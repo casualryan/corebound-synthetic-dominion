@@ -307,6 +307,8 @@
     <script src="statusEffects.js"></script>
     <script src="locations.js"></script>
     <script src="disassemble.js"></script>
+    <script src="lootPools.js"></script>
+    <script src="lootHandler.js"></script>
     <script src="combat.js"></script>
 
     <!-- Popups -->
@@ -405,9 +407,64 @@
 
                         enemyContainer.appendChild(statsList);
 
-                        if (enemyData.lootTable && enemyData.lootTable.length > 0) {
+                        // Display loot information from the new loot system
+                        if (enemyData.lootConfig) {
                             const lootHeader = document.createElement('h5');
-                            lootHeader.textContent = 'Loot Table:';
+                            lootHeader.textContent = 'Loot Information:';
+                            enemyContainer.appendChild(lootHeader);
+
+                            const lootList = document.createElement('ul');
+                            lootList.classList.add('codex-enemy-loot');
+                            lootList.style.listStyle = 'none';
+                            lootList.style.padding = '0';
+
+                            // Base drop chance
+                            const dropChanceItem = document.createElement('li');
+                            const dropChance = (enemyData.lootConfig.baseDropChance * 100).toFixed(2);
+                            dropChanceItem.textContent = `Base Drop Chance: ${dropChance}%`;
+                            lootList.appendChild(dropChanceItem);
+
+                            // Number of items
+                            const itemCountItem = document.createElement('li');
+                            itemCountItem.textContent = `Items Per Drop: ${enemyData.lootConfig.minItems} - ${enemyData.lootConfig.maxItems}`;
+                            lootList.appendChild(itemCountItem);
+
+                            // Loot pools by tier
+                            const poolsItem = document.createElement('li');
+                            poolsItem.textContent = "Available Loot Pools:";
+                            lootList.appendChild(poolsItem);
+
+                            // Add sublist for pools
+                            const poolsList = document.createElement('ul');
+                            poolsList.style.paddingLeft = '20px';
+
+                            for (const tier in enemyData.lootConfig.poolsByTier) {
+                                const tierItem = document.createElement('li');
+                                const pools = enemyData.lootConfig.poolsByTier[tier].join(', ');
+                                let tierName = "Unknown";
+                                
+                                // Map tier numbers to names
+                                switch (parseInt(tier)) {
+                                    case 1: tierName = "Common"; break;
+                                    case 2: tierName = "Uncommon"; break;
+                                    case 3: tierName = "Rare"; break;
+                                    case 4: tierName = "Very Rare"; break;
+                                    case 5: tierName = "Epic"; break;
+                                    case 6: tierName = "Legendary"; break;
+                                }
+                                
+                                tierItem.textContent = `Tier ${tier} (${tierName}): ${pools}`;
+                                poolsList.appendChild(tierItem);
+                            }
+                            
+                            lootList.appendChild(poolsList);
+                            enemyContainer.appendChild(lootList);
+                        }
+                        // Display the old loot table if it exists and there's no loot config
+                        // This is just for backward compatibility during transition
+                        else if (enemyData.lootTable && enemyData.lootTable.length > 0) {
+                            const lootHeader = document.createElement('h5');
+                            lootHeader.textContent = 'Legacy Loot Table:';
                             enemyContainer.appendChild(lootHeader);
 
                             const lootList = document.createElement('ul');

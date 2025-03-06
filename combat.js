@@ -144,35 +144,39 @@ function beginNextMonsterInSequence() {
 }
 
 function addMonsterLootToDelveBag(monster) {
-    if (!monster.lootTable) return;
+    // Skip if monster doesn't have loot config
+    if (!monster.lootConfig) return;
 
-    monster.lootTable.forEach(loot => {
-        if (Math.random() < loot.dropRate) {
-            const qty = getRandomInt(loot.minQuantity, loot.maxQuantity);
-            
-            // Find the item template
-            const itemTemplate = items.find(i => i.name === loot.itemName);
-            if (itemTemplate) {
-                // Generate a complete item instance with all stats
-                const itemInstance = generateItemInstance(itemTemplate);
-                itemInstance.quantity = qty;
-                
-                // Add the fully generated item to the delve bag
-                delveBag.items.push(itemInstance);
-                
-                logMessage(`Item added to delve bag: ${loot.itemName} x${qty}`);
-                updateDelveBagUI(); // Update UI when items are added
-            }
-        }
+    // Generate loot items using the new loot system
+    const player = window.player || {}; // Get player for modifiers
+    const lootItems = generateLoot(monster, player);
+    
+    // Add the items to the delve bag
+    lootItems.forEach(itemInstance => {
+        // Add the fully generated item to the delve bag
+        delveBag.items.push(itemInstance);
+        
+        logMessage(`Item added to delve bag: ${itemInstance.name} x${itemInstance.quantity || 1}`);
     });
+    
+    // Handle currency drops
     if (monster.currencyDrop) {
         if (Math.random() < monster.currencyDrop.dropRate) {
             const amt = getRandomInt(monster.currencyDrop.min, monster.currencyDrop.max);
-            delveBag.credits += amt;
-            logMessage(`Credits added to delve bag: ${amt}`);
-            updateDelveBagUI(); // Update UI when credits are added
+            
+            // Apply player currency modifiers if they exist
+            let finalAmount = amt;
+            if (player && player.stats && player.stats.currencyFind) {
+                finalAmount = Math.floor(amt * (1 + player.stats.currencyFind / 100));
+            }
+            
+            delveBag.credits += finalAmount;
+            logMessage(`Credits added to delve bag: ${finalAmount}`);
         }
     }
+    
+    // Update the delve bag UI
+    updateDelveBagUI();
 }
 
 function finalizeDelveLoot() {
@@ -1403,50 +1407,8 @@ function animateShieldBarChunk(target, shieldDamageAmount) {
 
 // Function to handle loot drops
 function dropLoot(enemy) {
-    logMessage(`${enemy.name} is dropping loot...`);
-    let lootFound = false;
-
-    // 1) Handle item drops as before
-    enemy.lootTable.forEach(loot => {
-        if (Math.random() < loot.dropRate) {
-            if (typeof items === 'undefined') {
-                console.error("The 'items' array is undefined. Ensure that 'items.js' is included before 'combat.js'.");
-                return;
-            }
-            const itemTemplate = items.find(item => item.name === loot.itemName);
-            if (itemTemplate) {
-                const quantity = getRandomInt(loot.minQuantity, loot.maxQuantity);
-                const droppedItem = generateItemInstance(itemTemplate);
-                droppedItem.quantity = quantity;
-
-                addItemToInventory(droppedItem);
-
-                const lootMessage = `You received: {flashing}${droppedItem.name} x${droppedItem.quantity}{end}`;
-                logMessage(lootMessage);
-                displayLootPopup(lootMessage);
-                updateInventoryDisplay();
-                lootFound = true;
-            } else {
-                console.warn(`Item template not found for ${loot.itemName}`);
-            }
-        }
-    });
-
-    // 2) Handle currency drops
-    if (enemy.currencyDrop) {
-        if (Math.random() < enemy.currencyDrop.dropRate) {
-            const amount = getRandomInt(enemy.currencyDrop.min, enemy.currencyDrop.max);
-            playerCurrency += amount; // Use your global currency variable
-            const currencyMessage = `You found {flashing}${amount} Credits{end} on the ${enemy.name}!`;
-            logMessage(currencyMessage);
-            displayLootPopup(currencyMessage); // If you want a popup
-            lootFound = true;
-        }
-    }
-
-    if (!lootFound) {
-        logMessage("The enemy had nothing of value.");
-    }
+    // Use the new loot handler
+    handleLootDrop(enemy);
 }
 
 

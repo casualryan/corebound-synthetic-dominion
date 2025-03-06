@@ -1,5 +1,3 @@
-// enemies.js
-
 // Enemy templates
 const enemies = [
     {
@@ -15,9 +13,14 @@ const enemies = [
         defenseTypes: {
             
         },
-        lootTable: [
-
-        ],
+        lootConfig: {
+            baseDropChance: 0.5,
+            minItems: 1,
+            maxItems: 1,
+            poolsByTier: {
+                1: ["genericCommon"]
+            }
+        },
         currencyDrop: {
             min: 5,
             max: 10,
@@ -39,9 +42,15 @@ const enemies = [
         defenseTypes: {
             
         },
-        lootTable: [
-            { itemName: "Broken Phase Sword", minQuantity: 1, maxQuantity: 2, dropRate: 1 },
-        ],
+        lootConfig: {
+            baseDropChance: 0.65,
+            minItems: 1,
+            maxItems: 2,
+            poolsByTier: {
+                1: ["genericCommon"],
+                2: ["genericUncommon"]
+            }
+        },
         currencyDrop: {
             min: 7,
             max: 12,
@@ -63,15 +72,22 @@ const enemies = [
         defenseTypes: {
             
         },
-        lootTable: [
-            { itemName: "Scrap Metal", minQuantity: 1, maxQuantity: 2, dropRate: 1 },
-        ],
+        lootConfig: {
+            baseDropChance: 0.8,
+            minItems: 1,
+            maxItems: 2,
+            poolsByTier: {
+                1: ["genericCommon"],
+                2: ["genericUncommon"],
+                3: ["genericRare"]
+            }
+        },
         currencyDrop: {
             min: 10,
-            max: 16,
-            dropRate: .5
+            max: 15,
+            dropRate: .80
         },
-        experienceValue: 11,
+        experienceValue: 8,
         statusEffects: [],        
     },
     {
@@ -87,12 +103,19 @@ const enemies = [
         defenseTypes: {
             
         },
-        lootTable: [
-            { itemName: "Synthetic Poison Gland", minQuantity: 1, maxQuantity: 2, dropRate: .15 },
-            { itemName: "Unstable Photon", minQuantity: 1, maxQuantity: 1, dropRate: .02 },
-            { itemName: "Minor Electronic Circuit", minQuantity: 1, maxQuantity: 1, dropRate: .05 },
-            { itemName: "Broken Poison Pistol", minQuantity: 1, maxQuantity: 1, dropRate: .005 }
-        ],
+        lootConfig: {
+            baseDropChance: 0.8,
+            minItems: 1,
+            maxItems: 3,
+            poolsByTier: {
+                1: ["lowRoboParts", "arachnidParts"],
+                2: ["basicComponents", "genericUncommon"],
+                3: ["midRobotParts", "genericRare"],
+                4: ["advancedComponents"],
+                5: ["epicTech"],
+                6: ["legendaryComponents"]
+            }
+        },
         currencyDrop: {
             min: 5,
             max: 10,
@@ -114,13 +137,26 @@ const enemies = [
         defenseTypes: {
             toughness: 15
         },
-        lootTable: [
-            { itemName: "Crystalized Light", minQuantity: 1, maxQuantity: 2, dropRate: 0.10 },
-            { itemName: "Partical Fuser", minQuantity: 1, maxQuantity: 1, dropRate: 0.02 },
-            { itemName: "Minor Electronic Circuit", minQuantity: 1, maxQuantity: 1, dropRate: 0.05 }
-        ],
-        experienceValue: 60,
-        statusEffects: []
+        lootConfig: {
+            baseDropChance: 0.75,
+            minItems: 1,
+            maxItems: 2,
+            poolsByTier: {
+                1: ["lowRoboParts", "genericCommon"],
+                2: ["basicComponents"],
+                3: ["midRobotParts"],
+                4: ["advancedComponents"],
+                5: ["epicTech"],
+                6: ["legendaryComponents"]
+            }
+        },
+        currencyDrop: {
+            min: 8,
+            max: 15,
+            dropRate: 1
+        },
+        experienceValue: 20,
+        statusEffects: [],   
     },
     {
         name: "Scorpionbot",
@@ -186,6 +222,19 @@ const enemies = [
         lootTable: [
 
         ],
+        lootConfig: {
+            baseDropChance: 0.9,
+            minItems: 2,
+            maxItems: 4,
+            poolsByTier: {
+                1: ["lowRoboParts", "genericCommon"],
+                2: ["basicComponents"],
+                3: ["midRobotParts", "genericRare"],
+                4: ["advancedComponents"],
+                5: ["epicTech"],
+                6: ["legendaryComponents"]
+            }
+        },
         experienceValue: 100,
         statusEffects: []
     },
@@ -219,7 +268,7 @@ const enemies = [
         criticalChance: 0.10,
         criticalMultiplier: 2,
         damageTypes: {
-            kinetic: 50,
+            kinetic: 30,
             magnetic: 10
         },
         defenseTypes: {
