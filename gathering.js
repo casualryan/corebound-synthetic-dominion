@@ -12,6 +12,25 @@ if (typeof updateInventoryDisplay === 'undefined') {
     // Import or define updateInventoryDisplay function
 }
 
+// Initialize screens when shown
+window.addEventListener('screenChanged', function(event) {
+    const screenId = event.detail.screenId;
+    
+    if (screenId === 'mining-screen') {
+        console.log('Mining screen shown, initializing activities');
+        displaySkillActivities('Mining');
+    }
+});
+
+// Ensure mining screen is initialized when the game loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the stop button event listener
+    const stopButton = document.getElementById('stop-mining');
+    if (stopButton) {
+        stopButton.addEventListener('click', stopGatheringActivity);
+    }
+});
+
 // Start a gathering activity
 function startGatheringActivity(skillName, activity) {
     if (isGathering) {
@@ -87,6 +106,9 @@ function stopGatheringActivity() {
             progressElement.style.width = '0%';
         }
 
+        // Ensure we update the skill stats display one last time
+        updateGatheringSkillDisplay(currentActivity.skillName);
+
         logMessage(`You stop ${currentActivity.activity.name}.`);
         currentActivity = null;
     }
@@ -117,16 +139,13 @@ function displayLootPopup(message) {
     }, 3000);
 }
 
-
-
-// Perform the gathering action upon completion
 // Perform the gathering action upon completion
 function performGatheringAction(skillName, activity) {
     // Get the item template from items.js
     const itemTemplate = items.find(i => i.name === activity.item.name);
     if (itemTemplate) {
         // Create an item instance
-        const gatheredItem = createItemInstance(itemTemplate);
+        const gatheredItem = generateItemInstance(itemTemplate);
         gatheredItem.quantity = activity.item.quantity || 1;
         // Add to inventory
         addItemToInventory(gatheredItem);
@@ -151,36 +170,94 @@ function performGatheringAction(skillName, activity) {
     updateGatheringSkillStats();
 }
 
-
-// Display activities for a given skill
+// Display the gathering activities for a given skill
 function displaySkillActivities(skillName) {
-    if (skillName === 'Fabrication') {
-        console.warn('Fabrication is not a gathering skill.');
+    console.log(`Displaying ${skillName} activities`);
+    
+    // Ignore MedTek for now as it will be implemented separately
+    if (skillName.toLowerCase() === 'medtek') return;
+    
+    const skillLevel = player.gatheringSkills?.[skillName]?.level || 1;
+    const skillXP = player.gatheringSkills?.[skillName]?.experience || 0;
+    const xpForNextLevel = getXPForNextLevel(skillLevel);
+    const progressPercent = (skillXP / xpForNextLevel) * 100;
+    
+    // Find the activities container for this skill
+    const activitiesContainer = document.getElementById(`${skillName.toLowerCase()}-activities`) || 
+                                document.getElementById('gathering-activities');
+    
+    if (!activitiesContainer) {
+        console.error(`Activities container not found for ${skillName}`);
         return;
     }
-
-    const activitiesDiv = document.querySelector(`#${skillName.toLowerCase()}-screen .activities`);
-    if (!activitiesDiv) {
-        console.error(`Activities div not found for skill ${skillName}`);
+    
+    // Clear the container
+    activitiesContainer.innerHTML = '';
+    
+    // Get the activities from the activity_data.js file
+    const activities = gatheringActivities.filter(act => act.skillType === skillName);
+    
+    if (activities.length === 0) {
+        console.error(`No activities found for skill ${skillName}`);
         return;
     }
-    activitiesDiv.innerHTML = ''; // Clear existing content
-
-    const skill = gatheringSkills.find(skill => skill.name === skillName);
-
-    if (skill) {
-        skill.activities.forEach(activity => {
-            const activityButton = document.createElement('button');
-            activityButton.textContent = `${activity.name} (Level ${activity.levelRequired})`;
-            const playerSkillLevel = player.gatheringSkills[skill.name]?.level || 1;
-            activityButton.disabled = playerSkillLevel < activity.levelRequired;
-            activityButton.addEventListener('click', () => {
-                startGatheringActivity(skill.name, activity);
+    
+    // Create activity cards
+    activities.forEach(activity => {
+        const unlocked = !activity.requiredLevel || 
+            (player.gatheringSkills && 
+             player.gatheringSkills[skillName] && 
+             player.gatheringSkills[skillName].level >= activity.requiredLevel);
+        
+        const card = document.createElement('div');
+        card.className = `activity-card ${unlocked ? 'unlocked' : 'locked'}`;
+        
+        // Add activity details and Start Mining button
+        card.innerHTML = `
+            <div class="activity-name">${activity.name}</div>
+            <div class="activity-time">
+                <i class="time-icon"></i> Time: ${activity.time} seconds
+            </div>
+            <div class="activity-yield">
+                <i class="yield-icon"></i> Yield: ${activity.item.name} (${activity.item.quantity || 1})
+            </div>
+            ${!unlocked ? `<div class="activity-requirement">Requires ${skillName} Level ${activity.requiredLevel}</div>` : ''}
+            <button class="start-activity-btn" ${!unlocked ? 'disabled' : ''}>Start Mining</button>
+        `;
+        
+        // Add click handler to the button instead of the card
+        const startButton = card.querySelector('.start-activity-btn');
+        if (startButton && unlocked) {
+            startButton.addEventListener('click', () => {
+                startGatheringActivity(skillName, activity);
+                logMessage(`You start ${activity.name}.`);
+                
+                // Play sound if available
+                if (window.playSound) {
+                    playSound('UI_SELECT');
+                }
             });
-            activitiesDiv.appendChild(activityButton);
-        });
-    } else {
-        console.error(`${skillName} skill not found in gatheringSkills.`);
+        }
+        
+        activitiesContainer.appendChild(card);
+    });
+    
+    // Add stats section for this skill
+    const statsDiv = document.getElementById(`${skillName.toLowerCase()}-skill-stats`) || 
+                    document.getElementById('gathering-skill-stats');
+    
+    if (statsDiv) {
+        statsDiv.className = 'mining-stats';
+        statsDiv.innerHTML = `
+            <h3>${skillName} Stats</h3>
+            <ul>
+                <li><span class="stat-name">Current Level:</span> <span class="stat-value">${skillLevel}</span></li>
+                <li><span class="stat-name">Experience:</span> <span class="stat-value">${skillXP} / ${xpForNextLevel}</span></li>
+                <li><span class="stat-name">Progress:</span> <span class="stat-value">${progressPercent.toFixed(1)}%</span></li>
+                <li><span class="stat-name">Time Bonus:</span> <span class="stat-value">-${(skillLevel * 2)}%</span></li>
+                <li><span class="stat-name">Yield Bonus:</span> <span class="stat-value">+${(skillLevel * 1.5).toFixed(1)}%</span></li>
+            </ul>
+        `;
     }
 }
 
@@ -228,29 +305,29 @@ function updateGatheringSkillStats() {
 }
 
 // Gathering skills data
-const gatheringSkills = [
-    {
-        name: 'Mining',
-        activities: [
-            {
-                name: 'Chip at Fallen Ships',
-                levelRequired: 1,
-                experience: 10,        // Experience gained per action
-                time: 4,              // Time in seconds per action
-                item: { name: 'Scrap Metal', quantity: 1 },
-            },
-            {
-                name: 'Titanium Harvesting',
-                levelRequired: 10,
-                experience: 25,
-                time: 6,
-                item: { name: 'Titanium', quantity: 1 },
-            },
-            // Add more activities as needed
-        ],
-    },
-    // Add other skills like Fabricating, Fishing, etc.
-];
+// const gatheringSkills = [
+//     {
+//         name: 'Mining',
+//         activities: [
+//             {
+//                 name: 'Chip at Fallen Ships',
+//                 levelRequired: 1,
+//                 experience: 10,        // Experience gained per action
+//                 time: 4,              // Time in seconds per action
+//                 item: { name: 'Scrap Metal', quantity: 1 },
+//             },
+//             {
+//                 name: 'Titanium Harvesting',
+//                 levelRequired: 10,
+//                 experience: 25,
+//                 time: 6,
+//                 item: { name: 'Titanium', quantity: 1 },
+//             },
+//             // Add more activities as needed
+//         ],
+//     },
+//     // Add other skills like Fabricating, Fishing, etc.
+// ];
 
 // Initialize gathering skill stats and display
 document.addEventListener('DOMContentLoaded', () => {

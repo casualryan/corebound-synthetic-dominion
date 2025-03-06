@@ -114,20 +114,25 @@ const items = [
         type: "Weapon",
         weaponType: "Sword",
         icon: "icons/ironsword.png",
+        bAttackSpeed: 2,
         damageTypes: {
             kinetic: { min: 3, max: 6 }, // Flat Damage
             mental: { min: 3, max: 6 }
         },
         statModifiers: {
             damageTypes: {
-                kinetic: { min: 100, max: 200 }, // Percent Damage
+                kinetic: { min: 10, max: 20 }, // Percent Damage
             },
         },
         attackSpeedModifierRange: { min: 5, max: 10 },
         criticalChanceModifierRange: { min: 10, max: 20 },
         criticalMultiplierModifierRange: { min: 10, max: 20 },
+        deflection: { min: 5, max: 5 },
         defenseTypes: {},
         slot: 'mainHand',
+        passiveBonuses: {
+            "Swift Strikes": 1 // +1 to Swift Strikes passive
+        },
         disassembleResults: [
             {
                 name: 'Scrap Metal', quantity: 1
@@ -137,7 +142,7 @@ const items = [
         effects: [
             {
                 trigger: 'onHit', // or 'whenHit', 'onHit', etc.
-                chance: 1, // 20% chance
+                chance: .2, // 20% chance
                 action: 'dealDamage',
                 parameters: {
                     damageType: 'kinetic',
@@ -155,7 +160,7 @@ const items = [
         icon: "icons/poison_pistol.png",
         slot: 'mainHand',
         damageTypes: {
-            chemical: { min: 8, max: 20 },
+            chemical: { min: 12, max: 25 },
         },
         statModifiers: {
             damageTypes: {
@@ -164,12 +169,51 @@ const items = [
         },
         attackSpeedModifierRange: { min: 50, max: 75 },
         disassembleResults: [
-            {
-                name: 'Synthetic Poison Gland', quantity: 1
-            },
+            {name: 'Synthetic Poison Gland', quantity: 1,},
+            {name: 'Minor Electronic Circuit', quantity: 1},
         ],
         isDisassembleable: true,
-        description: 'Made from Synthetic Poison harvested from various arachnid-bots'
+        description: 'Made from Synthetic Poison parts harvested from various arachnid-bots'
+    },
+
+    {
+        name: "Scorpion Sword",
+        type: "Weapon",
+        weaponType: "Sword",
+        icon: "icons/scorpion_sword.png",
+        damageTypes: {
+            kinetic: { min: 30, max: 40 },
+            chemical: { min: 15, max: 25 }
+        },
+        statModifiers: {
+            damageTypes: {
+                kinetic: { min: 19, max: 30 },
+                chemical: { min: 15, max: 25 }
+            },
+        },
+        attackSpeedModifierRange: { min: 15, max: 25 },
+        criticalChanceModifierRange: { min: 20, max: 20 },
+        defenseTypes: {},
+        effects: [
+            {
+                trigger: 'onHit',
+                chance: .25,
+                action: 'dealDamage',
+                parameters: {
+                    damageType: 'chemical',
+                    amount: 15,
+                    ignoreDefense: true
+                }
+            }
+        ],
+        slot: 'mainHand',
+        disassembleResults: [
+            {
+                name: 'Metal Scorpion Fang', quantity: 1
+            },
+        ],
+        description: '25% chance on hit to deal 15 Chemical damage, ignoring defense.',
+        isDisassembleable: true,
     },
 
     {
@@ -178,7 +222,7 @@ const items = [
         weaponType: "Sword",
         icon: "icons/lasersword.png",
         damageTypes: {
-            kinetic: { min: 8, max: 20 },
+            kinetic: { min: 12, max: 25 },
         },
         statModifiers: {
             damageTypes: {
@@ -192,7 +236,7 @@ const items = [
         effects: [
             {
                 trigger: 'onHit',
-                chance: .5,
+                chance: .3,
                 action: 'dealDamage',
                 parameters: {
                     damageType: 'kinetic',
@@ -202,7 +246,7 @@ const items = [
             },
             {
                 trigger: 'onHit',
-                chance: .5,
+                chance: .3,
                 action: 'dealDamage',
                 parameters: {
                     damageType: 'magnetic',
@@ -213,12 +257,74 @@ const items = [
         ],
         slot: 'mainHand',
         disassembleResults: [
-            {
-                name: 'Crystalized Light', quantity: 1
-            },
+            { name: 'Crystalized Light', quantity: 1 },
+            { name: 'Minor Electronic Circuit', quantity: 1 }
         ],
+        description: '30% chance on hit to deal 10 Kinetic, or 10 Magnetic damage, or both, ignoring defense.',
         isDisassembleable: true,
     },
+
+    {
+        name: "Fire Spewer Mk1",
+        type: "Weapon",
+        weaponType: "Pistol",
+        icon: "icons/flame_thrower.png",
+        slot: 'mainHand',
+        damageTypes: {
+            pyro: { min: 17, max: 25 },
+        },
+        statModifiers: {
+            damageTypes: {
+                pyro: { min: 40, max: 45 },
+            },
+        },
+        attackSpeedModifierRange: { min: 200, max: 275 },
+        defenseTypes: {},
+        disassembleResults: [
+            { name: 'Flame Shell', quantity: 1 },
+            { name: 'Pyro Core', quantity: 1 }
+        ],
+        isDisassembleable: true,
+        description: 'Rapidly spews fire at enemies, dealing Pyro damage.'
+    },
+
+    {
+        name: "O'Hare's Dementia",
+        type: "Weapon",
+        weaponType: "Shotgun",
+        icon: "icons/dementia.png",
+        slot: 'mainHand',
+        bAttackSpeed: 1.25, // Base Attack Speed
+        damageTypes: {
+            mental: { min: 210, max: 270
+        }
+        },
+        statModifiers: {
+            damageTypes: {
+                mental: { min: 100, max: 125 },
+            },
+        },
+        effects: [
+            {
+                trigger: 'onHit',
+                chance: 1,
+                action: 'dealDamage',
+                parameters: {
+                    damageType: 'mental',
+                    amount: 200,
+                    ignoreDefense: true
+                }
+            }
+        ],
+        slot: 'mainHand',
+        disassembleResults: [
+            { name: 'Minor Electronic Circuit', quantity: 1 }, // To Be Changed
+            { name: 'Pyro Core', quantity: 1 } // To Be Changed
+        ],
+        isDisassembleable: true,
+        description: "O'Hare was lost. With this, he found himself."
+    },
+
     {
         name: "Electro Blaster",
         type: "Weapon",
@@ -248,6 +354,24 @@ const items = [
                 name: 'Minor Electronic Circuit', quantity: 1
             },
         ],
+    },
+
+    {
+        name: "Broken Poison Pistol",
+        type: "Weapon",
+        weaponType: "Pistol",
+        icon: "icons/poison_pistol.png",
+        damageTypes: {
+            chemical: { min: 3, max: 6 },
+        },
+        defenseTypes: {},
+        slot: 'mainHand',
+        disassembleResults: [
+            { name: 'Minor Electronic Circuit', quantity: 1 },
+            { name: 'Scrap Metal', quantity: 1 },
+            { name: 'Synthetic Poison Gland', quantity: 1 }
+        ],
+        isDisassembleable: true,
     },
 
     // Armor
@@ -284,9 +408,19 @@ const items = [
                 parameters: {
                     amount: 30
                 }
+            },
+            {
+                trigger: 'whenHit',
+                chance: 0.25, // 10% chance
+                action: 'dealDamage',
+                parameters: {
+                    damageType: 'kinetic',
+                    amount: 15,
+                    ignoreDefenses: true
+                }
             }
         ],
-        description: '10% chance when hit to gain 30 life.'
+        description: '10% chance when hit to gain 30 life. 25% chance when hit to deal 15 Kinetic damage, ignoring defenses.'
     },
 
     {
@@ -311,6 +445,156 @@ const items = [
                 name: 'Unstable Photon', quantity: 1
             },
         ],
+        description: 'Defensive shield, increases Energy Shield, Health, and Defenses.'
+    },
+
+    {
+        name: "Heavy Metal Boots",
+        type: "Boots",
+        icon: "icons/heavy_metal_boots.png",
+        defenseTypes: {
+            toughness: { min: 5, max: 10 },
+            immunity: { min: 5, max: 10 },
+            antimagnet: { min: 5, max: 10 }
+        },
+        healthBonus: { min: 30, max: 30 },
+        healthBonusPercentRange: { min: 10, max: 15 },
+        deflection: { min: 3, max: 3 },
+        slot: 'feet',
+        isDisassembleable: true,
+        disassembleResults: [
+            {
+                name: 'Scrap Metal', quantity: 2
+            },
+        ],
+        description: 'Defensive boots.'
+    },
+
+    {
+        name: "Heavy Metal Gloves",
+        type: "Gloves",
+        icon: "icons/heavy_metal_gloves.png",
+        defenseTypes: {
+            toughness: { min: 5, max: 10 },
+            immunity: { min: 5, max: 10 },
+            antimagnet: { min: 5, max: 10 }
+        },
+        healthBonus: { min: 30, max: 30 },
+        healthBonusPercentRange: { min: 10, max: 15 },
+        deflection: { min: 3, max: 3 },
+        slot: 'gloves',
+        isDisassembleable: true,
+        disassembleResults: [
+            {
+                name: 'Scrap Metal', quantity: 2
+            },
+        ],
+        description: 'Defensive gloves.'
+    },
+
+    {
+        name: "Rapid Combat Gloves",
+        type: "Gloves",
+        icon: "icons/rapid_strike_gloves.png",
+        attackSpeedModifierRange: { min: 30, max: 40 },
+        precision: { min: 3, max: 3 },
+        deflection: { min: 3, max: 3 },
+        slot: 'gloves',
+        isDisassembleable: true,
+        disassembleResults: [
+            {
+                name: 'Scrap Metal', quantity: 2
+            },
+        ],
+        description: 'Offensive Gloves.'
+    },
+
+    {
+        name: "Focusing Helmet",
+        type: "Helmet",
+        icon: "icons/focusing_helmet.png",
+        defenseTypes: {
+            fortitude: { min: 5, max: 5 },
+            immunity: { min: 5, max: 5 },
+            antimagnet: { min: 5, max: 5 },
+            chemical: { min: 5, max: 5 },
+            heatResistance: { min: 5, max: 5 }
+        },
+        healthBonus: { min: 20, max: 20 },
+        healthBonusPercentRange: { min: 8, max: 10 },
+        precision: { min: 5, max: 5 },
+        slot: 'head',
+        isDisassembleable: true,
+        disassembleResults: [
+            {
+                name: 'Scrap Metal', quantity: 2
+            },
+        ],
+        description: 'Light defensive helmet, adds some Precision.'
+    },
+
+    {
+        name: "Spiked Reactor Shield",
+        type: "Shield",
+        icon: "icons/spiked_reactor_shield.png",
+        defenseTypes: {
+            toughness: { min: 5, max: 5 },
+            heatResistance: { min: 5, max: 5 },
+            immunity: { min: 5, max: 5 },
+            fortitude: { min: 5, max: 5 },
+            antimagnet: { min: 5, max: 5 }
+        },
+        effects: [
+            {
+                trigger: 'whenHit',
+                chance: 0.2,
+                action: 'dealDamage',
+                parameters: {
+                    damageType: 'kinetic',
+                    amount: 20,
+                    ignoreDefenses: true
+                }
+            }
+        ],
+        slot: 'offHand',
+        isDisassembleable: true,
+        disassembleResults: [
+            {
+                name: 'Titanium Thorn', quantity: 3
+            },
+        ],
+        description: '20% chance when hit to deal 20 Kinetic damage, ignoring defense.'
+    },
+
+    {
+        name: "Big 'Ol Bucket",
+        type: 'Helmet',
+        icon: 'icons/big_ol_bucket.png',
+        defenseTypes: {
+            toughness: { min: 20, max: 20 },
+            heatResistance: { min: 20, max: 20 },
+            immunity: { min: 10, max: 10 },
+            fortitude: { min: 20, max: 20 },    
+            antimagnet: { min: -10, max: -10 }
+        },
+        slot: 'head',
+        isDisassembleable: true,
+        disassembleResults: [
+            {
+                name: 'Scrap Metal', quantity: 1
+            },
+        ],
+        effects: [
+                {
+                trigger: 'whenHit',
+                chance: 0.1,
+                action: 'applyBuff',
+                parameters: {
+                    buff: 'Cracked',
+                }
+            }
+        ],     
+        description: 'A large metal bucket. May crack when damaged.'
     },
 
     // Bionics
@@ -332,6 +616,7 @@ const items = [
                 name: 'Scrap Metal', quantity: 1
             },
         ],
+        description: 'Increases Toughness, Immunity, and Heat Resistance, but decreases Antimagnet.'
     },
     {
         name: 'Health Enhancer',
@@ -345,6 +630,7 @@ const items = [
                 name: 'Scrap Metal', quantity: 1
             },
         ],
+        description: 'Increases Max Health.'
     },
 
     {
@@ -385,6 +671,12 @@ const items = [
                 name: 'Scrap Metal', quantity: 1
             },
         ],
+        isDisassembleable: true,
+        disassembleResults: [
+            {
+                name: 'Scrap Metal', quantity: 1
+            },
+        ],
         description: 'Increases Attack Speed by 20%-35%.'
     },
 
@@ -394,8 +686,9 @@ const items = [
         icon: 'icons/healthexchanger.png',
         slot: 'bionic',
         healthBonus: { min: -30, max: -10 },
-        energyShieldBonus: { min: 40, max: 60 },
-        energyShieldBonusPercentRange: { min: 10, max: 10 },
+        healthBonusPercentRange : { min: -10, max: -15 },
+        energyShieldBonus: { min: 50, max: 60 },
+        energyShieldBonusPercentRange: { min: 10, max: 15 },
         isDisassembleable: true,
         disassembleResults: [
             {
@@ -420,6 +713,80 @@ const items = [
                 name: 'Scrap Metal', quantity: 1
             },
         ],
+        description: 'Increases Kinetic Damage Multiplier.'
+    },
+
+    // Scrap Metal Set
+
+    {
+        name: 'Scrap Metal Boots',
+        type: 'Boots',
+        icon: 'icons/iron_boots.png',
+        healthBonus: { min: 15, max: 15 },
+        healthBonusPercentRange: { min: 10, max: 10 },
+        slot: 'feet',
+        isDisassembleable: false,
+        disassembleResults: [],
+        description: "Metal boots fashioned from discarded scrap."
+    },
+
+    {
+        name: 'Scrap Metal Helmet',
+        type: 'Helmet',
+        icon: 'icons/iron_helmet.png',
+        healthBonus: { min: 20, max: 20 },
+        healthBonusPercentRange: { min: 15, max: 15 },
+        slot: 'head',
+        isDisassembleable: false,
+        disassembleResults: [],
+        description: "Metal helmet fashioned from discarded scrap."
+    },
+
+    {
+        name: 'Scrap Metal Gloves',
+        type: 'Gloves',
+        icon: 'icons/iron_gloves.png',
+        healthBonus: { min: 10, max: 10 },
+        healthBonusPercentRange: { min: 8, max: 8 },
+        slot: 'gloves',
+        isDisassembleable: false,
+        disassembleResults: [],
+        description: "Metal gloves fashioned from discarded scrap."
+    },
+
+    {
+        name: 'Scrap Metal Trousers',
+        type: 'Trousers',
+        icon: 'icons/iron_pants.png',
+        healthBonus: { min: 20, max: 20 },
+        healthBonusPercentRange: { min: 15, max: 15 },
+        slot: 'legs',
+        isDisassembleable: false,
+        disassembleResults: [],
+        description: "Metal trousers fashioned from discarded scrap."
+    },
+
+    {
+        name: 'Scrap Metal Chest Plate',
+        type: 'Chest',
+        icon: 'icons/iron_gloves.png',
+        healthBonus: { min: 30, max: 30 },
+        healthBonusPercentRange: { min: 30, max: 30 },
+        slot: 'chest',
+        isDisassembleable: false,
+        disassembleResults: [],
+        description: "Metal chest plate fashioned from discarded scrap."
+    },
+
+    {
+        name: 'Regen Test Item',
+        type: 'offHand',
+        icon: 'icons/iron_gloves.png',
+        healthRegen: { min: 2, max: 2 },
+        slot: 'offHand',
+        isDisassembleable: false,
+        disassembleResults: [],
+        description: "Metal chest plate fashioned from discarded scrap."
     },
 
 
@@ -450,6 +817,7 @@ const items = [
         slot: 'Material',
         stackable: true,
         isDisassembleable: false,
+        disassembleResults: [],
     },
 
     {
@@ -459,6 +827,7 @@ const items = [
         slot: 'Material',
         stackable: true,
         isDisassembleable: false,
+        disassembleResults: [],
     },
 
     {
@@ -468,6 +837,7 @@ const items = [
         slot: 'Material',
         stackable: true,
         isDisassembleable: false,
+        disassembleResults: [],
     },
 
     {
@@ -477,6 +847,7 @@ const items = [
         slot: 'Material',
         stackable: true,
         isDisassembleable: false,
+        disassembleResults: [],
     },
 
     {
@@ -486,6 +857,8 @@ const items = [
         slot: 'Material',
         stackable: true,
         isDisassembleable: false,
+        disassembleResults: [],
+        description: 'Crafting Material for advanced technology.'
     },
     {
         name: 'Titanium Thorn',
@@ -494,7 +867,50 @@ const items = [
         slot: 'Material',
         stackable: true,
         isDisassembleable: false,
+        disassembleResults: [],
     },
+    {
+        name: 'Metal Scorpion Fang',
+        type: 'material',
+        icon: 'icons/metal_scorpion_fang.png',
+        slot: 'Material',
+        stackable: true,
+        isDisassembleable: false,
+        disassembleResults: [],
+    },
+
+    {
+        name: 'Flame Shell',
+        type: 'material',
+        icon: 'icons/flame_shell.png',
+        slot: 'Material',
+        stackable: true,
+        isDisassembleable: false,
+        disassembleResults: [],
+    },
+
+    {
+        name: 'Pyro Core',
+        type: 'material',
+        icon: 'icons/pyro_core.png',
+        slot: 'Material',
+        stackable: true,
+        isDisassembleable: false,
+        disassembleResults: [],
+    },
+
+    // {
+    //     name: 'Big Ol Bucket',
+    //     type: 'material',
+    //     icon: 'icons/big_ol_bucket.png',
+    //     slot: 'Material',
+    //     stackable: true,
+    //     isDisassembleable: false,
+    //     disassembleResults: [],
+    // }
 
 
 ];
+
+// Expose items as a global variable
+window.items = items;

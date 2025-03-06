@@ -36,6 +36,11 @@ function addItemToInventory(newItem) {
     }
     updateInventoryDisplay();
     notifyInventoryChange();
+
+    // Play pickup sound
+    if (window.playSound && !window.isSilentItemAdd) {
+        playSound('ITEM_PICKUP', 0.2);
+    }
 }
 
 // Function to remove an item from the inventory
@@ -83,7 +88,7 @@ function updateInventoryDisplay() {
     window.inventory.forEach(item => {
         if (item) {
             const listItem = document.createElement('li');
-            listItem.style.position = 'relative'; // Required for tooltip and quantity badge positioning
+            listItem.style.position = 'relative'; // Required for quantity badge positioning
 
             // Create item icon
             const itemIcon = document.createElement('img');
@@ -100,37 +105,22 @@ function updateInventoryDisplay() {
                 listItem.appendChild(quantityBadge);
             }
 
-            // Create tooltip
-            const tooltip = document.createElement('div');
-            tooltip.className = 'tooltip';
-
-            // Update tooltip content to include random stats
-            tooltip.innerHTML = getItemTooltipContent(item);
-
-            // Append icon and tooltip to list item
+            // Set tooltip content via data attribute
+            listItem.setAttribute('data-has-tooltip', 'true');
+            listItem.setAttribute('data-tooltip-source', 'inventory-item');
+            listItem.setAttribute('data-tooltip-content', getItemTooltipContent(item));
+            
+            // Append icon to list item
             listItem.appendChild(itemIcon);
-            listItem.appendChild(tooltip);
-
+            
             inventoryList.appendChild(listItem);
-
-            // Add hover event listeners with delay
-            let hoverTimeout;
-            itemIcon.addEventListener('mouseenter', () => {
-                hoverTimeout = setTimeout(() => {
-                    tooltip.style.display = 'block';
-                }, 500); // 0.5-second delay
-            });
-            itemIcon.addEventListener('mouseleave', () => {
-                clearTimeout(hoverTimeout);
-                tooltip.style.display = 'none';
-            });
 
             // Click event to handle item actions
             itemIcon.addEventListener('click', () => {
                 if (item.effect) {
                     showUseItemPopup(item);
                 } else {
-                    showItemOptionsPopup(item);
+                    showItemOptionsPopup(item, event);
                 }
             });
 
@@ -183,13 +173,28 @@ function equipItem(item) {
 
     // Update inventory and UI
     removeItemFromInventory(item);
+    
     if (previousItem) {
         addItemToInventory(previousItem);
     }
+    
+    // Reset and reapply all passive bonuses from gear
+    resetGearPassiveBonuses();
+    
+    // Recalculate player stats
     player.calculateStats();
+    
+    // Reapply passives since gear bonuses may have changed
+    applyAllPassivesToPlayer();
+    
     updateInventoryDisplay();
     updateEquipmentDisplay();
     updatePlayerStatsDisplay();
+
+    // Play equip sound
+    if (window.playSound) {
+        playSound('ITEM_EQUIP');
+    }
 }
 
 
@@ -208,78 +213,68 @@ function updateEquipmentDisplay() {
         const equippedItem = player.equipment[slotName];
 
         slotElement.innerHTML = ''; // Clear current content
-
+        
         if (equippedItem) {
-            // Display item icon
+            // Create a wrapper div to hold icon and tooltip data
+            const wrapper = document.createElement('div');
+            wrapper.setAttribute('data-has-tooltip', 'true');
+            wrapper.setAttribute('data-tooltip-source', 'equipment-slot');
+            wrapper.setAttribute('data-tooltip-content', getItemTooltipContent(equippedItem));
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.display = 'flex';
+            wrapper.style.alignItems = 'center';
+            wrapper.style.justifyContent = 'center';
+
+            // Create item icon
             const itemIcon = document.createElement('img');
-            itemIcon.src = equippedItem.icon || 'default-icon.png';
+            itemIcon.src = equippedItem.icon || "icons/default-icon.png";
             itemIcon.alt = equippedItem.name || 'Unknown Item';
+            itemIcon.style.maxWidth = '100%';
+            itemIcon.style.maxHeight = '100%';
 
-            // Create tooltip
-            const tooltip = document.createElement('div');
-            tooltip.className = 'tooltip';
-            tooltip.innerHTML = getItemTooltipContent(equippedItem);
+            // Append element
+            wrapper.appendChild(itemIcon);
+            slotElement.appendChild(wrapper);
 
-            // Append icon and tooltip
-            slotElement.appendChild(itemIcon);
-            slotElement.appendChild(tooltip);
-
-            // Add hover event listeners with delay
-            let hoverTimeout;
-            itemIcon.addEventListener('mouseenter', () => {
-                hoverTimeout = setTimeout(() => {
-                    tooltip.style.display = 'block';
-                }, 500);
+            // Add click handler to the wrapper
+            wrapper.addEventListener('click', (event) => {
+                unequipItemWithConfirmation(slotName, event);
             });
-            itemIcon.addEventListener('mouseleave', () => {
-                clearTimeout(hoverTimeout);
-                tooltip.style.display = 'none';
-            });
-
         } else {
-            // Display slot name
             slotElement.textContent = capitalize(slotName.replace('Hand', ' Hand'));
         }
     });
 
-    // Update bionic slots
+    // Update bionic slots with same structure
     player.equipment.bionicSlots.forEach((item, index) => {
         const slotElement = document.getElementById(`bionic-slot-${index}`);
-        slotElement.innerHTML = ''; // Clear current content
+        slotElement.innerHTML = '';
 
         if (item) {
-            // Display item icon
+            const wrapper = document.createElement('div');
+            wrapper.setAttribute('data-has-tooltip', 'true');
+            wrapper.setAttribute('data-tooltip-source', 'bionic-slot');
+            wrapper.setAttribute('data-tooltip-content', getItemTooltipContent(item));
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.display = 'flex';
+            wrapper.style.alignItems = 'center';
+            wrapper.style.justifyContent = 'center';
+
             const itemIcon = document.createElement('img');
-            itemIcon.src = item.icon || 'default-icon.png';
+            itemIcon.src = item.icon || "icons/default-icon.png";
             itemIcon.alt = item.name || 'Unknown Item';
+            itemIcon.style.maxWidth = '100%';
+            itemIcon.style.maxHeight = '100%';
 
-            // Create tooltip
-            const tooltip = document.createElement('div');
-            tooltip.className = 'tooltip';
-            tooltip.innerHTML = getItemTooltipContent(item);
+            wrapper.appendChild(itemIcon);
+            slotElement.appendChild(wrapper);
 
-            // Append icon and tooltip
-            slotElement.appendChild(itemIcon);
-            slotElement.appendChild(tooltip);
-
-            // Add hover event listeners with delay
-            let hoverTimeout;
-            itemIcon.addEventListener('mouseenter', () => {
-                hoverTimeout = setTimeout(() => {
-                    tooltip.style.display = 'block';
-                }, 500);
-            });
-            itemIcon.addEventListener('mouseleave', () => {
-                clearTimeout(hoverTimeout);
-                tooltip.style.display = 'none';
-            });
-
-            // Add click event to unequip
-            itemIcon.addEventListener('click', () => {
-                unequipItemWithConfirmation(`bionic-slot-${index}`);
+            wrapper.addEventListener('click', (event) => {
+                unequipItemWithConfirmation(`bionic-slot-${index}`, event);
             });
         } else {
-            // Display slot name
             slotElement.textContent = `Bionic ${index + 1}`;
         }
     });
@@ -339,26 +334,94 @@ function showConfirmationPopup(message, onConfirm, onSecondary = null) {
 
 // Function to initialize equipment slots with click event listeners
 function initializeEquipmentSlots() {
-    const slots = document.querySelectorAll('.equipment-slot');
-    slots.forEach(slot => {
-        slot.addEventListener('click', () => {
-            const slotName = slot.getAttribute('data-slot');
-            unequipItemWithConfirmation(slotName);
-        });
-    });
+    // We no longer need to add click listeners here
+    // This was causing double popups with the listeners in updateEquipmentDisplay
+    
+    // If we need to do other initialization for equipment slots in the future,
+    // we can add it here
 }
 
 // Function to unequip an item with confirmation
-function unequipItemWithConfirmation(slotName) {
+function unequipItemWithConfirmation(slotName, event) {
     const equippedItem = getEquippedItemBySlot(slotName);
     if (!equippedItem) {
         logMessage('No item equipped in this slot.');
         return;
     }
 
-    showConfirmationPopup(`Unequip ${equippedItem.name}?`, () => {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'overlay';
+    document.body.appendChild(overlay);
+
+    // Create popup
+    const popup = document.createElement('div');
+    popup.className = 'confirmation-popup';
+
+    const msg = document.createElement('p');
+    msg.textContent = `Unequip ${equippedItem.name}?`;
+    popup.appendChild(msg);
+
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.className = 'popup-buttons';
+
+    const yesButton = document.createElement('button');
+    yesButton.textContent = 'Yes';
+    yesButton.addEventListener('click', () => {
         unequipItem(slotName);
+        document.body.removeChild(popup);
+        document.body.removeChild(overlay);
     });
+
+    const noButton = document.createElement('button');
+    noButton.textContent = 'No';
+    noButton.addEventListener('click', () => {
+        document.body.removeChild(popup);
+        document.body.removeChild(overlay);
+    });
+
+    buttonsContainer.appendChild(yesButton);
+    buttonsContainer.appendChild(noButton);
+    popup.appendChild(buttonsContainer);
+    
+    // Add to DOM first so we can measure it
+    document.body.appendChild(popup);
+    
+    // Position the popup near the equipment slot
+    const slotElement = document.getElementById(slotName);
+    const rect = slotElement ? slotElement.getBoundingClientRect() : { top: 0, left: 0 };
+    
+    // Get window dimensions
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // Get popup dimensions
+    const popupRect = popup.getBoundingClientRect();
+    
+    // Calculate position (near the slot)
+    let left = rect.right + 10;
+    let top = rect.top;
+    
+    // Make sure it doesn't go off the right edge
+    if (left + popupRect.width > windowWidth - 20) {
+        left = rect.left - popupRect.width - 10;
+        
+        // If that would go off the left edge, position it below
+        if (left < 20) {
+            left = Math.max(20, Math.min(windowWidth - popupRect.width - 20, rect.left));
+            top = rect.bottom + 10;
+        }
+    }
+    
+    // Make sure it doesn't go off the bottom
+    if (top + popupRect.height > windowHeight - 20) {
+        top = Math.max(20, windowHeight - popupRect.height - 20);
+    }
+    
+    // Apply position
+    popup.style.position = 'fixed';
+    popup.style.top = `${top}px`;
+    popup.style.left = `${left}px`;
 }
 
 // Function to get the equipped item by slot name
@@ -373,29 +436,58 @@ function getEquippedItemBySlot(slotName) {
 
 // Function to unequip an item
 function unequipItem(slotName) {
-    let unequippedItem = null;
+    // Validate the slot exists and has an item
+    if (!player.equipment[slotName]) {
+        return false;
+    }
+
+    // If the slot is a bionic slot, handle differently
     if (slotName.startsWith('bionic-slot-')) {
-        const index = parseInt(slotName.split('-')[2]);
-        unequippedItem = player.equipment.bionicSlots[index];
-        player.equipment.bionicSlots[index] = null;
+        const slotIndex = parseInt(slotName.split('-')[2]);
+        if (isNaN(slotIndex) || slotIndex < 0 || slotIndex >= player.equipment.bionicSlots.length) {
+            return false;
+        }
+        // Add the bionic back to inventory
+        addItemToInventory(player.equipment.bionicSlots[slotIndex]);
+        
+        // Play sound
+        if (window.playSound) {
+            playSound('ITEM_DROP');
+        }
+        
+        // Remove from equipment
+        player.equipment.bionicSlots[slotIndex] = null;
     } else {
-        unequippedItem = player.equipment[slotName];
+        // Regular equipment slot
+        // Add back to inventory
+        addItemToInventory(player.equipment[slotName]);
+        
+        // Play sound
+        if (window.playSound) {
+            playSound('ITEM_DROP');
+        }
+        
+        // Remove from equipment
         player.equipment[slotName] = null;
     }
 
-    if (unequippedItem) {
-        addItemToInventory(unequippedItem);
-    }
-
+    // Reset and reapply all passive bonuses from gear
+    resetGearPassiveBonuses();
+    
     // Recalculate player stats after unequipping the item
     player.currentHealth = null;
     player.currentShield = null;
     player.calculateStats();
+    
+    // Reapply passives since gear bonuses changed
+    applyAllPassivesToPlayer();
 
     // Update displays
     updateInventoryDisplay();
     updateEquipmentDisplay();
     updatePlayerStatsDisplay();
+    
+    return true;
 }
 
 // Function to disassemble an item
@@ -432,7 +524,7 @@ function getMaterialsFromItem(item) {
         item.disassembleResults.forEach(result => {
             const materialTemplate = items.find(i => i.name === result.name);
             if (materialTemplate) {
-                const material = createItemInstance(materialTemplate);
+                const material = generateItemInstance(materialTemplate);
                 material.quantity = result.quantity;
                 materials.push(material);
             } else {
@@ -466,7 +558,7 @@ function useItem(item) {
 }
 
 // Function to show item options popup
-function showItemOptionsPopup(item) {
+function showItemOptionsPopup(item, clickEvent) {
     // Create overlay
     const overlay = document.createElement('div');
     overlay.id = 'overlay';
@@ -516,7 +608,44 @@ function showItemOptionsPopup(item) {
     });
     buttonsContainer.appendChild(cancelButton);
 
+    // Add the buttons container to the popup
     popup.appendChild(buttonsContainer);
+    
+    // Add to DOM first so we can calculate size
     document.body.appendChild(popup);
+    
+    // Position the popup near the clicked item
+    if (clickEvent && clickEvent.clientX && clickEvent.clientY) {
+        // Get window dimensions
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        // Get popup dimensions
+        const popupRect = popup.getBoundingClientRect();
+        
+        // Calculate position (start at click position)
+        let left = clickEvent.clientX + 10;
+        let top = clickEvent.clientY;
+        
+        // Make sure it doesn't go off the right edge
+        if (left + popupRect.width > windowWidth - 20) {
+            left = windowWidth - popupRect.width - 20;
+        }
+        
+        // Make sure it doesn't go off the bottom
+        if (top + popupRect.height > windowHeight - 20) {
+            top = windowHeight - popupRect.height - 20;
+        }
+        
+        // Make sure it doesn't go off the top
+        if (top < 20) {
+            top = 20;
+        }
+        
+        // Apply position
+        popup.style.position = 'fixed';
+        popup.style.top = `${top}px`;
+        popup.style.left = `${left}px`;
+    }
 }
 

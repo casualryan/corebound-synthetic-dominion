@@ -3,12 +3,36 @@
 // Enemy templates
 const enemies = [
     {
-        name: "Spiderbot",
-        health: 25,
+        name: "Training Dummy Mk. I",
+        health: 30,
         energyShield: 0,
-        attackSpeed: 1.1,
+        attackSpeed: .5,
         criticalChance: 0,
-        criticalMultiplier: 1.5,
+        criticalMultiplier: 1,
+        damageTypes: {
+            kinetic: 3
+        },
+        defenseTypes: {
+            
+        },
+        lootTable: [
+
+        ],
+        currencyDrop: {
+            min: 5,
+            max: 10,
+            dropRate: .5
+        },
+        experienceValue: 3,
+        statusEffects: [],        
+    },
+    {
+        name: "Training Dummy Mk. II",
+        health: 50,
+        energyShield: 0,
+        attackSpeed: .8,
+        criticalChance: 0,
+        criticalMultiplier: 1,
         damageTypes: {
             kinetic: 5
         },
@@ -16,62 +40,118 @@ const enemies = [
             
         },
         lootTable: [
-            { itemName: "Synthetic Poison Gland", minQuantity: 1, maxQuantity: 2, dropRate: 1 },
-            { itemName: "Unstable Photon", minQuantity: 1, maxQuantity: 1, dropRate: .05 },
+            { itemName: "Broken Phase Sword", minQuantity: 1, maxQuantity: 2, dropRate: 1 },
         ],
+        currencyDrop: {
+            min: 7,
+            max: 12,
+            dropRate: .65
+        },
+        experienceValue: 5,
+        statusEffects: [],        
+    },
+    {
+        name: "Training Dummy Mk. III",
+        health: 60,
+        energyShield: 10,
+        attackSpeed: .8,
+        criticalChance: .05,
+        criticalMultiplier: 1.5,
+        damageTypes: {
+            kinetic: 7
+        },
+        defenseTypes: {
+            
+        },
+        lootTable: [
+            { itemName: "Scrap Metal", minQuantity: 1, maxQuantity: 2, dropRate: 1 },
+        ],
+        currencyDrop: {
+            min: 10,
+            max: 16,
+            dropRate: .5
+        },
+        experienceValue: 11,
+        statusEffects: [],        
+    },
+    {
+        name: "Spiderbot",
+        health: 50,
+        energyShield: 0,
+        attackSpeed: 1,
+        criticalChance: 0,
+        criticalMultiplier: 1.5,
+        damageTypes: {
+            kinetic: 12
+        },
+        defenseTypes: {
+            
+        },
+        lootTable: [
+            { itemName: "Synthetic Poison Gland", minQuantity: 1, maxQuantity: 2, dropRate: .15 },
+            { itemName: "Unstable Photon", minQuantity: 1, maxQuantity: 1, dropRate: .02 },
+            { itemName: "Minor Electronic Circuit", minQuantity: 1, maxQuantity: 1, dropRate: .05 },
+            { itemName: "Broken Poison Pistol", minQuantity: 1, maxQuantity: 1, dropRate: .005 }
+        ],
+        currencyDrop: {
+            min: 5,
+            max: 10,
+            dropRate: 1
+        },
         experienceValue: 10,
         statusEffects: [],        
     },
     {
         name: "Roachbot",
-        health: 35,
+        health: 90,
         energyShield: 5,
-        attackSpeed: 1.1,
+        attackSpeed: 1.2,
         criticalChance: 0.15,
         criticalMultiplier: 2.0,
         damageTypes: {
-            kinetic: 10
+            kinetic: 27
         },
         defenseTypes: {
-            toughness: 8
+            toughness: 15
         },
         lootTable: [
-            { itemName: "Crystalized Light", minQuantity: 1, maxQuantity: 2, dropRate: 0.30 },
-            { itemName: "Partical Fuser", minQuantity: 1, maxQuantity: 1, dropRate: 0.10 },
+            { itemName: "Crystalized Light", minQuantity: 1, maxQuantity: 2, dropRate: 0.10 },
+            { itemName: "Partical Fuser", minQuantity: 1, maxQuantity: 1, dropRate: 0.02 },
+            { itemName: "Minor Electronic Circuit", minQuantity: 1, maxQuantity: 1, dropRate: 0.05 }
         ],
         experienceValue: 60,
         statusEffects: []
     },
     {
         name: "Scorpionbot",
-        health: 150,
+        health: 220,
         energyShield: 30,
-        attackSpeed: 0.8,
-        criticalChance: 0.07,
-        criticalMultiplier: 2.0,
+        attackSpeed: 1.2,
+        criticalChance: 0.10,
+        criticalMultiplier: 2.3,
         damageTypes: {
-            kinetic: 5,
-            chemical: 20
+            chemical: 58,
         },
         defenseTypes: {
             toughness: 10,
-            immunity: 5
+            immunity: 10,
+            heatResistance: -15
         },
         lootTable: [
-            { itemName: "Speed Enhancer", dropRate: 0.10 },
+            { itemName: "Metal Scorpion Fang", minQuantity: 1, maxQuantity: 1, dropRate: 0.05 },
         ],
         experienceValue: 80,
         statusEffects: []
     },
     {
         name: "Cactibot",
-        health: 110,
-        energyShield: 35,
+        health: 220,
+        energyShield: 30,
         attackSpeed: 1.2,
-        criticalChance: 0.15,
+        criticalChance: 0.10,
         criticalMultiplier: 1.5,
         damageTypes: {
-            kinetic: 25,
+            kinetic: 61,
         },
         defenseTypes: {
             toughness: 20,
@@ -80,7 +160,7 @@ const enemies = [
             immunity: 10,
         },
         lootTable: [
-            { itemName: "Titanium Thorn", dropRate: 0.10 },
+            { itemName: "Titanium Thorn", minQuantity: 1, maxQuantity: 1, dropRate: 0.10 },
         ],
         experienceValue: 70,
         statusEffects: []
@@ -88,16 +168,43 @@ const enemies = [
     // Add more enemies with random stats
     {
         name: "Steel Golem",
-        health: 200,
-        energyShield: 50,
-        attackSpeed: 0.6,
-        criticalChance: 0.05,
-        criticalMultiplier: 2.5,
+        health: 500,
+        energyShield: 0,
+        attackSpeed: 0.65,
+        criticalChance: 0.00,
+        criticalMultiplier: 2,
         damageTypes: {
-            kinetic: 60
+            kinetic: 67
         },
         defenseTypes: {
-            toughness: 20
+            toughness: 30,
+            heatResistance: 20,
+            fortitude: 50,
+            immunity: 50,
+            antimagnet: -20
+        },
+        lootTable: [
+
+        ],
+        experienceValue: 100,
+        statusEffects: []
+    },
+    {
+        name: "Awakened Steel Golem",
+        health: 800,
+        energyShield: 0,
+        attackSpeed: 0.75,
+        criticalChance: 0.00,
+        criticalMultiplier: 2,
+        damageTypes: {
+            kinetic: 88
+        },
+        defenseTypes: {
+            toughness: 35,
+            heatResistance: 30,
+            fortitude: 70,
+            immunity: 70,
+            antimagnet: -30
         },
         lootTable: [
         ],
@@ -106,57 +213,58 @@ const enemies = [
     },
     {
         name: "Electro Wasp",
-        health: 100,
+        health: 150,
         energyShield: 10,
         attackSpeed: 1.5,
-        criticalChance: 0.15,
-        criticalMultiplier: 1.5,
+        criticalChance: 0.10,
+        criticalMultiplier: 2,
         damageTypes: {
-            kinetic: 5,
-            magnetic: 20
+            kinetic: 50,
+            magnetic: 10
         },
         defenseTypes: {
-            toughness: 5,
-            antimagnet: 5
+            toughness: 10,
+            antimagnet: 10
         },
         lootTable: [
-            { itemName: "Crystalized Light", minQuantity: 2, maxQuantity: 3, dropRate: 1 },
-            { itemName: "Electro Blaster", dropRate: 0.2, maxQuantity: 1, minQuantity: 1 }
+            { itemName: "Crystalized Light", minQuantity: 2, maxQuantity: 3, dropRate: .80 },
+            { itemName: "Partical Fuser", minQuantity: 1, maxQuantity: 1, dropRate: 0.5 }
         ],
         experienceValue: 55,
         statusEffects: []
     },
     {
         name: "Pyro Beetle",
-        health: 110,
-        energyShield: 15,
-        attackSpeed: 1.0,
-        criticalChance: 0.1,
+        health: 330,
+        energyShield: 50,
+        attackSpeed: 1.35,
+        criticalChance: 0.15,
         criticalMultiplier: 2.0,
         damageTypes: {
-            pyro: 25
+            pyro: 99
         },
         defenseTypes: {
-            toughness: 8,
-            heatResistance: 10
+            toughness: 15,
+            heatResistance: 50,
+            fortitude: 20,
         },
         lootTable: [
-            { itemName: "Flame Shell", dropRate: 0.15 },
-            { itemName: "Pyro Core", dropRate: 0.1 }
+            { itemName: "Flame Shell", minQuantity: 1, maxQuantity: 1, dropRate: 0.15 },
+            { itemName: "Pyro Core", minQuantity: 1, maxQuantity: 1, dropRate: 0.1 },
+
         ],
         experienceValue: 65,
         statusEffects: []
     },
     {
         name: "Knight O'Hare",
-        health: 300,
-        energyShield: 50,
+        health: 1500,
+        energyShield: 40,
         attackSpeed: 2,
-        criticalChance: 0,
+        criticalChance: 0.3,
         criticalMultiplier: 2.0,
         damageTypes: {
-            kinetic: 25,
-            chemical: 10
+            kinetic: 150,
         },
         defenseTypes: {
             toughness: 40,
@@ -166,6 +274,7 @@ const enemies = [
             antimagnet: 10
         },
         lootTable: [            
+            
         ],
         experienceValue: 500,
         statusEffects: []

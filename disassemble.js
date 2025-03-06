@@ -47,7 +47,7 @@ function getMaterialsFromItem(item) {
         item.disassembleResults.forEach(result => {
             const materialTemplate = items.find(i => i.name === result.name);
             if (materialTemplate) {
-                const material = createItemInstance(materialTemplate);
+                const material = generateItemInstance(materialTemplate);
                 material.quantity = result.quantity;
                 materials.push(material);
             } else {

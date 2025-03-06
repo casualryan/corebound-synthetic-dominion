@@ -1,0 +1,11 @@
+//codex broken since combat -> delve change
+
+//change gear generation to have some more randomness to it
+
+//change loot drop chance to a weighted system instead of % chance
+
+//design new passives
+
+//medtek and injector implementation
+
+//fabrication tooltips broken since fabrication UI rework

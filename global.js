@@ -3,179 +3,192 @@ window.currentScreen = '';
 console.log('global.js loaded');
 console.log('window.inventory at the start:', window.inventory);
 
-// Function to apply item modifiers to stats
+let playerCurrency = 500;
+
+// Add this near the top of the file with other constants
+const MAX_PLAYER_LEVEL = 51;
+
+//Console.log the XP requirements for the first 50 levels
+// document.addEventListener('DOMContentLoaded', () => {
+//     debugFirstFiftyLevelsXP();
+// });
+// function debugFirstFiftyLevelsXP() {
+//     console.log("XP Requirements for first 50 levels:");
+//     for (let i = 1; i <= 50; i++) {
+//         let req = getXPForNextLevel(i);
+//         console.log(`Level ${i}: ${req} XP`);
+//     }
+// }
+
+// Helper function to cleanly remove and reapply all passive bonuses from gear
+function resetGearPassiveBonuses() {
+    // Clear all gear passive bonuses
+    player.gearPassiveBonuses = {};
+    
+    // Reapply from all equipped items
+    const equipSlots = ['mainHand', 'offHand', 'head', 'chest', 'legs', 'feet', 'gloves'];
+    
+    // Apply from normal equipment slots
+    for (const slot of equipSlots) {
+        if (player.equipment[slot] && player.equipment[slot].passiveBonuses) {
+            for (const passiveName in player.equipment[slot].passiveBonuses) {
+                const bonusValue = player.equipment[slot].passiveBonuses[passiveName];
+                if (typeof bonusValue === 'number' && bonusValue > 0) {
+                    if (!player.gearPassiveBonuses[passiveName]) {
+                        player.gearPassiveBonuses[passiveName] = bonusValue;
+                    } else {
+                        player.gearPassiveBonuses[passiveName] += bonusValue;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Apply from bionic slots
+    if (player.equipment.bionicSlots) {
+        for (const bionicItem of player.equipment.bionicSlots) {
+            if (bionicItem && bionicItem.passiveBonuses) {
+                for (const passiveName in bionicItem.passiveBonuses) {
+                    const bonusValue = bionicItem.passiveBonuses[passiveName];
+                    if (typeof bonusValue === 'number' && bonusValue > 0) {
+                        if (!player.gearPassiveBonuses[passiveName]) {
+                            player.gearPassiveBonuses[passiveName] = bonusValue;
+                        } else {
+                            player.gearPassiveBonuses[passiveName] += bonusValue;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // Function to apply item modifiers to stats
 function applyItemModifiers(stats, item) {
     // Apply flat damage types
+    if (!stats || !item) return;
+    
+    // Flat Damage Types
     if (item.damageTypes) {
+        if (!stats.damageTypes) stats.damageTypes = {};
         for (let damageType in item.damageTypes) {
-            if (!stats.damageTypes[damageType]) {
+            if (stats.damageTypes[damageType] === undefined) {
                 stats.damageTypes[damageType] = 0;
             }
-            stats.damageTypes[damageType] += item.damageTypes[damageType];
+            let val = item.damageTypes[damageType];
+            if (typeof val !== "number") { val = 0; }
+            stats.damageTypes[damageType] += val;
         }
     }
-
-    // Apply percentage damage type modifiers
+    
+    // Percentage Damage Modifiers
     if (item.statModifiers && item.statModifiers.damageTypes) {
+        if (!stats.damageTypeModifiers) stats.damageTypeModifiers = {};
         for (let damageType in item.statModifiers.damageTypes) {
-            if (!stats.damageTypeModifiers[damageType]) {
-                stats.damageTypeModifiers[damageType] = 1; // Start with a multiplier of 1
+            if (stats.damageTypeModifiers[damageType] === undefined) {
+                stats.damageTypeModifiers[damageType] = 1;
             }
-            stats.damageTypeModifiers[damageType] *= (1 + item.statModifiers.damageTypes[damageType] / 100); // Convert percentage to multiplier
+            let modVal = item.statModifiers.damageTypes[damageType];
+            if (typeof modVal !== "number") { modVal = 0; }
+            // Apply additively instead of multiplicatively
+            stats.damageTypeModifiers[damageType] += modVal / 100;
         }
     }
-
-    // Apply defense types
+    
+    // Note: We no longer directly apply passive bonuses here
+    // Instead, we use resetGearPassiveBonuses() to rebuild the bonuses completely
+    
+    // Defense Types
     if (item.defenseTypes) {
+        if (!stats.defenseTypes) stats.defenseTypes = {};
         for (let defenseType in item.defenseTypes) {
-            if (!stats.defenseTypes[defenseType]) {
+            if (stats.defenseTypes[defenseType] === undefined) {
                 stats.defenseTypes[defenseType] = 0;
             }
-            stats.defenseTypes[defenseType] += item.defenseTypes[defenseType];
+            let defVal = item.defenseTypes[defenseType];
+            if (typeof defVal !== "number") { defVal = 0; }
+            stats.defenseTypes[defenseType] += defVal;
         }
     }
-
-    // Apply flat health bonus
+    
+    // Health Bonus
     if (item.healthBonus !== undefined) {
         stats.healthBonus = (stats.healthBonus || 0) + item.healthBonus;
     }
-
-    // Apply flat energy shield bonus
+    // Energy Shield Bonus
     if (item.energyShieldBonus !== undefined) {
         stats.energyShieldBonus = (stats.energyShieldBonus || 0) + item.energyShieldBonus;
     }
-
-    // Apply percentage health bonus
+    // Percentage Health Bonus
     if (item.healthBonusPercent !== undefined) {
         stats.healthBonusPercent = (stats.healthBonusPercent || 0) + item.healthBonusPercent;
     }
-
-    // Apply percentage energy shield bonus
+    // Percentage Energy Shield Bonus
     if (item.energyShieldBonusPercent !== undefined) {
         stats.energyShieldBonusPercent = (stats.energyShieldBonusPercent || 0) + item.energyShieldBonusPercent;
     }
-
-    // Apply attack speed modifier
+    // Attack Speed Modifier (flat percentage; e.g., 0.5 means +50%)
     if (item.attackSpeedModifier !== undefined) {
-        stats.attackSpeedMultiplier = (stats.attackSpeedMultiplier || 1) * (1 + item.attackSpeedModifier); // Convert percentage to multiplier
+        stats.attackSpeedMultiplier *= (1 + item.attackSpeedModifier);
     }
-
-    // Apply critical chance modifier
+    // Critical Chance Modifier
     if (item.criticalChanceModifier !== undefined) {
         stats.criticalChance = (stats.criticalChance || 0) + item.criticalChanceModifier;
     }
-
-    // Apply critical multiplier modifier
+    // Critical Multiplier Modifier
     if (item.criticalMultiplierModifier !== undefined) {
         stats.criticalMultiplier = (stats.criticalMultiplier || 1) * (1 + item.criticalMultiplierModifier);
     }
-
-    // Apply effects
-    if (item.effects) {
-        stats.effects = stats.effects.concat(item.effects);
+    // Precision and Deflection
+    if (item.precision !== undefined) {
+        stats.precision = (stats.precision || 0) + item.precision;
     }
-}
-
-
-
-// Function to update player stats display dynamically
-function updatePlayerStatsDisplay() {
-    player.calculateStats();  // Ensure stats are updated before display
-    if (player.currentHealth === null || player.currentHealth === undefined) {
-        player.currentHealth = player.totalStats.health;
+    if (item.deflection !== undefined) {
+        stats.deflection = (stats.deflection || 0) + item.deflection;
     }
-    if (player.currentShield === null || player.currentShield === undefined) {
-        player.currentShield = player.totalStats.energyShield;
+    if (item.healthRegen) {
+        stats.healthRegen += item.healthRegen;
     }
 
-    // Get the elements
-    const attackSpeedElement = document.getElementById("player-attack-speed");
-    const critChanceElement = document.getElementById("player-crit-chance");
-    const critMultiplierElement = document.getElementById("player-crit-multiplier");
-
-    // Ensure elements exist
-    if (!attackSpeedElement || !critChanceElement || !critMultiplierElement) {
-        console.error("One or more player stat elements not found in the DOM.");
-        return;
+    // Apply other stat modifiers, avoiding direct assignment to stats.attackSpeed
+    if (item.statModifiers) {
+        for (let stat in item.statModifiers) {
+            // Skip stats that are already handled or could conflict
+            if (
+                stat === 'damageTypes' ||
+                stat === 'defenseTypes' ||
+                stat === 'damageTypeModifiers' ||
+                stat === 'attackSpeedModifier' ||
+                stat === 'criticalChanceModifier' ||
+                stat === 'criticalMultiplierModifier' ||
+                stat === 'attackSpeed' ||           // Avoid direct assignment to stats.attackSpeed
+                stat === 'attackSpeedMultiplier'    // Avoid direct assignment
+            ) {
+                continue; // Already handled or should be skipped
+            } else if (stat in stats) {
+                stats[stat] += item.statModifiers[stat];
+            } else {
+                stats[stat] = item.statModifiers[stat];
+            }
+        }
     }
-
-    attackSpeedElement.textContent = player.totalStats.attackSpeed.toFixed(2);
-    critChanceElement.textContent = `${(player.totalStats.criticalChance * 100).toFixed(2)}%`;
-    critMultiplierElement.textContent = player.totalStats.criticalMultiplier.toFixed(2);
-
-    // Update HP bar
-    const playerHpBar = document.getElementById('player-hp-bar');
-    const playerHpPercentage = (player.currentHealth / player.totalStats.health) * 100;
-    playerHpBar.style.width = playerHpPercentage + '%';
-
-    // Update HP text
-    const playerHpText = document.getElementById('player-hp-text');
-    playerHpText.textContent = `${Math.round(player.currentHealth)} / ${Math.round(player.totalStats.health)}`;
-
-    // Update Energy Shield bar
-    const playerEsBar = document.getElementById('player-es-bar');
-    const playerEsPercentage = (player.currentShield / player.totalStats.energyShield) * 100 || 0;
-    playerEsBar.style.width = playerEsPercentage + '%';
-
-    // Update Energy Shield text
-    const playerEsText = document.getElementById('player-es-text');
-    playerEsText.textContent = `${Math.round(player.currentShield)} / ${Math.round(player.totalStats.energyShield)}`;
-
-    // Update damage types
-    const damageTypesList = document.getElementById('player-damage-types');
-    damageTypesList.innerHTML = '';
-    for (let type in player.totalStats.damageTypes) {
-        const li = document.createElement('li');
-        li.textContent = `${capitalize(type)}: ${player.totalStats.damageTypes[type]}`;
-        damageTypesList.appendChild(li);
-    }
-
-    // Update defense types
-    const defenseTypesList = document.getElementById('player-defense-types');
-    defenseTypesList.innerHTML = '';
-    for (let type in player.totalStats.defenseTypes) {
-        const li = document.createElement('li');
-        li.textContent = `${capitalize(type)}: ${player.totalStats.defenseTypes[type]}`;
-        defenseTypesList.appendChild(li);
-    }
-
-    // Update active effects
-    const activeEffectsList = document.getElementById('player-active-effects');
-    activeEffectsList.innerHTML = '';
-    player.statusEffects.forEach(effect => {
-        const li = document.createElement('li');
-        li.textContent = `${effect.name} (${effect.remainingDuration.toFixed(1)}s)`;
-        activeEffectsList.appendChild(li);
-    });
-
-    // Update level and experience
-    const levelElement = document.getElementById("player-level");
-    const experienceElement = document.getElementById("player-experience");
-
-    // Ensure elements exist
-    if (!levelElement || !experienceElement) {
-        console.error("Level or experience elements not found in the DOM.");
-        return;
-    }
-
-    levelElement.textContent = player.level;
-    experienceElement.textContent = player.experience;
 }
 
 // Helper function to capitalize the first letter
-function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-}
+// Remove duplicate capitalize() and use the one from combat.js
+// function capitalize(str) {
+//     return str.charAt(0).toUpperCase() + str.slice(1);
+// }
 
-// Base stats for the player
+// Updated playerBaseStats (removed inherent attackSpeed)
 let playerBaseStats = {
     health: 100,
+    healthRegen: 1,
     energyShield: 0,
-    attackSpeed: 1.0, // Base attacks per 3 seconds
-    attackSpeedModifier: 0.0, // Percentage modifier (e.g., 0.5 for +50%)
     criticalChance: 0,
     criticalMultiplier: 1.5,
+    precision: 0,
+    deflection: 0,
     damageTypes: {
         kinetic: 0,
         mental: 0,
@@ -192,7 +205,6 @@ let playerBaseStats = {
     }
 };
 
-// Initialize player object
 let player = {
     name: 'Player',
     level: 1,
@@ -223,137 +235,193 @@ let player = {
         },
         // Add other skills as needed
     },
-    activeBuffs: [], // Correctly defined as a property
-    effects: [],     // Initialize effects array
-    applyBuff: function(buffName) {
-        // Find the buff definition by name
+    activeBuffs: [],
+    effects: [],
+    // This property holds the cumulative passive bonus (e.g., 0.30 for +30%)
+    passiveAttackSpeedBonus: 0,
+
+    applyBuff: function (buffName) {
         const buffDef = buffs.find(b => b.name === buffName);
         if (!buffDef) {
             console.error(`Buff '${buffName}' not found.`);
             return;
         }
-    
-        // Create a deep copy of the buff to avoid modifying the original definition
         const buff = JSON.parse(JSON.stringify(buffDef));
-        buff.remainingDuration = buff.duration; // Initialize remaining duration
-    
-        // Check if the buff already exists on the player
+        buff.remainingDuration = buff.duration;
         const existingBuff = this.activeBuffs.find(b => b.name === buff.name);
         if (existingBuff) {
-            // Refresh duration
             existingBuff.remainingDuration = buff.duration;
         } else {
             this.activeBuffs.push(buff);
         }
         updatePlayerStatsDisplay();
-    
         console.log(`Applied buff: ${buff.name}`);
         logMessage(`${this.name} gains buff: ${buff.name}`);
-    
-        // Recalculate stats to apply the buff immediately
         this.calculateStats();
     },
-    
+
     calculateStats: function() {
-        let stats = JSON.parse(JSON.stringify(this.baseStats));
-    
-        // Initialize base stats and modifiers
-        stats.attackSpeed = stats.attackSpeed || 1.0;
-        stats.attackSpeedMultiplier = 1.0;
-        stats.criticalChance = stats.criticalChance || 0;
-        stats.criticalMultiplier = stats.criticalMultiplier || 1.5;
-        stats.criticalMultiplierMultiplier = 1.0;
-    
-        stats.damageTypes = {};
-        stats.damageTypeModifiers = {};
-        stats.defenseTypes = {};
-        stats.effects = [];
-    
+        // Start with a fresh copy of base stats.
+        let stats = JSON.parse(JSON.stringify(playerBaseStats));
+        
+        // Initialize bonus fields
         stats.healthBonus = 0;
         stats.healthBonusPercent = 0;
         stats.energyShieldBonus = 0;
         stats.energyShieldBonusPercent = 0;
-    
-        // Apply all equipped items
+        stats.damageTypeModifiers = {}; // Initialize as empty object to avoid inheriting modifiers
+        
+        // Initialize each damage type modifier to base value of 1.0 (100%)
+        for (let damageType in stats.damageTypes) {
+            stats.damageTypeModifiers[damageType] = 1.0;
+        }
+        
+        // Apply passive bonuses to stats
+        if (this.passiveBonuses) {
+            // Apply flat bonuses
+            if (this.passiveBonuses.flatHealth > 0) {
+                stats.healthBonus += this.passiveBonuses.flatHealth;
+            }
+            
+            if (this.passiveBonuses.flatEnergyShield > 0) {
+                stats.energyShieldBonus += this.passiveBonuses.flatEnergyShield;
+            }
+            
+            if (this.passiveBonuses.healthRegen > 0) {
+                stats.healthRegen += this.passiveBonuses.healthRegen;
+            }
+            
+            if (this.passiveBonuses.precision > 0) {
+                stats.precision += this.passiveBonuses.precision;
+            }
+            
+            if (this.passiveBonuses.deflection > 0) {
+                stats.deflection += this.passiveBonuses.deflection;
+            }
+            
+            // Apply percentage bonuses
+            if (this.passiveBonuses.healthPercent > 0) {
+                stats.healthBonusPercent += this.passiveBonuses.healthPercent / 100;
+            }
+            
+            if (this.passiveBonuses.energyShieldPercent > 0) {
+                stats.energyShieldBonusPercent += this.passiveBonuses.energyShieldPercent / 100;
+            }
+            
+            // Apply critical chance and multiplier
+            if (this.passiveBonuses.criticalChance > 0) {
+                stats.criticalChance += this.passiveBonuses.criticalChance / 100;
+            }
+            
+            if (this.passiveBonuses.criticalMultiplier > 0) {
+                stats.criticalMultiplier += this.passiveBonuses.criticalMultiplier;
+            }
+            
+            // Apply flat damage bonuses
+            for (const damageType in this.passiveBonuses.flatDamageTypes) {
+                if (!stats.damageTypes[damageType]) {
+                    stats.damageTypes[damageType] = 0;
+                }
+                stats.damageTypes[damageType] += this.passiveBonuses.flatDamageTypes[damageType];
+            }
+            
+            // Apply defense bonuses
+            for (const defenseType in this.passiveBonuses.defenseTypes) {
+                if (!stats.defenseTypes[defenseType]) {
+                    stats.defenseTypes[defenseType] = 0;
+                }
+                stats.defenseTypes[defenseType] += this.passiveBonuses.defenseTypes[defenseType];
+            }
+            
+            // Apply percentage damage bonuses (will be merged with gear bonuses later)
+            for (const damageType in this.passiveBonuses.damageTypes) {
+                if (!stats.damageTypeModifiers[damageType]) {
+                    stats.damageTypeModifiers[damageType] = 1.0; // Base 100%
+                }
+                // Add percentage as decimal (e.g., +15% becomes +0.15)
+                stats.damageTypeModifiers[damageType] += this.passiveBonuses.damageTypes[damageType] / 100;
+            }
+        }
+        
+        // Determine base attack speed from equipped weapon (default 1.0)
+        let baseAttackSpeed = 1.0;
+        if (this.equipment.mainHand && this.equipment.mainHand.bAttackSpeed !== undefined) {
+            baseAttackSpeed = this.equipment.mainHand.bAttackSpeed;
+        }
+        
+        // Sum equipment attack speed bonus from items.
+        let equipmentASBonus = 0;
         Object.keys(this.equipment).forEach(slot => {
-            if (slot === 'bionicSlots') {  // Handle bionic slots
+            if (slot === 'bionicSlots') {
                 this.equipment[slot].forEach(bionic => {
-                    if (bionic) applyItemModifiers(stats, bionic);
+                    if (bionic) {
+                        if (bionic.attackSpeedModifier !== undefined) {
+                            equipmentASBonus += bionic.attackSpeedModifier;
+                        }
+                        applyItemModifiers(stats, bionic);
+                    }
                 });
-            } else if (this.equipment[slot]) {  // Handle other equipped slots
+            } else if (this.equipment[slot]) {
+                if (this.equipment[slot].attackSpeedModifier !== undefined) {
+                    equipmentASBonus += this.equipment[slot].attackSpeedModifier;
+                }
                 applyItemModifiers(stats, this.equipment[slot]);
             }
         });
-    
-        // Apply active buffs
+        
+        // Sum buffs that affect attack speed.
         if (this.activeBuffs) {
             this.activeBuffs.forEach(buff => {
+                if (buff.statChanges && buff.statChanges.attackSpeed !== undefined) {
+                    equipmentASBonus += buff.statChanges.attackSpeed;
+                }
                 if (buff.statChanges) {
                     for (let stat in buff.statChanges) {
-                        if (stat === 'attackSpeed') {
-                            stats.attackSpeedMultiplier *= 1 + buff.statChanges[stat];
-                        } else if (stat === 'criticalMultiplier') {
-                            stats.criticalMultiplierMultiplier *= 1 + buff.statChanges[stat];
-                        } else if (stat in stats) {
+                        if (stat !== 'attackSpeed' && stat in stats) {
                             stats[stat] += buff.statChanges[stat];
-                        } else if (stats.damageTypes[stat] !== undefined) {
-                            // Damage types
-                            stats.damageTypes[stat] = (stats.damageTypes[stat] || 0) + buff.statChanges[stat];
-                        } else if (stats.defenseTypes[stat] !== undefined) {
-                            // Defense types
-                            stats.defenseTypes[stat] = (stats.defenseTypes[stat] || 0) + buff.statChanges[stat];
-                        } else {
-                            // Handle any other stats
-                            stats[stat] = (stats[stat] || 0) + buff.statChanges[stat];
                         }
                     }
                 }
-                if (buff.effects) {
-                    stats.effects = stats.effects.concat(buff.effects);
-                }
             });
         }
-    
-        // Apply attack speed modifications
-        stats.attackSpeed *= stats.attackSpeedMultiplier;
-        stats.attackSpeed = Math.min(Math.max(stats.attackSpeed, 0.1), 10); // Cap attack speed between 0.1 and 10
-    
-        // Apply critical multiplier modifications
-        stats.criticalMultiplier *= stats.criticalMultiplierMultiplier;
-    
-        // Apply percentage modifiers to damage types
-        for (let damageType in stats.damageTypes) {
-            if (stats.damageTypeModifiers[damageType]) {
-                stats.damageTypes[damageType] *= stats.damageTypeModifiers[damageType];
+        
+        // Get the passive bonus (already stored in player.passiveAttackSpeedBonus)
+        let passiveBonus = this.passiveAttackSpeedBonus || 0;
+        
+        // Final attack speed = baseAttackSpeed * (1 + (equipment bonus + passive bonus))
+        stats.attackSpeed = baseAttackSpeed * (1 + equipmentASBonus + passiveBonus);
+        stats.attackSpeed = Math.min(Math.max(stats.attackSpeed, 0.1), 10);
+        
+        // Process damage type modifiers (using modifiers that now include both passive and equipment bonuses)
+        for (let dt in stats.damageTypes) {
+            if (stats.damageTypeModifiers[dt]) {
+                stats.damageTypes[dt] *= stats.damageTypeModifiers[dt];
             }
-            stats.damageTypes[damageType] = Math.round(stats.damageTypes[damageType]);
+            stats.damageTypes[dt] = Math.round(stats.damageTypes[dt]);
         }
-    
-        // Apply health bonuses
+        
+        // Apply health and energy shield bonuses.
         stats.health += stats.healthBonus;
-        stats.health *= (1 + stats.healthBonusPercent);
+        stats.health *= 1 + stats.healthBonusPercent;
         stats.health = Math.round(stats.health);
-    
-        // Apply energy shield bonuses
+        
         stats.energyShield += stats.energyShieldBonus;
-        stats.energyShield *= (1 + stats.energyShieldBonusPercent);
+        stats.energyShield *= 1 + stats.energyShieldBonusPercent;
         stats.energyShield = Math.round(stats.energyShield);
-    
+        
         this.totalStats = stats;
-    
-        // Initialize current health and shield if null
+        
         if (this.currentHealth === null || this.currentHealth === undefined) {
-            this.currentHealth = this.totalStats.health;
+            this.currentHealth = stats.health;
         }
         if (this.currentShield === null || this.currentShield === undefined) {
-            this.currentShield = this.totalStats.energyShield;
+            this.currentShield = stats.energyShield;
         }
-    
-        // Update effects array
-        this.effects = stats.effects;
     },
-}
-    
+};
+
+
+
 
 // Function to log messages
 function logMessage(message) {
@@ -443,56 +511,110 @@ function gainExperience(amount) {
 }
 
 function checkLevelUp() {
+    // Don't level up if already at max level
+    if (player.level >= MAX_PLAYER_LEVEL) {
+        return;
+    }
+    
     const xpForNextLevel = getXPForNextLevel(player.level);
+    
     if (player.experience >= xpForNextLevel) {
-        player.level += 1;
+        player.level++;
         player.experience -= xpForNextLevel;
-        logMessage(`Congratulations! You've reached level ${player.level}!`);
+        player.passivePoints = (player.passivePoints||0) + 2;  // Award 2 passive points per level
+        
+        // Play level up sound
+        if (window.playSound) {
+            playSound('LEVEL_UP', 0.5);
+        }
+        
+        logMessage(`Congratulations! You've reached level ${player.level} and gained 2 passive points!`);
+        
+        // If we've reached max level, cap experience and show a message
+        if (player.level >= MAX_PLAYER_LEVEL) {
+            player.experience = 0;
+            logMessage(`You've reached the maximum level of ${MAX_PLAYER_LEVEL}!`);
+        }
+        
         // Increase base stats upon leveling up (optional)
         updatePlayerStatsDisplay(); // Update the level display
+        
+        // Check for more level ups
+        checkLevelUp();
     }
 }
 
+
 function getXPForNextLevel(level) {
-    // Example formula: XP needed doubles each level
-    return 100 * Math.pow(2, level - 1);
+    // If level is 1, next level requires 100 XP
+    if (level <= 1) {
+        return 100;
+    }
+    // Recursively get XP for (level - 1), then apply the formula
+    const prevReq = getXPForNextLevel(level - 1);
+    return Math.round((prevReq + 15) * 1.15);
 }
 
 // Save game function
 function saveGame(isAutoSave = false) {
-    const gameState = {
-        player: {
-            baseStats: player.baseStats,
-            currentHealth: player.currentHealth,
-            currentShield: player.currentShield,
-            experience: player.experience,
-            level: player.level,
-            gatheringSkills: player.gatheringSkills,
-            statusEffects: player.statusEffects,
-            activeBuffs: player.activeBuffs,
-            equipment: player.equipment,
-        },
-        inventory: window.inventory.map(item => {
-            return JSON.parse(JSON.stringify(item));
-        }),
-    };
-
-    localStorage.setItem('idleCombatGameSave', JSON.stringify(gameState));
-    console.log('Game saved successfully.');
-    if (!isAutoSave) {
-        logMessage('Game saved successfully.');
+    try {
+        // Create a game state object
+        const gameState = {
+            player: {
+                baseStats: player.baseStats,
+                currentHealth: player.currentHealth,
+                currentShield: player.currentShield,
+                statusEffects: player.statusEffects,
+                experience: player.experience,
+                level: player.level,
+                gatheringSkills: player.gatheringSkills,
+                activeBuffs: player.activeBuffs,
+                equipment: player.equipment,
+                currency: playerCurrency,
+                passives: {
+                    allocations: player.passiveAllocations,
+                    points: player.passivePoints,
+                    gearBonuses: player.gearPassiveBonuses
+                }
+            },
+            inventory: window.inventory,
+            shopRefresh: {
+                nextShopRefreshTime: nextShopRefreshTime
+            },
+            isDelveInProgress: isDelveInProgress,
+            currentDelveLocation: currentDelveLocation,
+            currentMonsterIndex: currentMonsterIndex,
+            delveBag: delveBag
+        };
+        
+        // Convert to JSON and save to localStorage
+        localStorage.setItem('idleCombatGameSave', JSON.stringify(gameState));
+        console.log('Game saved successfully.');
+        
+        // Play save sound unless it's an auto-save
+        if (window.playSound && !isAutoSave) {
+            playSound('SAVE_GAME', 0.3);
+        }
+        
+        // Only show the message if it's a manual save
+        if (!isAutoSave) {
+            logMessage('Game saved successfully.');
+        }
+    } catch (e) {
+        console.error('Error saving game:', e);
+        logMessage('Error saving game!');
     }
 }
 
-
-// Load game function
 function loadGame() {
     const savedState = localStorage.getItem('idleCombatGameSave');
     if (savedState) {
         try {
+            // Stop any active systems before loading
+            if (isCombatActive) stopCombat('gameLoad');
+            if (isGathering) stopGatheringActivity();
+            
             const gameState = JSON.parse(savedState);
-
-            // Restore player data
             player.baseStats = gameState.player.baseStats || JSON.parse(JSON.stringify(playerBaseStats));
             player.currentHealth = gameState.player.currentHealth;
             player.currentShield = gameState.player.currentShield;
@@ -502,24 +624,36 @@ function loadGame() {
             player.gatheringSkills = gameState.player.gatheringSkills || player.gatheringSkills;
             player.activeBuffs = gameState.player.activeBuffs || [];
             player.equipment = restoreEquipment(gameState.player.equipment);
-
-            // Restore inventory
-            window.inventory = gameState.inventory.map(savedItem => {
-                return restoreItem(savedItem);
-            });
-
-            // Recalculate player stats and update displays
+            playerCurrency = (typeof gameState.player.currency === 'number') ? gameState.player.currency : playerCurrency;
+            
+            // Restore passives data and immediately reapply them.
+            if (gameState.player.passives) {
+                player.passiveAllocations = gameState.player.passives.allocations || {};
+                player.passivePoints = gameState.player.passives.points || 0;
+                player.gearPassiveBonuses = gameState.player.passives.gearBonuses || {};
+            } else {
+                player.passiveAllocations = {};
+                player.passivePoints = 1; // New player starts with 1 point
+                player.gearPassiveBonuses = {};
+            }
+            applyAllPassivesToPlayer();
+            
+            window.inventory = gameState.inventory.map(savedItem => restoreItem(savedItem));
+            if (gameState.shopRefresh && typeof gameState.shopRefresh.nextShopRefreshTime === 'number') {
+                nextShopRefreshTime = gameState.shopRefresh.nextShopRefreshTime;
+            } else {
+                nextShopRefreshTime = Date.now() + SHOP_REFRESH_INTERVAL;
+            }
             player.calculateStats();
             updatePlayerStatsDisplay();
             updateInventoryDisplay();
             updateEquipmentDisplay();
-
             console.log('Game loaded successfully.');
             logMessage('Game loaded successfully.');
         } catch (error) {
             console.error('Error loading saved game:', error);
             logMessage('Failed to load saved game. Starting a new game.');
-            resetGame(); // Optional: reset the game if loading fails
+            resetGame();
         }
     } else {
         console.log('No saved game found.');
@@ -528,9 +662,6 @@ function loadGame() {
     const event = new Event('gameLoaded');
     window.dispatchEvent(event);
 }
-
-
-
 
 function restoreItem(savedItem) {
     // Find the item template
@@ -576,7 +707,24 @@ function restoreEquipment(savedEquipment) {
     return equipment;
 }
 
-
+// Add missing function
+function stopDelveWithFailure() {
+    if (isDelveInProgress) {
+        logMessage("Your delve fails, and you lose all items you found!");
+        delveBag = { items: [], credits: 0 };
+        isDelveInProgress = false;
+        currentDelveLocation = null;
+        currentMonsterIndex = 0;
+        
+        // Ensure combat is fully stopped
+        if (isCombatActive) {
+            stopCombat('delveFailure');
+        }
+        
+        // Update UI
+        displayAdventureLocations();
+    }
+}
 
 // Reset game function
 function resetGame() {
@@ -594,10 +742,30 @@ function resetGame() {
         player.effects = [];
         player.experience = 0;
         player.level = 1;
+        
+        // Reset passive system
+        player.passivePoints = 1; // Start with 1 point as a new player
+        player.passiveAllocations = {}; // Clear all allocations
+        player.gearPassiveBonuses = {}; // Clear all gear bonuses
+        player.passiveAttackSpeedBonus = 0; // Reset cumulative passive bonus
+        
         player.gatheringSkills = {
             Mining: { level: 1, experience: 0 },
             Medtek: { level: 1, experience: 0 },
+            Foraging: { level: 1, experience: 0 },
             // Add other skills as needed
+        };
+
+        // Reset equipment
+        player.equipment = {
+            mainHand: null,
+            offHand: null,
+            head: null,
+            chest: null,
+            legs: null,
+            feet: null,
+            gloves: null,
+            bionicSlots: [null, null, null, null]
         };
 
         // Clear inventory
@@ -612,24 +780,22 @@ function resetGame() {
             console.warn('Starting item template not found.');
         }
 
-        player.equipment = {
-            mainHand: null,
-            offHand: null,
-            head: null,
-            chest: null,
-            legs: null,
-            feet: null,
-            gloves: null,
-            bionicSlots: [null, null, null, null],
-        };
+        playerCurrency = 500;
 
+        // Recalculate player stats and update UI
         player.calculateStats();
-        updatePlayerStatsDisplay();
         updateInventoryDisplay();
         updateEquipmentDisplay();
-
-        console.log('Game reset successfully.');
-        logMessage('Game reset successfully.');
+        updatePlayerStatsDisplay();
+        displayPassivesScreen(); // Make sure passive screen is also updated
+        
+        // Re-initialize equipment slots
+        initializeEquipmentSlots();
+        
+        // Show the updated UI
+        showScreen('inventory-screen');
+        
+        logMessage('Game has been reset!');
     } else {
         console.log('Reset cancelled.');
         logMessage('Reset cancelled.');
@@ -685,7 +851,7 @@ document.addEventListener('DOMContentLoaded', () => {
             menuItem.addEventListener('click', () => {
                 const screenId = menuItem.getAttribute('data-screen');
                 const skillName = menuItem.getAttribute('data-skill');
-    
+
                 // Stop any ongoing activities
                 if (isGathering) {
                     stopGatheringActivity();
@@ -693,13 +859,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isCombatActive) {
                     stopCombat();
                 }
-    
+
                 if (screenId) {
                     showScreen(screenId);
                 } else if (skillName) {
                     const skillScreenId = getSkillScreenId(skillName);
                     showScreen(skillScreenId);
-    
+
                     if (skillName === 'Fabrication') {
                         displayFabricationRecipes(); // Function from fabrication.js
                     } else {
@@ -740,8 +906,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // Function to show the appropriate screen
-// global.js
-
 function showScreen(screenId) {
     // Hide all screens
     const screens = document.querySelectorAll('.screen');
@@ -754,10 +918,14 @@ function showScreen(screenId) {
     if (targetScreen) {
         targetScreen.classList.add('active');
         window.currentScreen = screenId;
+        
+        // Update sidebar menu to show active item
+        updateSidebarActiveItem(screenId);
     } else {
         console.error(`Screen with ID ${screenId} not found.`);
         return;
     }
+    
     if (screenId !== 'adventure-screen') {
         // Clear any pending combat restart
         if (combatRestartTimeout) {
@@ -785,6 +953,26 @@ function showScreen(screenId) {
     }
 }
 
+// Function to update the active sidebar menu item
+function updateSidebarActiveItem(screenId) {
+    // Remove active class from all menu items
+    document.querySelectorAll('.sidebar-menu li').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Add active class to the matching menu item
+    const menuItem = document.querySelector(`.sidebar-menu li[data-screen="${screenId}"]`);
+    if (menuItem) {
+        menuItem.classList.add('active');
+    } else {
+        // Handle skill screens (convert mining-screen to Mining skill)
+        const skillName = screenId.replace('-screen', '');
+        const skillItem = document.querySelector(`.sidebar-menu li[data-skill="${skillName.charAt(0).toUpperCase() + skillName.slice(1)}"]`);
+        if (skillItem) {
+            skillItem.classList.add('active');
+        }
+    }
+}
 
 // Event listeners for sidebar menu items
 document.querySelectorAll('.sidebar-menu li').forEach(menuItem => {

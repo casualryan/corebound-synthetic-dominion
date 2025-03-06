@@ -1,28 +1,22 @@
-function createItemInstance(template) {
-    const item = { ...template };
-    if (typeof item.quantity === 'undefined') {
-        item.quantity = 1;
-    }
-    // Do not overwrite item.quantity if it is already set
-    return item;
-}
-
 function generateItemInstance(template) {
-    const item = { ...template }; // Shallow copy of the template
+    const item = JSON.parse(JSON.stringify(template));
 
-    // Roll damage types with ranges
+    // Explicitly copy bAttackSpeed if it exists (for weapons)
+    if (template.bAttackSpeed !== undefined) {
+        item.bAttackSpeed = template.bAttackSpeed;
+    }
+
+    // Roll damage types
     if (template.damageTypes) {
         item.damageTypes = {};
-        for (let damageType in template.damageTypes) {
-            const range = template.damageTypes[damageType];
-            if (typeof range === 'object' && range.min !== undefined && range.max !== undefined) {
-                item.damageTypes[damageType] = getRandomInt(range.min, range.max);
-            } else {
-                item.damageTypes[damageType] = range; // Fixed value
-            }
+        for (const type in template.damageTypes) {
+            const range = template.damageTypes[type];
+            const min = getRandomInt(range.min, range.max);
+            item.damageTypes[type] = min;
         }
     }
 
+    // Roll defense types with ranges
     if (template.defenseTypes) {
         item.defenseTypes = {};
         for (let defenseType in template.defenseTypes) {
@@ -44,16 +38,17 @@ function generateItemInstance(template) {
                 const percent = getRandomInt(range.min, range.max);
                 item.statModifiers.damageTypes[damageType] = percent;
             } else {
-                item.statModifiers.damageTypes[damageType] = template.statModifiers.damageTypes[damageType]; // Fixed value
+                item.statModifiers.damageTypes[damageType] = template.statModifiers.damageTypes[damageType];
             }
         }
     }
 
+    // Roll health bonus
     if (template.healthBonus) {
         if (typeof template.healthBonus === 'object') {
             item.healthBonus = getRandomInt(template.healthBonus.min, template.healthBonus.max);
         } else {
-            item.healthBonus = template.healthBonus; // Fixed value
+            item.healthBonus = template.healthBonus;
         }
     }
 
@@ -62,15 +57,15 @@ function generateItemInstance(template) {
         if (typeof template.energyShieldBonus === 'object') {
             item.energyShieldBonus = getRandomInt(template.energyShieldBonus.min, template.energyShieldBonus.max);
         } else {
-            item.energyShieldBonus = template.energyShieldBonus; // Fixed value
+            item.energyShieldBonus = template.energyShieldBonus;
         }
     }
 
     // Roll percentage health bonus
     if (template.healthBonusPercentRange) {
         const percent = getRandomInt(template.healthBonusPercentRange.min, template.healthBonusPercentRange.max);
-        item.healthBonusPercent = percent / 100; // For calculations
-        item.healthBonusPercentDisplay = percent; // For display
+        item.healthBonusPercent = percent / 100;
+        item.healthBonusPercentDisplay = percent;
     } else if (template.healthBonusPercent !== undefined) {
         item.healthBonusPercent = template.healthBonusPercent;
         item.healthBonusPercentDisplay = item.healthBonusPercent * 100;
@@ -79,8 +74,8 @@ function generateItemInstance(template) {
     // Roll percentage energy shield bonus
     if (template.energyShieldBonusPercentRange) {
         const percent = getRandomInt(template.energyShieldBonusPercentRange.min, template.energyShieldBonusPercentRange.max);
-        item.energyShieldBonusPercent = percent / 100; // For calculations
-        item.energyShieldBonusPercentDisplay = percent; // For display
+        item.energyShieldBonusPercent = percent / 100;
+        item.energyShieldBonusPercentDisplay = percent;
     } else if (template.energyShieldBonusPercent !== undefined) {
         item.energyShieldBonusPercent = template.energyShieldBonusPercent;
         item.energyShieldBonusPercentDisplay = item.energyShieldBonusPercent * 100;
@@ -89,27 +84,73 @@ function generateItemInstance(template) {
     // Roll attack speed modifier
     if (template.attackSpeedModifierRange) {
         const percent = getRandomInt(template.attackSpeedModifierRange.min, template.attackSpeedModifierRange.max);
-        item.attackSpeedModifier = percent / 100; // For calculations
-        item.attackSpeedModifierPercent = percent; // For display
+        item.attackSpeedModifier = percent / 100;
+        item.attackSpeedModifierPercent = percent;
     }
 
     // Roll critical chance modifier
     if (template.criticalChanceModifierRange) {
         const percent = getRandomInt(template.criticalChanceModifierRange.min, template.criticalChanceModifierRange.max);
-        item.criticalChanceModifier = percent / 100; // For calculations
-        item.criticalChanceModifierPercent = percent; // For display
+        item.criticalChanceModifier = percent / 100;
+        item.criticalChanceModifierPercent = percent;
     }
 
     // Roll critical multiplier modifier
     if (template.criticalMultiplierModifierRange) {
         const percent = getRandomInt(template.criticalMultiplierModifierRange.min, template.criticalMultiplierModifierRange.max);
-        item.criticalMultiplierModifier = percent / 100; // For calculations
-        item.criticalMultiplierModifierPercent = percent; // For display
+        item.criticalMultiplierModifier = percent / 100;
+        item.criticalMultiplierModifierPercent = percent;
     }
 
-    // Copy other properties
+    // Roll precision
+    if (template.precision) {
+        if (typeof template.precision === 'object') {
+            const value = getRandomInt(template.precision.min, template.precision.max);
+            item.precision = value;
+        } else {
+            item.precision = template.precision;
+        }
+    }
+
+    // Roll deflection
+    if (template.deflection) {
+        if (typeof template.deflection === 'object') {
+            const value = getRandomInt(template.deflection.min, template.deflection.max);
+            item.deflection = value;
+        } else {
+            item.deflection = template.deflection;
+        }
+    }
+
+    // Roll health regeneration
+    if (template.healthRegen) {
+        if (typeof template.healthRegen === 'object') {
+            const value = getRandomFloat(template.healthRegen.min, template.healthRegen.max);
+            item.healthRegen = parseFloat(value.toFixed(2));
+        } else {
+            item.healthRegen = template.healthRegen;
+        }
+    }
+
+    // Add passive skill bonuses if specified in template
+    if (template.passiveBonuses) {
+        item.passiveBonuses = {};
+        
+        // Apply exact passive bonuses if specified as fixed numbers
+        for (const passiveName in template.passiveBonuses) {
+            const bonusValue = template.passiveBonuses[passiveName];
+            if (typeof bonusValue === 'number') {
+                item.passiveBonuses[passiveName] = bonusValue;
+            } 
+            // Or apply random passive bonuses if specified as a range
+            else if (typeof bonusValue === 'object' && bonusValue.min !== undefined && bonusValue.max !== undefined) {
+                item.passiveBonuses[passiveName] = getRandomInt(bonusValue.min, bonusValue.max);
+            }
+        }
+    }
+
     if (typeof item.quantity === 'undefined') {
-        item.quantity = 1; // Default quantity for non-stackable items
+        item.quantity = 1;
     }
 
     return item;
@@ -117,4 +158,8 @@ function generateItemInstance(template) {
 
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function getRandomFloat(min, max) {
+    return Math.random() * (max - min) + min;
 }

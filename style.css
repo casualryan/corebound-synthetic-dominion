@@ -1,61 +1,273 @@
 /* style.css */
 
-/* General styling */
-body {
-    font-family: 'Orbitron', sans-serif;
-    background-color: #0f0f0f;
-    color: #fff;
-    background-image: url('images/sci-fi-background.jpg'); /* Replace with your image path */
-    background-size: cover;
-    background-position: center;
+/* Reset / Base */
+html, body {
     margin: 0;
     padding: 0;
+    height: 100%;
+    font-family: 'Orbitron', sans-serif;
+    color: #fff;
+    background: #000;
 }
 
+body {
+    background: linear-gradient(135deg, #020202 0%, #0f0f0f 100%);
+    background-size: cover;
+    background-position: center;
+    overflow: auto;
+}
+
+/* Subtle shadow */
 body, body * {
-    text-shadow: 
-        1.2px 1.2px 0px black, 
-        -1.2px -1.2px 0px black, 
-        1.2px -1.2px 0px black, 
-        -1.2px 1.2px 0px black;
+    text-shadow:
+        1px 1px 2px rgba(0,0,0,0.8);
 }
 
-/* Container for stats and combat log */
+/* Scrollbars */
+::-webkit-scrollbar {
+    width: 10px;
+}
+::-webkit-scrollbar-track {
+    background: #111;
+}
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #444;
+}
+
+/* Layout */
+#sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 220px;
+    height: 100%;
+    background: linear-gradient(to bottom, #050b14, #081124);
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(0, 255, 204, 0.2);
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
+    z-index: 100;
+}
+
+#main-content {
+    margin-left: 220px;
+    padding: 20px;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+}
+
+h1, h2, h3, h4, h5 {
+    margin-top: 0;
+    color: #00ffcc;
+}
+
+/* Sidebar */
+.sidebar-section {
+    padding: 15px 10px;
+    position: relative;
+}
+
+.sidebar-section h2 {
+    color: #66ccff;
+    font-size: 16px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    text-shadow: 0 0 5px rgba(102, 204, 255, 0.5);
+    padding-left: 10px;
+    position: relative;
+}
+
+.sidebar-section h2::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 70%;
+    background-color: #00ffcc;
+    border-radius: 2px;
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(0, 255, 204, 0.3), transparent);
+    margin: 5px 0;
+}
+
+.sidebar-menu {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu li {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar-menu li::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background-color: #00ffcc;
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+    transform-origin: top;
+}
+
+.sidebar-menu li:hover::before,
+.sidebar-menu li.active::before {
+    transform: scaleY(1);
+}
+
+.sidebar-menu li::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(0, 255, 204, 0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+.sidebar-menu li:hover::after,
+.sidebar-menu li.active::after {
+    opacity: 1;
+}
+
+.sidebar-menu li img {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+    filter: brightness(0.8);
+    transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.sidebar-menu li:hover img,
+.sidebar-menu li.active img {
+    filter: brightness(1.2);
+    transform: scale(1.1);
+}
+
+.sidebar-menu li span {
+    color: #cccccc;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.sidebar-menu li:hover span,
+.sidebar-menu li.active span {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(0, 255, 204, 0.7);
+}
+
+.sidebar-menu li.active {
+    background-color: rgba(0, 15, 30, 0.6);
+    box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+}
+
+.sidebar-spacer {
+    flex-grow: 1;
+}
+
+.sidebar-bottom {
+    padding: 15px;
+}
+
+#settings-button {
+    width: 100%;
+    background: linear-gradient(to bottom, #003366, #001133);
+    color: #ffffff;
+    border: 1px solid #00ffcc;
+    border-radius: 4px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#settings-button:hover {
+    background: linear-gradient(to bottom, #004080, #002255);
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+}
+
+#settings-button img {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+}
+
+#settings-button span {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+}
+
+/* Screens */
+.screen {
+    display: none;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s, transform 0.5s;
+}
+
+.screen.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Panels (stats, logs, etc.) */
+.stats, .combat-log {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid #333;
+    border-radius: 10px;
+    box-shadow: 0 0 10px #000;
+    color: #fff;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.stats h2, .combat-log h2 {
+    font-size: 22px;
+}
+
+/* Container for adventure stats and log */
 .container {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     margin: 20px 0;
+    gap: 20px;
 }
 
 .container > div {
-    flex: 1 1 32%; /* Adjust the width as needed */
-    margin: 10px;
+    flex: 1 1 32%; 
 }
 
-/* Stats and Combat Log Styling */
-.stats, .combat-log {
-    background-color: rgba(26, 26, 26, 0.9);
-    padding: 20px;
-    border: 1px solid #333;
-    border-radius: 10px;
-    box-shadow: 0 0 10px #000;
-    color: #fff;
-}
-
-.stats h2, .combat-log h2 {
-    font-size: 24px;
-    margin-top: 0;
-    color: #00ffcc;
-}
-
-.combat-log {
-    max-height: 400px;
-    overflow-y: auto;
-    font-family: 'Courier New', Courier, monospace;
-}
-
-/* Stat List Styling */
+/* Stat Lists */
 .stat-list {
     list-style-type: none;
     padding: 0;
@@ -66,11 +278,11 @@ body, body * {
     margin: 5px 0;
 }
 
-/* Inventory Styling */
+/* Inventory */
 #inventory {
     display: flex;
     flex-wrap: wrap;
-    background-color: rgba(26, 26, 26, 0.8);
+    background: rgba(26, 26, 26, 0.8);
     padding: 10px;
     border: 1px solid #333;
     border-radius: 5px;
@@ -84,34 +296,42 @@ body, body * {
     width: 60px;
     height: 60px;
     list-style: none;
-}
-
-#inventory li img {
-    width: 100%;
-    height: 100%;
     border: 1px solid #555;
     border-radius: 5px;
+    overflow: visible; /* Ensure tooltip can show */
+    background: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 #inventory li:hover {
     border: 1px solid #00ffcc;
     cursor: pointer;
+    transform: translateY(-3px);
+    box-shadow: 0 0 10px #00ffcc;
 }
 
-/* Quantity badge for stacked items */
+#inventory li img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .quantity-badge {
     position: absolute;
     bottom: 2px;
     right: 2px;
-    background-color: rgba(0, 0, 0, 0.7);
+    background: rgba(0, 0, 0, 0.7);
     color: #fff;
     padding: 2px 5px;
     border-radius: 3px;
     font-size: 12px;
-    pointer-events: none; /* Allows clicking through the badge */
+    pointer-events: none;
 }
 
-/* Buttons Styling */
+/* Buttons */
 button {
     background-color: #1a1a1a;
     color: #fff;
@@ -120,66 +340,47 @@ button {
     font-size: 16px;
     font-family: 'Orbitron', sans-serif;
     cursor: pointer;
-    transition: background-color 0.3s, box-shadow 0.3s;
+    transition: background-color 0.3s, box-shadow 0.3s, transform 0.2s;
     border-radius: 5px;
 }
 
 button:hover {
     background-color: #333;
     box-shadow: 0 0 10px #00ffcc;
+    transform: scale(1.02);
 }
 
 button:active {
     background-color: #444;
 }
 
-/* Remove absolute positioning from settings button */
-#settings-button {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    background-color: transparent;
-    border: none;
-    color: #fff;
-    cursor: pointer;
-}
-
-#settings-button img {
-    width: 24px;
-    height: 24px;
-    margin-right: 10px;
-}
-
-/* HP and ES Bar Containers */
+/* HP/ES Bars */
 .hp-bar-container,
 .es-bar-container {
     position: relative;
-    width: 100%; /* Adjust based on your layout */
-    height: 25px; /* Adjust as needed */
-    background-color: #555;
+    width: 100%;
+    height: 25px;
+    background-color: #222;
     border: 1px solid #000;
     border-radius: 5px;
     overflow: hidden;
-    margin-bottom: 10px; /* Spacing below the bars */
+    margin-bottom: 10px;
 }
 
-/* HP Bars */
 .hp-bar {
-    width: 100%; /* Starts at full width */
+    width: 100%;
     height: 100%;
-    background-color: #0f0; /* Green color for HP */
-    transition: width 0.3s linear;
+    background-color: #0f0;
+    transition: width 0.5s ease;
 }
 
-/* Energy Shield Bars */
 .es-bar {
-    width: 100%; /* Starts at full width */
+    width: 100%;
     height: 100%;
-    background-color: #00f; /* Blue color for energy shield */
-    transition: width 0.3s linear;
+    background-color: #00f;
+    transition: width 0.5s ease;
 }
 
-/* HP and ES Text */
 .hp-text,
 .es-text {
     text-align: center;
@@ -187,29 +388,35 @@ button:active {
     font-size: 0.9em;
 }
 
+/* Animate damage slices */
+.hp-slice, .es-slice {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    animation: sliceAnimation 1.2s forwards;
+    pointer-events: none;
+}
 
-
-/* HP Bar Slice */
 .hp-slice {
-    position: absolute;
-    top: 0;
-    height: 100%;
-    background-color: rgba(255, 0, 0, 0.9); /* Semi-transparent red for HP slices */
-    animation: sliceAnimation 1s forwards;
-    pointer-events: none;
+    background-color: rgba(255, 0, 0, 0.9);
 }
 
-/* Energy Shield Bar Slice */
 .es-slice {
-    position: absolute;
-    top: 0;
-    height: 100%;
-    background-color: rgba(0, 0, 255, 0.9); /* Semi-transparent blue for shield slices */
-    animation: sliceAnimation 1s forwards;
-    pointer-events: none;
+    background-color: rgba(0, 0, 255, 0.9);
 }
 
-/* Damage Number */
+@keyframes sliceAnimation {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+}
+
+/* Damage number floating */
 .damage-number {
     position: absolute;
     color: red;
@@ -219,37 +426,18 @@ button:active {
     pointer-events: none;
 }
 
-/* Slice Animation */
-@keyframes sliceAnimation {
-    from {
-        transform: translateY(0);
-        opacity: 1;
-    }
-    to {
-        transform: translateY(20px); /* Falls down */
-        opacity: 0;
-    }
-}
-
-/* Damage Number Animation */
 @keyframes damageNumberAnimation {
     from {
         transform: translateY(0);
         opacity: 1;
     }
     to {
-        transform: translateY(-20px); /* Floats up */
+        transform: translateY(-20px);
         opacity: 0;
     }
 }
 
-.es-text {
-    text-align: center;
-    margin-bottom: 5px;
-    font-size: 0.9em;
-}
-
-/* Progress Bars */
+/* Progress bars (Attack, Gathering) */
 .progress-container {
     width: 100%;
     background-color: #333;
@@ -275,214 +463,41 @@ button:active {
     background: linear-gradient(90deg, #ffcc00, #ff9900);
 }
 
-/* Tooltip Styling */
+/* Tooltips */
 .tooltip {
-    display: none;
-    position: absolute;
-    background-color: rgba(34, 34, 34, 0.9);
-    color: #fff;
-    padding: 5px;
+    position: fixed;
+    z-index: 99999; /* High z-index for visibility */
+    background-color: rgba(0, 0, 0, 0.95);
+    border: 1px solid #00ffcc;
+    padding: 8px;
     border-radius: 4px;
-    z-index: 1000;
+    pointer-events: none;
+    color: white;
     font-size: 14px;
-    font-family: 'Orbitron', sans-serif;
-    box-shadow: 0 0 10px #000;
-    white-space: normal; /* Allow text to wrap at spaces */
-    word-wrap: break-word; /* Break long words if necessary */
+    max-width: 250px;
+    white-space: pre-wrap;
     line-height: 1.2;
-    text-shadow: none;
-    max-width: 300px; /* Adjust as needed */
-    width: max-content; /* Allow tooltip to expand based on content */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
-.tooltip strong {
-    display: block;
-    margin-bottom: 5px;
+/* Ensure parent elements don't clip tooltips */
+[data-has-tooltip] {
+    position: relative;
+    z-index: 1;
 }
 
-ul#inventory li {
-    position: relative; /* Required for tooltip positioning */
-    list-style: none;
-    padding: 5px;
-    margin: 5px;
-    background-color: #333;
-    color: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-ul#inventory li:hover .tooltip,
-#equipped-items li:hover .tooltip {
-    display: block;
-    top: -5px;
-    left: 105%;
-}
-
-/* Modal Styling */
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed;
-    z-index: 1000; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0, 0, 0, 0.5); /* Black w/ opacity */
-}
-
-.modal-content {
-    background-color: #1a1a1a;
-    color: #fff;
-    border: 1px solid #333;
-    margin: 15% auto; /* 15% from top and centered */
-    padding: 20px;
-    width: 300px; /* Could be more or less, depending on screen size */
-    font-family: 'Orbitron', sans-serif;
-}
-
-.close-button {
-    color: #fff;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-}
-
-.close-button:hover,
-.close-button:focus {
-    color: #ff3300;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.modal h2 {
-    color: #00ffcc;
-}
-
-/* Dark Mode Styles */
-body.dark-mode {
-    background-color: #000;
-    color: #fff;
-}
-
-body.dark-mode .stats,
-body.dark-mode .combat-log,
-body.dark-mode #inventory,
-body.dark-mode #equipped-items {
-    background-color: #0d0d0d;
-    border-color: #222;
-}
-
-body.dark-mode .progress-container {
-    background-color: #222;
-}
-
-body.dark-mode .progress-bar {
-    background-color: #444;
-}
-
-body.dark-mode .attack-bar {
-    background: linear-gradient(90deg, #006666, #003333);
-}
-
-body.dark-mode .gathering-bar {
-    background: linear-gradient(90deg, #664400, #332200);
-}
-
-body, html {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-}
-
-/* Layout */
-#sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 220px;
-    height: 100%;
-    background-color: #1a1a1a;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-}
-
-.sidebar-section {
-    padding: 20px;
-}
-
-.sidebar-menu {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-}
-
-.sidebar-menu li {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.sidebar-menu li:hover {
-    background-color: #333;
-}
-
-.sidebar-menu img {
-    width: 24px;
-    height: 24px;
-    margin-right: 10px;
-}
-
-.sidebar-menu span {
-    font-size: 16px;
-}
-
-hr {
-    border: none;
-    border-top: 1px solid #333;
-    margin: 10px 0;
-}
-
-/* Spacer to push settings button to the bottom */
-.sidebar-spacer {
-    flex: 1 1 auto;
-}
-
-.sidebar-bottom {
-    padding: 20px;
-}
-
-#main-content {
-    margin-left: 220px;
-    padding: 20px;
-}
-
-/* Adjust h1 position */
-h1 {
-    margin-left: 240px; /* Slightly more than sidebar width */
-    padding-top: 20px;
-}
-
-/* Screen visibility */
-.screen {
-    display: none;
-}
-
-.screen.active {
-    display: block;
-}
-
-/* Equipment Paper-Doll Layout */
+/* Equipment paper-doll styles */
 #equipment-paper-doll {
     width: 300px;
+    height: 440px;
     margin: 0 auto;
     position: relative;
+    border: 1px solid #333;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    padding: 20px;
 }
 
-/* Define positions for each equipment slot */
 .equipment-slot {
     position: absolute;
     width: 60px;
@@ -494,22 +509,25 @@ h1 {
     line-height: 60px;
     color: #fff;
     cursor: pointer;
+    z-index: 1;
 }
 
 .equipment-slot img {
     width: 100%;
     height: 100%;
+    object-fit: contain;
 }
 
-#head-slot { top: 0; left: 120px; }
-#chest-slot { top: 80px; left: 120px; }
-#legs-slot { top: 160px; left: 120px; }
-#feet-slot { top: 240px; left: 120px; }
-#mainHand-slot { top: 160px; left: 40px; }
-#offHand-slot { top: 160px; left: 200px; }
-#gloves-slot { top: 160px; left: 280px; }
+/* Position slots in paper-doll format */
+#head-slot { top: 20px; left: 120px; }
+#chest-slot { top: 100px; left: 120px; }
+#legs-slot { top: 180px; left: 120px; }
+#feet-slot { top: 260px; left: 120px; }
+#mainHand-slot { top: 180px; left: 40px; }
+#offHand-slot { top: 180px; left: 200px; }
+#gloves-slot { top: 100px; left: 200px; }
 
-/* Bionic slots at the bottom */
+/* Remove bottom property from bionic-slot class */
 .bionic-slot {
     position: absolute;
     width: 60px;
@@ -521,54 +539,54 @@ h1 {
     line-height: 60px;
     color: #fff;
     cursor: pointer;
-    bottom: 0;
 }
 
-#bionic-slot-0 { top: 320px; left: 60px; }
-#bionic-slot-1 { top: 320px; left: 125px; }
-#bionic-slot-2 { top: 320px; left: 190px; }
-#bionic-slot-3 { top: 320px; left: 255px; }
+#bionic-slot-0 { top: 340px; left: 40px; }
+#bionic-slot-1 { top: 340px; left: 110px; }
+#bionic-slot-2 { top: 340px; left: 180px; }
+#bionic-slot-3 { top: 340px; left: 250px; }
 
-/* Confirmation Popup */
-.confirmation-popup {
+/* Modal (Settings) */
+.modal {
+    display: none;
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: #1a1a1a;
-    color: #fff;
-    padding: 20px;
-    border: 1px solid #333;
-    z-index: 1001;
-    border-radius: 5px;
-}
-
-.confirmation-popup button {
-    margin: 5px;
-}
-
-/* Overlay for popup */
-#overlay {
-    position: fixed;
-    top: 0;
+    z-index: 1000;
     left: 0;
+    top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 1000;
+    background-color: rgba(0,0,0,0.5);
 }
 
-.settings-buttons {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
+.modal-content {
+    background-color: #1a1a1a;
+    color: #fff;
+    border: 1px solid #333;
+    margin: 10% auto;
+    padding: 20px;
+    width: 300px;
+    font-family: 'Orbitron', sans-serif;
+    position: relative;
+    border-radius: 5px;
+    box-shadow: 0 0 15px #00ffcc;
 }
 
-.settings-buttons button {
-    margin: 5px 0;
+.close-button {
+    color: #fff;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close-button:hover {
+    color: #ff3300;
 }
 
-/* Damage Popups Container */
+.modal h2 {
+    color: #00ffcc;
+}
+
+/* Damage Popups */
 #damage-popups-container {
     position: fixed;
     bottom: 20px;
@@ -581,7 +599,6 @@ h1 {
     align-items: center;
 }
 
-/* Damage Popup Styles */
 .damage-popup {
     margin-top: 5px;
     padding: 10px 15px;
@@ -590,14 +607,15 @@ h1 {
     font-weight: bold;
     text-align: center;
     animation: popupSlideUp 0.5s ease-out forwards;
+    box-shadow: 0 0 10px #000;
 }
 
 .damage-popup.player-damage {
-    background-color: rgba(185, 0, 0, 0.8); /* Red background for player damage */
+    background-color: rgba(185, 0, 0, 0.8);
 }
 
 .damage-popup.enemy-damage {
-    background-color: rgba(8, 136, 175, 0.8); /* Blue background for enemy damage */
+    background-color: rgba(8, 136, 175, 0.8);
 }
 
 #loot-popups-container {
@@ -612,18 +630,17 @@ h1 {
     align-items: center;
 }
 
-/* loot popup */
 .loot-popup {
     margin-top: 5px;
     padding: 10px 15px;
     border-radius: 5px;
-    color: #fff;
     font-weight: bold;
     text-align: center;
     animation: popupSlideUp 0.5s ease-out forwards;
     background-color: rgba(54, 160, 1, 0.8);
     color: #fd4141;
     border: #000;
+    box-shadow: 0 0 10px #000;
 }
 
 @keyframes popupSlideUp {
@@ -637,114 +654,920 @@ h1 {
     }
 }
 
-/* Fabrication Screen Styles */
-#fabrication-categories {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.fabrication-category {
-    border: 1px solid #ccc;
-    padding: 10px;
-}
-
-.recipe-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.recipe-card {
-    position: relative;
-    border: 1px solid #999;
-    padding: 10px;
-    width: 300px;
-    position: relative;
-    background-color: rgba(26, 26, 26, .9);
-    color: #fff;
-    border-radius: 5px;
-    
-}
-
-.recipe-card h4 {
-    margin: 0 0 5px 0;
-
-}
-
-.recipe-card p {
-    margin: 5px 0;
-}
-
-.recipe-card ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 5px 0;
-}
-
-.recipe-card ul li {
-    margin: 2px 0;
-}
-
-.recipe-card button {
-    margin-top: 10px;
-    width: 100%;
-}
-
-ul#inventory li:hover .tooltip,
-#equipped-items li:hover .tooltip,
-.recipe-card:hover .tooltip {
-    display: block;
-    top: -5px;
-    left: 105%;
-}
-
-@keyframes flash {
-    0%, 50%, 100% { opacity: 1; }
-    25%, 75% { opacity: 0; }
-}
-
-/* Fabricate Button */
-.fabricate-button {
+/* Fabrication Screen Styling */
+#fabrication-screen {
+    background-color: #060a14;
+    padding: 20px;
     position: relative;
     overflow: hidden;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #f0f0f0;
-    color: #000;
-    outline: none; /* Removes default focus outline */
-    transition: background-color 0.3s;
 }
 
-.fabricate-button:hover:not(:disabled) {
-    background-color: #e0e0e0;
-}
-
-.fabricate-button:disabled {
-    background-color: #ddd;
-    cursor: not-allowed;
-}
-
-/* Button Text */
-.button-text {
+#fabrication-screen h2 {
+    color: #66ccff;
+    text-shadow: 0 0 8px rgba(102, 204, 255, 0.5);
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    margin-bottom: 25px;
     position: relative;
-    z-index: 1; /* Ensures text is above the progress bar */
     display: inline-block;
 }
 
-/* Fabricate Button Progress Bar */
-.button-progress-bar {
-    width: 0%;
-    height: 100%;
+#fabrication-screen h2::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, #00ffcc, transparent);
+}
+
+/* Fabrication Categories */
+#fabrication-categories {
+    margin-bottom: 30px;
+}
+
+.fabrication-tabs {
+    display: flex;
+    border-bottom: 1px solid #00ffcc;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #00ffcc #001133;
+    padding-bottom: 2px;
+}
+
+.fab-category-tab {
+    background: linear-gradient(to bottom, #002255, #001133);
+    color: #eee;
+    border: none;
+    border-radius: 5px 5px 0 0;
+    padding: 10px 20px;
+    margin-right: 5px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    min-width: 100px;
+    text-align: center;
+}
+
+.fab-category-tab::before {
+    content: '';
     position: absolute;
     top: 0;
     left: 0;
-    background-color: rgba(0, 255, 0, 0.3);
-    transition: width 0.1s linear;
-    pointer-events: none;
-    border-radius: 5px;
-    z-index: 0; /* Ensures progress bar is behind the button text */
+    width: 100%;
+    height: 2px;
+    background-color: #00ffcc;
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+    transform-origin: left;
 }
+
+.fab-category-tab:hover::before,
+.fab-category-tab.active::before {
+    transform: scaleX(1);
+}
+
+.fab-category-tab:hover {
+    background: linear-gradient(to bottom, #003366, #002255);
+    box-shadow: 0 0 10px rgba(0, 255, 204, 0.3);
+}
+
+.fab-category-tab.active {
+    background: linear-gradient(to bottom, #004080, #002c66);
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
+}
+
+/* Recipe Cards Container */
+.recipe-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    margin-top: 10px;
+    max-width: 100%;
+    overflow-y: auto;
+}
+
+.no-recipes {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: #7c899c;
+    font-style: italic;
+    background: rgba(0, 10, 30, 0.3);
+    border-radius: 8px;
+    border: 1px dashed #345;
+}
+
+/* Recipe Card */
+.recipe-card {
+    background: linear-gradient(135deg, #001133, #002255);
+    border-radius: 8px;
+    border: 1px solid #00ffcc;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.recipe-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 255, 204, 0.4);
+}
+
+.recipe-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(to right, transparent, #00ffcc, transparent);
+    opacity: 0.7;
+}
+
+.recipe-header {
+    padding: 15px;
+    background: rgba(0, 30, 60, 0.6);
+    border-bottom: 1px solid rgba(0, 255, 204, 0.3);
+}
+
+.recipe-name {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-shadow: 0 0 5px rgba(102, 204, 255, 0.5);
+    font-family: 'Orbitron', sans-serif;
+}
+
+.recipe-type {
+    color: #66ccff;
+    font-size: 14px;
+}
+
+.recipe-body {
+    padding: 15px;
+}
+
+.recipe-description {
+    color: #ccc;
+    font-size: 14px;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+.recipe-ingredients {
+    margin-bottom: 15px;
+}
+
+.recipe-ingredients-title {
+    color: #00ffcc;
+    font-size: 15px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    text-shadow: 0 0 3px rgba(0, 255, 204, 0.5);
+}
+
+.ingredients-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ingredient-item {
+    color: #eee;
+    padding: 3px 0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.ingredient-item.missing {
+    color: #ff6680;
+}
+
+.recipe-time {
+    color: #aac;
+    font-size: 13px;
+    margin-bottom: 15px;
+}
+
+.fab-button-container {
+    display: flex;
+    justify-content: center;
+    position: relative;
+    height: 40px;
+    margin-top: 10px;
+}
+
+.fab-button {
+    background: linear-gradient(to bottom, #003366, #001133);
+    color: #ffffff;
+    border: 1px solid #00ffcc;
+    border-radius: 4px;
+    font-size: 15px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 2;
+    width: 100%;
+    font-family: 'Orbitron', sans-serif;
+    position: relative;
+}
+
+.fab-button:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #004080, #002255);
+    box-shadow: 0 0 8px rgba(0, 255, 204, 0.6);
+}
+
+.fab-button:disabled {
+    background: #111;
+    border-color: #333;
+    color: #555;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.fab-progress-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+    z-index: 1;
+    pointer-events: none; /* Allow clicks to pass through to the button */
+}
+
+.fab-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(to right, rgba(0, 255, 204, 0.4), rgba(102, 204, 255, 0.6));
+    transition: width 0.1s linear;
+    box-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+}
+
+/* Mining Screen Styling */
+#mining-screen {
+    background-color: #060a14;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+#mining-screen h2 {
+    color: #66ccff;
+    text-shadow: 0 0 8px rgba(102, 204, 255, 0.5);
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    margin-bottom: 25px;
+    position: relative;
+    display: inline-block;
+}
+
+#mining-screen h2::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, #00ffcc, transparent);
+}
+
+.mining-header {
+    background: linear-gradient(to right, rgba(0, 15, 30, 0.9), rgba(0, 30, 60, 0.8));
+    border-left: 3px solid #00ffcc;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.skill-level-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.skill-level {
+    font-size: 24px;
+    color: #00ffcc;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(0, 255, 204, 0.7);
+    font-family: 'Orbitron', sans-serif;
+}
+
+.skill-progress {
+    height: 6px;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+    position: relative;
+}
+
+.skill-progress-bar {
+    height: 100%;
+    background: linear-gradient(to right, #00ffcc, #66ccff);
+    width: 0%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* Mining Activities Grid */
+.activities {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.activity-card {
+    background: linear-gradient(135deg, #001133, #002255);
+    border-radius: 8px;
+    border: 1px solid #00ffcc;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+    padding: 15px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.activity-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 255, 204, 0.4);
+}
+
+.activity-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(to right, transparent, #00ffcc, transparent);
+    opacity: 0.7;
+}
+
+.activity-name {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    text-shadow: 0 0 5px rgba(102, 204, 255, 0.5);
+    font-family: 'Orbitron', sans-serif;
+}
+
+.activity-time {
+    color: #66ccff;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.activity-yield {
+    color: #00ffcc;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.activity-requirement {
+    color: #ff6680;
+    font-size: 12px;
+    margin-bottom: 10px;
+}
+
+/* Mining Progress Bar */
+.progress-container {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    height: 20px;
+    margin: 15px 0;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.progress-bar.gathering-bar {
+    background: linear-gradient(to right, #00ffcc, #66ccff);
+    height: 100%;
+    width: 0%;
+    transition: width 0.1s linear;
+    position: relative;
+}
+
+.progress-bar.gathering-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+#stop-mining {
+    background: linear-gradient(to bottom, #7b1113, #510a0c);
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(123, 17, 19, 0.5);
+    font-family: 'Orbitron', sans-serif;
+    margin-bottom: 20px;
+}
+
+#stop-mining:hover {
+    background: linear-gradient(to bottom, #a11618, #7b1113);
+    box-shadow: 0 0 15px rgba(161, 22, 24, 0.7);
+}
+
+.mining-stats {
+    background: rgba(0, 15, 30, 0.8);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    width: 300px;
+    max-width: 100%;
+}
+
+.mining-stats h3 {
+    color: #66ccff;
+    margin-top: 0;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+.mining-stats ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mining-stats li {
+    color: #eee;
+    padding: 5px 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.mining-stats .stat-name {
+    color: #aac;
+}
+
+.mining-stats .stat-value {
+    color: #00ffcc;
+    font-weight: bold;
+}
+
+/* Passives Screen Styling */
+#passives-screen {
+    background-color: #060a14;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Neural Interface Points Display */
+.passive-points-container {
+    background: linear-gradient(to right, #001133, #002255);
+    border-radius: 8px;
+    border-left: 3px solid #00ffcc;
+    padding: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.passive-points-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(0, 255, 204, 0.1), transparent);
+    transform: rotate(45deg);
+    animation: shimmer 3s infinite linear;
+    pointer-events: none;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+}
+
+.passive-points-header {
+    display: flex;
+    align-items: center;
+}
+
+.passive-points-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #00ffcc, #003366);
+    box-shadow: 0 0 10px #00ffcc;
+    margin-right: 10px;
+    position: relative;
+}
+
+.passive-points-icon::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background-color: #00001a;
+    border-radius: 50%;
+    box-shadow: inset 0 0 3px #00ffcc;
+}
+
+.passive-points-text {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1px;
+}
+
+.passive-points-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: #00ffcc;
+    text-shadow: 0 0 10px rgba(0, 255, 204, 0.7);
+    font-family: 'Orbitron', sans-serif;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+    background: rgba(0, 30, 60, 0.6);
+    border-radius: 4px;
+    height: 50px;
+}
+
+/* Tier Styles */
+.passive-tier {
+    margin-bottom: 30px;
+}
+
+.passive-tier-header {
+    margin-bottom: 15px;
+}
+
+.tier-header-bg {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-radius: 5px;
+    background: linear-gradient(to right, rgba(0, 15, 30, 0.9), rgba(0, 30, 60, 0.8));
+    position: relative;
+    overflow: hidden;
+}
+
+.tier-header-bg::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 204, 0.1), transparent);
+    animation: scanline 4s infinite linear;
+    z-index: 1;
+    pointer-events: none;
+}
+
+@keyframes scanline {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.tier-unlocked {
+    border-left: 3px solid #00ffcc;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
+}
+
+.tier-locked {
+    border-left: 3px solid #ff3366;
+    box-shadow: 0 0 15px rgba(255, 51, 102, 0.3);
+    opacity: 0.8;
+}
+
+.tier-number {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+    position: relative;
+    z-index: 2;
+}
+
+.tier-status {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: normal;
+    color: #66ccff;
+    position: relative;
+    z-index: 2;
+}
+
+.tier-locked .tier-status {
+    color: #ff6680;
+}
+
+/* Passive Cards Container */
+.passive-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 24px;
+    padding: 10px;
+}
+
+/* Passive Card Styles */
+.passive-card {
+    position: relative;
+    width: 100%;
+    min-height: 120px;
+    perspective: 1000px;
+    cursor: pointer;
+}
+
+.passive-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 15px 10px;
+    background: linear-gradient(135deg, #001133, #002255);
+    border-radius: 8px;
+    border: 1px solid #00ffcc;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.passive-card-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(to right, transparent, #00ffcc, transparent);
+    opacity: 0.7;
+}
+
+.passive-card-inner.locked {
+    border-color: #333;
+    opacity: 0.7;
+    filter: grayscale(70%);
+}
+
+.passive-card-inner:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 255, 204, 0.4);
+}
+
+.passive-name {
+    color: #ffffff;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+    font-family: 'Orbitron', sans-serif;
+    word-wrap: break-word;
+    width: 100%;
+    text-overflow: ellipsis;
+    text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+}
+
+.passive-name.long-name {
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.passive-name.medium-name {
+    font-size: 13px;
+    line-height: 1.2;
+}
+
+.passive-name.short-name {
+    font-size: 15px;
+}
+
+.passive-rank {
+    color: #66ccff;
+    font-size: 14px;
+    margin-bottom: 10px;
+    text-align: center;
+    text-shadow: 0 0 3px rgba(102, 204, 255, 0.5);
+}
+
+.gear-bonus {
+    color: #00ffcc;
+    font-weight: bold;
+}
+
+.passive-buttons {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 5px;
+}
+
+.passive-minus-btn, .passive-plus-btn {
+    width: 45%;
+    background: linear-gradient(to bottom, #003366, #001133);
+    color: #ffffff;
+    border: 1px solid #00ffcc;
+    border-radius: 4px;
+    font-size: 16px;
+    padding: 3px 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.passive-minus-btn:hover, .passive-plus-btn:hover {
+    background: linear-gradient(to bottom, #004080, #002255);
+    box-shadow: 0 0 8px rgba(0, 255, 204, 0.6);
+}
+
+.passive-minus-btn:disabled, .passive-plus-btn:disabled {
+    background: #111;
+    border-color: #333;
+    color: #555;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Glow effect for the entire tier container */
+.tiers-glow-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(0, 255, 204, 0.05) 0%, transparent 70%);
+    z-index: -1;
+}
+
+/* Tooltip styling */
+.tooltip {
+    background-color: #081b33;
+    color: #e0f2ff;
+    border: 1px solid #00306e;
+    box-shadow: 0 0 15px rgba(0, 200, 255, 0.6);
+    width: 300px;
+    max-width: 300px;
+    padding: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-radius: 5px;
+    font-size: 14px;
+    line-height: 1.4;
+    white-space: normal;
+    position: absolute;
+    z-index: 99999;
+    pointer-events: none;
+    word-wrap: break-word;
+}
+
+/* Special styling for delve bag tooltips */
+#delve-bag-items li .tooltip {
+    position: absolute;
+    top: -5px;
+    left: 110%;
+    z-index: 99999;
+    background-color: #081b33;
+    border: 1px solid #00306e;
+    box-shadow: 0 0 15px rgba(0, 200, 255, 0.6);
+    width: 300px;
+    max-width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    line-height: 1.4;
+    pointer-events: none;
+    transform: translateY(-30%);
+}
+
+/* Make sure tooltips don't overflow the viewport */
+@media (max-width: 1200px) {
+    #delve-bag-items li .tooltip {
+        left: auto;
+        right: 110%;
+    }
+}
+
+.start-activity-btn {
+    background: linear-gradient(to bottom, #003366, #001133);
+    color: #ffffff;
+    border: 1px solid #00ffcc;
+    border-radius: 4px;
+    font-size: 15px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    margin-top: 10px;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.start-activity-btn:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #004080, #002255);
+    box-shadow: 0 0 8px rgba(0, 255, 204, 0.6);
+}
+
+.start-activity-btn:disabled {
+    background: #111;
+    border-color: #333;
+    color: #555;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.confirmation-popup {
+    background: linear-gradient(to bottom, #001a33, #000d1a);
+    border: 2px solid #00ffcc;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.5);
+    color: #e0f2ff;
+    font-family: 'Orbitron', sans-serif;
+    max-width: 400px;
+    padding: 20px;
+    text-align: center;
+    z-index: 10000;
+}
+
+.confirmation-popup p {
+    margin: 0 0 15px 0;
+}
+
+.popup-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.popup-buttons button {
+    background: linear-gradient(to bottom, #004080, #002b59);
+    border: 1px solid #00ffcc;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+    padding: 8px 15px;
+    transition: all 0.2s ease;
+}
+
+.popup-buttons button:hover {
+    background: linear-gradient(to bottom, #005cb3, #003c78);
+    box-shadow: 0 0 10px rgba(0, 255, 204, 0.7);
+}
+
+#overlay {
+    background: rgba(0, 0, 0, 0.7);
+    height: 100%;
+    left: 0;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 9999;
+}
+

@@ -23,14 +23,29 @@
                     <img src="icons/equipment-icon.png" alt="Equipment Icon">
                     <span>Equipment</span>
                 </li>
+                <li data-screen="passives-screen">
+                    <img src="icons/passives-icon.png" alt="Passives Icon">
+                    <span>Passives</span>
             </ul>
         </div>
         <hr>
+
+        <!-- Shops Section -->
+        <div class="sidebar-section">
+            <ul class="sidebar-menu">
+                <li data-screen="shops-screen">
+                    <img src="icons/shops-icon.png" alt="Shops Icon">
+                    <span>Shops</span>
+                </li>
+            </ul>
+        </div>
+        <hr>
+
         <div class="sidebar-section">
             <ul class="sidebar-menu">
                 <li data-screen="adventure-screen">
-                    <img src="icons/adventure-icon.png" alt="Adventure Icon">
-                    <span>Adventure</span>
+                    <img src="icons/adventure-icon.png" alt="Delve Icon">
+                    <span>Delve</span>
                 </li>
             </ul>
         </div>
@@ -100,10 +115,31 @@
             </div>
         </div>
 
+        <!-- Just after the equipment-screen or somewhere convenient -->
+        <div id="passives-screen" class="screen">
+            <h2>Passives</h2>
+            
+            <p>Passive Points: <span id="player-passive-points">0</span></p>
+            <!-- Container for your tiers/passives -->
+            <div id="passive-tiers"></div>
+        </div>
+
+
+        <!-- Shops Screen -->
+        <div id="shops-screen" class="screen">
+            <h2>Shops</h2>
+            <!-- Display the NPC list here -->
+            <div id="npc-list"></div>
+
+            <!-- Display the selected NPC's shop here -->
+            <div id="npc-shop-container"></div>
+        </div>
+
         <!-- Adventure Screen -->
         <div id="adventure-screen" class="screen">
-            <h2>Adventure</h2>
-            <h3>Adventure Locations</h3>
+            <h2>Delve</h2>
+            <div id="delve-controls"></div>
+            <h3>Delve Locations</h3>
             <div id="adventure-locations"></div>
             <div class="container">
                 <!-- Player Stats -->
@@ -116,14 +152,12 @@
                     <!-- Player HP Bar Container -->
                     <div class="hp-bar-container">
                         <div id="player-hp-bar" class="hp-bar"></div>
-                        <!-- Slices and damage numbers will be added here dynamically -->
                     </div>
                     <div class="hp-text" id="player-hp-text">0 / 0</div>
 
                     <!-- Player Energy Shield Bar Container -->
                     <div class="es-bar-container">
                         <div id="player-es-bar" class="es-bar"></div>
-                        <!-- Slices and damage numbers will be added here dynamically -->
                     </div>
                     <div class="es-text" id="player-es-text">0 / 0</div>
 
@@ -132,6 +166,7 @@
                     <div class="progress-container">
                         <div id="player-attack-progress-bar" class="progress-bar attack-bar"></div>
                     </div>
+
                     <p>Attack Speed: <span id="player-attack-speed">0</span></p>
                     <p>Critical Chance: <span id="player-crit-chance">0%</span></p>
                     <p>Critical Multiplier: <span id="player-crit-multiplier">0</span></p>
@@ -139,6 +174,11 @@
                     <ul id="player-damage-types" class="stat-list"></ul>
                     <h3>Defense Types</h3>
                     <ul id="player-defense-types" class="stat-list"></ul>
+                    <h3>Other Stats</h3>
+                    <div>Precision: <span id="player-precision"></span></div>
+                    <div>Deflection: <span id="player-deflection"></span></div>
+                    <div>Health Regeneration: <span id="player-health-regen"></span> / Second</div>
+                    <div id="player-damage-type-modifiers" style="list-style-type: none;"></div>
                     <h3>Active Effects</h3>
                     <ul id="player-active-effects" class="stat-list"></ul>
                 </div>
@@ -153,14 +193,12 @@
                     <!-- Enemy HP Bar Container -->
                     <div class="hp-bar-container">
                         <div id="enemy-hp-bar" class="hp-bar"></div>
-                        <!-- Slices and damage numbers will be added here dynamically -->
                     </div>
                     <div class="hp-text" id="enemy-hp-text">0 / 0</div>
 
                     <!-- Enemy Energy Shield Bar Container -->
                     <div class="es-bar-container">
                         <div id="enemy-es-bar" class="es-bar"></div>
-                        <!-- Slices and damage numbers will be added here dynamically -->
                     </div>
                     <div class="es-text" id="enemy-es-text">0 / 0</div>
 
@@ -185,7 +223,6 @@
                     <div id="log-messages"></div>
                 </div>
             </div>
-            <button id="stop-combat" style="display: none;">Stop Combat</button>
         </div>
 
         <!-- Codex Screen -->
@@ -201,50 +238,40 @@
             </div>
         </div>
 
-        <!-- Skill Screens (e.g., Mining) -->
+        <!-- Mining Screen -->
         <div id="mining-screen" class="screen">
             <h2>Mining</h2>
-            <!-- Activities Div -->
-            <div class="activities"></div>
-            <!-- Gathering Progress -->
+            <div id="mining-activities" class="activities"></div>
             <h3>Progress</h3>
             <div class="progress-container">
                 <div id="mining-progress-bar" class="progress-bar gathering-bar"></div>
             </div>
-            <!-- Stop Gathering Button -->
             <button id="stop-mining" style="display: none;">Stop Mining</button>
-            <!-- Gathering Skill Stats -->
             <div id="gathering-skill-stats"></div>
         </div>
 
         <!-- fabrication-screen -->
         <div id="fabrication-screen" class="screen">
             <h2>Fabrication</h2>
-            <!-- Recipe Categories -->
             <div id="fabrication-categories">
                 <!-- Categories will be dynamically populated -->
             </div>
+            <div id="recipe-container" class="recipe-container">
+                <!-- Recipes will be dynamically populated -->
+            </div>
         </div>
-    </div>
 
-    <!-- Medtek Screen -->
-    <div id="medtek-screen" class="screen">
-        <h2>Medtek</h2>
-        <!-- Activities Div -->
-        <div class="activities"></div>
-        <!-- Medtek Progress -->
-        <h3>Progress</h3>
-        <div class="progress-container">
-            <div id="medtek-progress-bar" class="progress-bar gathering-bar"></div>
+        <!-- Medtek Screen -->
+        <div id="medtek-screen" class="screen">
+            <h2>Medtek</h2>
+            <div class="activities"></div>
+            <h3>Progress</h3>
+            <div class="progress-container">
+                <div id="medtek-progress-bar" class="progress-bar gathering-bar"></div>
+            </div>
+            <button id="stop-medtek" style="display: none;">Stop Crafting</button>
+            <div id="medtek-skill-stats"></div>
         </div>
-        <!-- Stop Medtek Button -->
-        <button id="stop-medtek" style="display: none;">Stop Crafting</button>
-        <!-- Medtek Skill Stats -->
-        <div id="medtek-skill-stats"></div>
-    </div>
-
-    <!-- Add other skill screens similarly -->
-
     </div>
 
     <!-- Settings Menu (Modal) -->
@@ -252,9 +279,6 @@
         <div class="modal-content">
             <span id="close-settings" class="close-button">&times;</span>
             <h2>Settings</h2>
-            <label>
-                <input type="checkbox" id="dark-mode-toggle"> Dark Mode
-            </label>
             <div class="settings-buttons">
                 <button id="save-game">Save Game</button>
                 <button id="load-game">Load Game</button>
@@ -263,21 +287,26 @@
         </div>
     </div>
 
-    <script src="buffs.js"></script>
     <script src="items.js"></script>
     <script src="recipes.js"></script>
-    <script src="tooltip.js"></script>
+    <script src="enemies.js"></script>
     <script src="injectors.js"></script>
-    <script src="itemgenerator.js"></script>
+    <script src="skills.js"></script>
+    <script src="passives.js"></script>
+    <script src="gathering_activities.js"></script>
+    <script src="tooltip.js"></script>
+    <script src="global.js"></script>
     <script src="inventory.js"></script>
     <script src="gathering.js"></script>
-    <script src="medtek.js"></script>
-    <script src="global.js"></script>
     <script src="fabrication.js"></script>
+    <script src="npcshops.js"></script>
+    <script src="buffs.js"></script>
+    <script src="itemgenerator.js"></script>
+    <script src="passivesUI.js"></script>
+    <script src="sounds.js"></script>
     <script src="statusEffects.js"></script>
     <script src="locations.js"></script>
     <script src="disassemble.js"></script>
-    <script src="enemies.js"></script>
     <script src="combat.js"></script>
 
     <!-- Popups -->
@@ -286,18 +315,29 @@
 
     <!-- Codex Script -->
     <script>
-        // Codex functionality
+        // Codex functionality from original code or your code can remain unchanged.
         document.addEventListener('DOMContentLoaded', function () {
-            // Get the area tabs container
             const areaTabsContainer = document.getElementById('codex-area-tabs');
             const enemyListContainer = document.getElementById('codex-enemy-list');
 
-            // Function to populate area tabs
             function populateAreaTabs() {
                 locations.forEach(location => {
                     const tab = document.createElement('button');
                     tab.classList.add('codex-area-tab');
                     tab.textContent = location.name;
+                    tab.style.padding = '10px';
+                    tab.style.margin = '5px';
+                    tab.style.borderRadius = '5px';
+                    tab.style.border = '1px solid #00ffcc';
+                    tab.style.background = 'rgba(0,0,0,0.5)';
+                    tab.style.color = '#fff';
+                    tab.style.cursor = 'pointer';
+                    tab.addEventListener('mouseover', () => {
+                        tab.style.background = 'rgba(0,255,204,0.2)';
+                    });
+                    tab.addEventListener('mouseout', () => {
+                        tab.style.background = 'rgba(0,0,0,0.5)';
+                    });
                     tab.addEventListener('click', () => {
                         displayEnemiesForLocation(location);
                     });
@@ -305,76 +345,66 @@
                 });
             }
 
-            // Function to display enemies for a location
             function displayEnemiesForLocation(location) {
-                // Clear previous content
                 enemyListContainer.innerHTML = '';
-
-                // Create a header for the location
                 const locationHeader = document.createElement('h3');
                 locationHeader.textContent = location.name;
                 enemyListContainer.appendChild(locationHeader);
 
-                // For each enemy in the location
                 location.enemies.forEach(locationEnemy => {
-                    // Find the enemy data
                     const enemyData = enemies.find(e => e.name === locationEnemy.name);
                     if (enemyData) {
-                        // Create a container for the enemy
                         const enemyContainer = document.createElement('div');
                         enemyContainer.classList.add('codex-enemy');
+                        enemyContainer.style.border = '1px solid #333';
+                        enemyContainer.style.padding = '10px';
+                        enemyContainer.style.margin = '10px 0';
+                        enemyContainer.style.borderRadius = '5px';
+                        enemyContainer.style.background = 'rgba(0,0,0,0.5)';
 
-                        // Enemy name and spawn rate
                         const enemyName = document.createElement('h4');
                         enemyName.textContent = `${enemyData.name} (Spawn Rate: ${locationEnemy.spawnRate}%)`;
                         enemyContainer.appendChild(enemyName);
 
-                        // Enemy stats
                         const statsList = document.createElement('ul');
                         statsList.classList.add('codex-enemy-stats');
+                        statsList.style.listStyle = 'none';
+                        statsList.style.padding = '0';
 
-                        // Health
                         const healthItem = document.createElement('li');
                         healthItem.textContent = `Health: ${enemyData.health}`;
                         statsList.appendChild(healthItem);
 
-                        // Energy Shield
                         const shieldItem = document.createElement('li');
                         shieldItem.textContent = `Energy Shield: ${enemyData.energyShield}`;
                         statsList.appendChild(shieldItem);
 
-                        // Attack Speed
                         const attackSpeedItem = document.createElement('li');
                         attackSpeedItem.textContent = `Attack Speed: ${enemyData.attackSpeed}`;
                         statsList.appendChild(attackSpeedItem);
 
-                        // Critical Chance
                         const critChanceItem = document.createElement('li');
                         critChanceItem.textContent = `Critical Chance: ${(enemyData.criticalChance * 100).toFixed(2)}%`;
                         statsList.appendChild(critChanceItem);
 
-                        // Critical Multiplier
                         const critMultiplierItem = document.createElement('li');
                         critMultiplierItem.textContent = `Critical Multiplier: ${enemyData.criticalMultiplier}`;
                         statsList.appendChild(critMultiplierItem);
 
-                        // Damage Types
+                        const damageTypes = Object.entries(enemyData.damageTypes).map(([type, value]) => `${type.charAt(0).toUpperCase()+type.slice(1)}: ${value}`).join(', ');
                         const damageTypesItem = document.createElement('li');
-                        const damageTypes = Object.entries(enemyData.damageTypes).map(([type, value]) => `${capitalize(type)}: ${value}`).join(', ');
                         damageTypesItem.textContent = `Damage Types: ${damageTypes}`;
                         statsList.appendChild(damageTypesItem);
 
-                        // Defense Types
                         if (enemyData.defenseTypes && Object.keys(enemyData.defenseTypes).length > 0) {
+                            const defenseTypes = Object.entries(enemyData.defenseTypes).map(([type, value]) => `${type.charAt(0).toUpperCase()+type.slice(1)}: ${value}`).join(', ');
                             const defenseTypesItem = document.createElement('li');
-                            const defenseTypes = Object.entries(enemyData.defenseTypes).map(([type, value]) => `${capitalize(type)}: ${value}`).join(', ');
                             defenseTypesItem.textContent = `Defense Types: ${defenseTypes}`;
                             statsList.appendChild(defenseTypesItem);
                         }
 
                         enemyContainer.appendChild(statsList);
 
-                        // Loot Table
                         if (enemyData.lootTable && enemyData.lootTable.length > 0) {
                             const lootHeader = document.createElement('h5');
                             lootHeader.textContent = 'Loot Table:';
@@ -382,6 +412,8 @@
 
                             const lootList = document.createElement('ul');
                             lootList.classList.add('codex-enemy-loot');
+                            lootList.style.listStyle = 'none';
+                            lootList.style.padding = '0';
 
                             enemyData.lootTable.forEach(lootItem => {
                                 const lootListItem = document.createElement('li');
@@ -395,7 +427,6 @@
 
                         enemyListContainer.appendChild(enemyContainer);
                     } else {
-                        // Enemy data not found
                         const missingEnemy = document.createElement('div');
                         missingEnemy.textContent = `Enemy data not found for ${locationEnemy.name}`;
                         enemyListContainer.appendChild(missingEnemy);
@@ -403,15 +434,7 @@
                 });
             }
 
-            // Helper function to capitalize the first letter
-            function capitalize(str) {
-                return str.charAt(0).toUpperCase() + str.slice(1);
-            }
-
-            // Initialize Codex
             populateAreaTabs();
-
-            // Optionally, display the first area's enemies by default
             if (locations.length > 0) {
                 displayEnemiesForLocation(locations[0]);
             }
@@ -419,5 +442,4 @@
     </script>
 
 </body>
-
 </html>
