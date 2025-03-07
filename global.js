@@ -842,6 +842,12 @@ function displayAdventureLocations() {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize items from the split item files
+    if (typeof loadItems === 'function') {
+        window.items = loadItems();
+        console.log('Items loaded from separate category files');
+    }
+    
     document.getElementById('save-game').addEventListener('click', () => saveGame(false));
     document.getElementById('load-game').addEventListener('click', loadGame);
     document.getElementById('reset-game').addEventListener('click', resetGame);

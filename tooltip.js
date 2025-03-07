@@ -160,6 +160,16 @@ function getItemTooltipContent(item, showRanges = false) {
                 defenseValue.max !== undefined
             ) {
                 statsContent += `<span style="color: #64dfdf;">+${defenseValue.min} - +${defenseValue.max} ${capitalize(defenseType)}</span><br>`;
+            } else if (typeof defenseValue === 'object') {
+                // Fix for [object Object] display - show min value if available
+                const minVal = defenseValue.min !== undefined ? defenseValue.min : 0;
+                const maxVal = defenseValue.max !== undefined ? defenseValue.max : minVal;
+                
+                if (minVal === maxVal) {
+                    statsContent += `<span style="color: #64dfdf;">+${minVal} ${capitalize(defenseType)}</span><br>`;
+                } else {
+                    statsContent += `<span style="color: #64dfdf;">+${minVal} - +${maxVal} ${capitalize(defenseType)}</span><br>`;
+                }
             } else {
                 statsContent += `<span style="color: #64dfdf;">+${defenseValue} ${capitalize(defenseType)}</span><br>`;
             }
@@ -189,23 +199,46 @@ function getItemTooltipContent(item, showRanges = false) {
             item.healthBonus.max !== undefined
         ) {
             healthShieldContent += `<span style="color: #48bf91;">+${item.healthBonus.min} - +${item.healthBonus.max} Health</span><br>`;
+        } else if (typeof item.healthBonus === 'object') {
+            // Fix for [object Object] display
+            const minVal = item.healthBonus.min !== undefined ? item.healthBonus.min : 0;
+            const maxVal = item.healthBonus.max !== undefined ? item.healthBonus.max : minVal;
+            
+            if (minVal === maxVal) {
+                healthShieldContent += `<span style="color: #48bf91;">+${minVal} Health</span><br>`;
+            } else {
+                healthShieldContent += `<span style="color: #48bf91;">+${minVal} - +${maxVal} Health</span><br>`;
+            }
         } else {
             healthShieldContent += `<span style="color: #48bf91;">+${item.healthBonus} Health</span><br>`;
         }
     }
-    if (item.healthBonusPercentDisplay !== undefined) {
+    if (item.healthBonusPercentRange !== undefined) {
         if (!hasHealthShield) {
             healthShieldContent += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
             hasHealthShield = true;
         }
-        healthShieldContent += `<span style="color: #48bf91;">+${item.healthBonusPercentDisplay}% Health</span><br>`;
-    }
-    if (showRanges && item.healthBonusPercentRange) {
-        if (!hasHealthShield) {
-            healthShieldContent += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
-            hasHealthShield = true;
+        
+        if (
+            showRanges &&
+            typeof item.healthBonusPercentRange === 'object' &&
+            item.healthBonusPercentRange.min !== undefined &&
+            item.healthBonusPercentRange.max !== undefined
+        ) {
+            healthShieldContent += `<span style="color: #48bf91;">+${item.healthBonusPercentRange.min}% - +${item.healthBonusPercentRange.max}% Health</span><br>`;
+        } else if (typeof item.healthBonusPercentRange === 'object') {
+            // Fix for [object Object] display
+            const minVal = item.healthBonusPercentRange.min !== undefined ? item.healthBonusPercentRange.min : 0;
+            const maxVal = item.healthBonusPercentRange.max !== undefined ? item.healthBonusPercentRange.max : minVal;
+            
+            if (minVal === maxVal) {
+                healthShieldContent += `<span style="color: #48bf91;">+${minVal}% Health</span><br>`;
+            } else {
+                healthShieldContent += `<span style="color: #48bf91;">+${minVal}% - +${maxVal}% Health</span><br>`;
+            }
+        } else {
+            healthShieldContent += `<span style="color: #48bf91;">+${item.healthBonusPercentRange}% Health</span><br>`;
         }
-        healthShieldContent += `<span style="color: #48bf91;">+${item.healthBonusPercentRange.min}% - +${item.healthBonusPercentRange.max}% Health</span><br>`;
     }
 
     // Health Regen
@@ -227,37 +260,68 @@ function getItemTooltipContent(item, showRanges = false) {
         }
     }
     
+    // If we have health/shield content, close the div and add it to the main content
     if (hasHealthShield) {
         healthShieldContent += `</div>`;
         content += healthShieldContent;
     }
 
-    // Energy Shield - only add section if it has content
+    // Energy Shield Bonuses
     if (item.energyShieldBonus !== undefined) {
-        content += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
+        if (!hasHealthShield) {
+            healthShieldContent += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
+            hasHealthShield = true;
+        }
+        
         if (
             showRanges &&
             typeof item.energyShieldBonus === 'object' &&
             item.energyShieldBonus.min !== undefined &&
             item.energyShieldBonus.max !== undefined
         ) {
-            content += `<span style="color: #48bf91;">+${item.energyShieldBonus.min} - +${item.energyShieldBonus.max} Energy Shield</span><br>`;
+            healthShieldContent += `<span style="color: #06d6a0;">+${item.energyShieldBonus.min} - +${item.energyShieldBonus.max} Energy Shield</span><br>`;
+        } else if (typeof item.energyShieldBonus === 'object') {
+            // Fix for [object Object] display
+            const minVal = item.energyShieldBonus.min !== undefined ? item.energyShieldBonus.min : 0;
+            const maxVal = item.energyShieldBonus.max !== undefined ? item.energyShieldBonus.max : minVal;
+            
+            if (minVal === maxVal) {
+                healthShieldContent += `<span style="color: #06d6a0;">+${minVal} Energy Shield</span><br>`;
+            } else {
+                healthShieldContent += `<span style="color: #06d6a0;">+${minVal} - +${maxVal} Energy Shield</span><br>`;
+            }
         } else {
-            content += `<span style="color: #48bf91;">+${item.energyShieldBonus} Energy Shield</span><br>`;
+            healthShieldContent += `<span style="color: #06d6a0;">+${item.energyShieldBonus} Energy Shield</span><br>`;
         }
-        content += `</div>`;
     }
     
-    if (item.energyShieldBonusPercentDisplay !== undefined) {
-        content += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
-        content += `<span style="color: #48bf91;">+${item.energyShieldBonusPercentDisplay}% Energy Shield</span><br>`;
-        content += `</div>`;
-    }
-    
-    if (showRanges && item.energyShieldBonusPercentRange) {
-        content += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
-        content += `<span style="color: #48bf91;">+${item.energyShieldBonusPercentRange.min}% - +${item.energyShieldBonusPercentRange.max}% Energy Shield</span><br>`;
-        content += `</div>`;
+    // Energy Shield Percentage Bonuses
+    if (item.energyShieldBonusPercentRange !== undefined) {
+        if (!hasHealthShield) {
+            healthShieldContent += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
+            hasHealthShield = true;
+        }
+        
+        if (
+            showRanges &&
+            typeof item.energyShieldBonusPercentRange === 'object' &&
+            item.energyShieldBonusPercentRange.min !== undefined &&
+            item.energyShieldBonusPercentRange.max !== undefined
+        ) {
+            healthShieldContent += `<span style="color: #06d6a0;">+${item.energyShieldBonusPercentRange.min}% - +${item.energyShieldBonusPercentRange.max}% Energy Shield</span><br>`;
+        } else if (typeof item.energyShieldBonusPercentRange === 'object') {
+            // Fix for [object Object] display
+            const minVal = item.energyShieldBonusPercentRange.min !== undefined ? item.energyShieldBonusPercentRange.min : 0;
+            const maxVal = item.energyShieldBonusPercentRange.max !== undefined ? item.energyShieldBonusPercentRange.max : minVal;
+            
+            if (minVal === maxVal) {
+                healthShieldContent += `<span style="color: #06d6a0;">+${minVal}% Energy Shield</span><br>`;
+            } else {
+                healthShieldContent += `<span style="color: #06d6a0;">+${minVal}% - +${maxVal}% Energy Shield</span><br>`;
+            }
+        } else {
+            healthShieldContent += `<span style="color: #06d6a0;">+${item.energyShieldBonusPercentRange}% Energy Shield</span><br>`;
+        }
     }
 
     // Attack Speed - only add section if it has content
@@ -517,7 +581,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 hideTimeout = null;
             }
             
-            // Show tooltip immediately
+            // Always update currentTarget and show tooltip
+            // This ensures tooltip is updated when moving between elements
+            currentTarget = target;
             showTooltip(target);
         } else if (event.type === 'mouseleave') {
             debugTooltip('Mouse leave from element with tooltip', { 
@@ -525,12 +591,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 elementClass: target.className
             });
             
-            // Delay hiding to prevent flicker when moving between tooltip elements
+            // Use a short delay to allow for smooth transitions between tooltips
             hideTimeout = setTimeout(() => {
                 if (target === currentTarget) {
                     hideTooltip();
                 }
-            }, 100);
+            }, 50);
         }
     }
 
@@ -543,6 +609,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (current.dataset && current.dataset.hasTooltip === 'true') {
                 return current;
             }
+            
+            // Special case handling for common containers
+            if (current.classList) {
+                // Recipe cards, passive cards, and shop items should all trigger tooltips
+                // even if the data-has-tooltip is on a parent element
+                if (current.classList.contains('recipe-card') || 
+                    current.classList.contains('passive-card') ||
+                    current.classList.contains('shop-item')) {
+                    
+                    if (current.hasAttribute('data-has-tooltip')) {
+                        return current;
+                    }
+                }
+            }
+            
             current = current.parentElement;
         }
         
@@ -550,15 +631,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showTooltip(target) {
-        currentTarget = target;
-        
-        // If we're already showing a tooltip, we can just reposition it
-        if (isTooltipVisible && globalTooltip.style.display === 'block') {
-            debugTooltip('Repositioning existing tooltip', { target: target });
-            positionTooltip(target);
-            return;
-        }
-
         // Find tooltip content
         let content = '';
         
@@ -602,9 +674,6 @@ document.addEventListener('DOMContentLoaded', () => {
         positionTooltip(target);
         
         isTooltipVisible = true;
-        
-        // Make sure any other tooltips are hidden
-        hideAllLegacyTooltips();
     }
     
     function positionTooltip(target) {
@@ -954,25 +1023,6 @@ function removeLegacyTooltipCSS() {
         }
     }
 }
-
-// Add a screen change handler to make sure tooltips are cleaned up
-window.addEventListener('screenChanged', (event) => {
-    debugTooltip('Screen changed to ' + event.detail.screenId + ' - cleaning up tooltips');
-    
-    // Hide any visible tooltip
-    hideTooltip();
-    
-    // Force a check for legacy tooltips
-    hideAllLegacyTooltips();
-    
-    // Make doubly sure our global tooltip is hidden
-    if (globalTooltip) {
-        globalTooltip.style.display = 'none';
-    }
-    
-    currentTarget = null;
-    isTooltipVisible = false;
-});
 
 // Modify the delve bag tooltip handler to use existing showTooltip function
 document.addEventListener('mouseover', function(e) {

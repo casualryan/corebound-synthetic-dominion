@@ -90,24 +90,37 @@ function displayAdventureLocations() {
 }
 
 function startAdventure(location) {
-    if (isDelveInProgress) {
+    if (isGathering) {
+        stopGatheringActivity();
+    }
+
+    if (isCombatActive || isDelveInProgress) {
         logMessage("You are already on an adventure!");
         return;
     }
 
+    // Reset and prepare for adventure
     clearLog();
     logMessage(`You begin your delve into ${location.name}.`);
-
-    isDelveInProgress = true;
+    currentLocation = location;
+    
+    // Make sure health regen is properly initialized before entering delve mode
+    // This ensures it's ready to work when the delve ends
+    // stopHealthRegen(); // Clear any existing timers
+    startHealthRegen(); // Initialize the health regeneration system
+    
+    // Now set up the delve
     currentDelveLocation = location;
     currentMonsterIndex = 0;
+    isDelveInProgress = true;
     delveBag = { items: [], credits: 0 };
     updateDelveBagUI(); // Update UI when adventure starts
-
+    
     // We rely on displayAdventureLocations() to hide the location buttons 
     // and show the "Flee" button instead.
     displayAdventureLocations();
-    startHealthRegen();
+    
+    // Begin with the first monster
     beginNextMonsterInSequence();
 }
 
@@ -117,9 +130,18 @@ function beginNextMonsterInSequence() {
         finalizeDelveLoot();
         logMessage(`You have cleared all monsters in ${currentDelveLocation.name}!`);
 
-        // Immediately reset the player's HP/shield for UI
+        // First mark delve as completed so health regen can work
+        isDelveInProgress = false;
+        
+        // Restore player's HP/shield only when delve is completed
         player.currentHealth = player.totalStats.health;
         player.currentShield = player.totalStats.energyShield;
+        
+        // Clear buffs at the end of a delve (except for future medtek injectors)
+        clearBuffs(player, true);
+        
+        // Now restart health regeneration
+        stopHealthRegen();
         startHealthRegen();
         updatePlayerStatsDisplay();
 
@@ -180,6 +202,11 @@ function addMonsterLootToDelveBag(monster) {
 }
 
 function finalizeDelveLoot() {
+    isDelveInProgress = false;
+    
+    // Clear all buffs except medtek injectors when completing a delve
+    clearBuffs(player, true);
+    
     logMessage("You successfully cleared the delve and collect your spoils!");
 
     delveBag.items.forEach(loot => {
@@ -745,18 +772,20 @@ function fleeCombat() {
 }
 
 function startHealthRegen() {
-    // If we are delving, skip health regeneration entirely
-    // if (isDelveInProgress) {
-    //     return;
-    // }
-
     // Clear any existing interval to prevent multiple intervals
     if (healthRegenInterval) {
         clearInterval(healthRegenInterval);
+        healthRegenInterval = null;
+        console.log("Clearing existing health regeneration timer");
     }
 
-    // Regenerate health every 200 milliseconds
+    console.log("Starting health regeneration timer. isDelveInProgress: " + isDelveInProgress);
+    console.log("Player health regen rate: " + player.totalStats.healthRegen + " per second");
+
+    // Regenerate health every 200 milliseconds, but with special rules for delves
     healthRegenInterval = setInterval(() => {
+        
+        // Otherwise apply normal health regeneration
         if (player.currentHealth < player.totalStats.health) {
             const regenPerTick = player.totalStats.healthRegen / 5; 
             // (Assuming healthRegen is per second, 5 ticks/sec -> 200ms each)
@@ -775,6 +804,7 @@ function stopHealthRegen() {
     if (healthRegenInterval) {
         clearInterval(healthRegenInterval);
         healthRegenInterval = null;
+        console.log("Health regeneration stopped");
     }
 }
 
@@ -848,9 +878,22 @@ function combatLoop() {
     updateEnemyStatsDisplay();
 }
 
-function clearBuffs(entity) {
+function clearBuffs(entity, preserveMedtekInjectors = false) {
     console.log(`clearBuffs called for ${entity.name} (clearbuffs)`);
-    entity.activeBuffs = [];
+    
+    if (preserveMedtekInjectors && entity === player) {
+        // Filter out all buffs except medtek injectors
+        // This is a placeholder for when medtek injectors are implemented
+        // Currently, they don't exist, so all buffs will be cleared
+        // When implemented, this should be: entity.activeBuffs = entity.activeBuffs.filter(buff => buff.isMedtekInjector);
+        entity.activeBuffs = [];
+        logMessage(`${entity.name}'s buffs cleared (except for medtek injectors).`);
+    } else {
+        // Clear all buffs
+        entity.activeBuffs = [];
+        logMessage(`${entity.name}'s buffs cleared.`);
+    }
+    
     console.log(`${entity.name} activeBuffs length after clearing: ${entity.activeBuffs.length} (clearbuffs)`);
     entity.calculateStats();
 }
@@ -892,10 +935,16 @@ function stopCombat(reason) {
         fleeButton.disabled = false; // Make sure it's enabled for next time
     }
 
-    // ALWAYS restore player health to full no matter what
-    player.currentHealth = player.totalStats.health;
-    player.currentShield = player.totalStats.energyShield;
-    updatePlayerStatsDisplay();
+    // Only restore player health when fleeing or completing a delve
+    // NOT between delve fights
+    if (reason === 'playerFled' || reason === 'delveCompleted' || reason === 'playerDefeated') {
+        player.currentHealth = player.totalStats.health;
+        player.currentShield = player.totalStats.energyShield;
+        updatePlayerStatsDisplay();
+        
+        // Always restart health regeneration after combat ends with fleeing, defeat, or delve completion
+        startHealthRegen();
+    }
 
     // Handle delve state based on reason
     if (isDelveInProgress) {
@@ -907,6 +956,10 @@ function stopCombat(reason) {
             currentDelveLocation = null;
             currentMonsterIndex = 0;
             displayAdventureLocations();
+            
+            // Restart health regeneration as we're no longer in a delve
+            stopHealthRegen();
+            startHealthRegen();
         }
         else if (reason === 'delveCompleted') {
             // Mark success
@@ -914,16 +967,22 @@ function stopCombat(reason) {
             currentDelveLocation = null;
             currentMonsterIndex = 0;
             displayAdventureLocations();
+            
+            // Restart health regeneration as we're no longer in a delve
+            stopHealthRegen();
+            startHealthRegen();
         }
         else if (reason === 'enemyDefeated') {
             // Don't end the delve, we'll handle the next monster
             currentMonsterIndex++;
             
-            // Make sure player's health doesn't continue to drop
-            clearBuffs(player);
-            clearBuffs(enemy);
+            // Clear buffs between fights, but preserve any future medtek injectors
+            clearBuffs(player, true);
+            if (enemy) {
+                clearBuffs(enemy);
+            }
             
-            // Health has already been restored above
+            // Don't restore health between delve fights
             // Wait 3 seconds before beginning the next fight
             interFightPauseTimer = setTimeout(() => {
                 beginNextMonsterInSequence();

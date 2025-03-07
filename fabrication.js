@@ -376,8 +376,11 @@ function createRecipeCard(recipe) {
     if (window.items) {
         const itemTemplate = window.items.find(i => i.name === recipe.name);
         if (itemTemplate) {
+            // Add tooltip data
             card.setAttribute('data-has-tooltip', 'true');
-            card.setAttribute('data-tooltip-content', getItemTooltipContent(itemTemplate));
+            card.setAttribute('data-tooltip-content', getItemTooltipContent(itemTemplate, true));
+            // Make the card look interactive
+            card.style.cursor = 'pointer';
         }
     }
     

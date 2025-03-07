@@ -85,10 +85,13 @@ function updateInventoryDisplay() {
     }
 
     // Loop through each item in the inventory
-    window.inventory.forEach(item => {
+    window.inventory.forEach((item, index) => {
         if (item) {
             const listItem = document.createElement('li');
             listItem.style.position = 'relative'; // Required for quantity badge positioning
+            
+            // Set the item index for staggered animations
+            listItem.style.setProperty('--item-index', index);
 
             // Create item icon
             const itemIcon = document.createElement('img');
@@ -123,7 +126,6 @@ function updateInventoryDisplay() {
                     showItemOptionsPopup(item, event);
                 }
             });
-
         } else {
             console.warn('Undefined item found in inventory. Skipping...');
         }
@@ -206,77 +208,141 @@ function updateEquipmentDisplay() {
         return;
     }
 
+    // Add a subtle animation to the paper doll
+    const paperDoll = document.getElementById('equipment-paper-doll');
+    paperDoll.classList.add('updating');
+    setTimeout(() => paperDoll.classList.remove('updating'), 500);
+
     // Update equipment slots
     const slots = ['mainHand', 'offHand', 'head', 'chest', 'legs', 'feet', 'gloves'];
-    slots.forEach(slotName => {
+    slots.forEach((slotName, index) => {
         const slotElement = document.getElementById(`${slotName}-slot`);
         const equippedItem = player.equipment[slotName];
 
-        slotElement.innerHTML = ''; // Clear current content
-        
-        if (equippedItem) {
-            // Create a wrapper div to hold icon and tooltip data
-            const wrapper = document.createElement('div');
-            wrapper.setAttribute('data-has-tooltip', 'true');
-            wrapper.setAttribute('data-tooltip-source', 'equipment-slot');
-            wrapper.setAttribute('data-tooltip-content', getItemTooltipContent(equippedItem));
-            wrapper.style.width = '100%';
-            wrapper.style.height = '100%';
-            wrapper.style.display = 'flex';
-            wrapper.style.alignItems = 'center';
-            wrapper.style.justifyContent = 'center';
+        // Add a slight delay to each slot update for a cascading effect
+        setTimeout(() => {
+            slotElement.innerHTML = ''; // Clear current content
+            
+            if (equippedItem) {
+                // Create a wrapper div to hold icon and tooltip data
+                const wrapper = document.createElement('div');
+                wrapper.setAttribute('data-has-tooltip', 'true');
+                wrapper.setAttribute('data-tooltip-source', 'equipment-slot');
+                wrapper.setAttribute('data-tooltip-content', getItemTooltipContent(equippedItem));
+                wrapper.style.width = '100%';
+                wrapper.style.height = '100%';
+                wrapper.style.display = 'flex';
+                wrapper.style.alignItems = 'center';
+                wrapper.style.justifyContent = 'center';
+                
+                // Add a class for equipped items
+                wrapper.classList.add('equipped-item');
+                
+                // Add a data attribute for item rarity if it exists
+                if (equippedItem.rarity) {
+                    wrapper.setAttribute('data-rarity', equippedItem.rarity);
+                    slotElement.setAttribute('data-rarity', equippedItem.rarity);
+                }
 
-            // Create item icon
-            const itemIcon = document.createElement('img');
-            itemIcon.src = equippedItem.icon || "icons/default-icon.png";
-            itemIcon.alt = equippedItem.name || 'Unknown Item';
-            itemIcon.style.maxWidth = '100%';
-            itemIcon.style.maxHeight = '100%';
+                // Create item icon
+                const itemIcon = document.createElement('img');
+                itemIcon.src = equippedItem.icon || "icons/default-icon.png";
+                itemIcon.alt = equippedItem.name || 'Unknown Item';
+                itemIcon.style.maxWidth = '100%';
+                itemIcon.style.maxHeight = '100%';
 
-            // Append element
-            wrapper.appendChild(itemIcon);
-            slotElement.appendChild(wrapper);
+                // Append element
+                wrapper.appendChild(itemIcon);
+                slotElement.appendChild(wrapper);
 
-            // Add click handler to the wrapper
-            wrapper.addEventListener('click', (event) => {
-                unequipItemWithConfirmation(slotName, event);
-            });
-        } else {
-            slotElement.textContent = capitalize(slotName.replace('Hand', ' Hand'));
-        }
+                // Add click handler to the wrapper
+                wrapper.addEventListener('click', (event) => {
+                    // Add a visual feedback effect when clicked
+                    wrapper.classList.add('clicked');
+                    setTimeout(() => wrapper.classList.remove('clicked'), 300);
+                    
+                    unequipItemWithConfirmation(slotName, event);
+                });
+                
+                // Add a subtle entrance animation
+                wrapper.style.opacity = '0';
+                wrapper.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    wrapper.style.transition = 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                    wrapper.style.opacity = '1';
+                    wrapper.style.transform = 'scale(1)';
+                }, 50);
+            } else {
+                slotElement.textContent = capitalize(slotName.replace('Hand', ' Hand'));
+                
+                // Add a subtle pulse effect to empty slots
+                slotElement.classList.add('pulse-empty');
+                setTimeout(() => slotElement.classList.remove('pulse-empty'), 1000);
+            }
+        }, index * 100); // Stagger the updates by 100ms per slot
     });
 
     // Update bionic slots with same structure
     player.equipment.bionicSlots.forEach((item, index) => {
         const slotElement = document.getElementById(`bionic-slot-${index}`);
-        slotElement.innerHTML = '';
+        
+        // Add a slight delay for cascading effect, continuing from regular equipment
+        setTimeout(() => {
+            slotElement.innerHTML = '';
 
-        if (item) {
-            const wrapper = document.createElement('div');
-            wrapper.setAttribute('data-has-tooltip', 'true');
-            wrapper.setAttribute('data-tooltip-source', 'bionic-slot');
-            wrapper.setAttribute('data-tooltip-content', getItemTooltipContent(item));
-            wrapper.style.width = '100%';
-            wrapper.style.height = '100%';
-            wrapper.style.display = 'flex';
-            wrapper.style.alignItems = 'center';
-            wrapper.style.justifyContent = 'center';
+            if (item) {
+                const wrapper = document.createElement('div');
+                wrapper.setAttribute('data-has-tooltip', 'true');
+                wrapper.setAttribute('data-tooltip-source', 'bionic-slot');
+                wrapper.setAttribute('data-tooltip-content', getItemTooltipContent(item));
+                wrapper.style.width = '100%';
+                wrapper.style.height = '100%';
+                wrapper.style.display = 'flex';
+                wrapper.style.alignItems = 'center';
+                wrapper.style.justifyContent = 'center';
+                
+                // Add a class for equipped bionics
+                wrapper.classList.add('equipped-bionic');
+                
+                // Add a data attribute for item rarity if it exists
+                if (item.rarity) {
+                    wrapper.setAttribute('data-rarity', item.rarity);
+                    slotElement.setAttribute('data-rarity', item.rarity);
+                }
 
-            const itemIcon = document.createElement('img');
-            itemIcon.src = item.icon || "icons/default-icon.png";
-            itemIcon.alt = item.name || 'Unknown Item';
-            itemIcon.style.maxWidth = '100%';
-            itemIcon.style.maxHeight = '100%';
+                const itemIcon = document.createElement('img');
+                itemIcon.src = item.icon || "icons/default-icon.png";
+                itemIcon.alt = item.name || 'Unknown Item';
+                itemIcon.style.maxWidth = '100%';
+                itemIcon.style.maxHeight = '100%';
 
-            wrapper.appendChild(itemIcon);
-            slotElement.appendChild(wrapper);
+                wrapper.appendChild(itemIcon);
+                slotElement.appendChild(wrapper);
 
-            wrapper.addEventListener('click', (event) => {
-                unequipItemWithConfirmation(`bionic-slot-${index}`, event);
-            });
-        } else {
-            slotElement.textContent = `Bionic ${index + 1}`;
-        }
+                wrapper.addEventListener('click', (event) => {
+                    // Add a visual feedback effect when clicked
+                    wrapper.classList.add('clicked');
+                    setTimeout(() => wrapper.classList.remove('clicked'), 300);
+                    
+                    unequipItemWithConfirmation(`bionic-slot-${index}`, event);
+                });
+                
+                // Add a subtle entrance animation
+                wrapper.style.opacity = '0';
+                wrapper.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    wrapper.style.transition = 'all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                    wrapper.style.opacity = '1';
+                    wrapper.style.transform = 'scale(1)';
+                }, 50);
+            } else {
+                slotElement.textContent = `Bionic ${index + 1}`;
+                
+                // Add a subtle pulse effect to empty slots
+                slotElement.classList.add('pulse-empty');
+                setTimeout(() => slotElement.classList.remove('pulse-empty'), 1000);
+            }
+        }, (slots.length + index) * 100); // Continue the staggered timing from regular equipment
     });
 }
 
