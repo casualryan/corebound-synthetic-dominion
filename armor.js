@@ -8,11 +8,9 @@ const armor = [
         criticalChance: 0,
         criticalMultiplier: 0,
         defenseTypes: {
-            toughness: { min: 20, max: 30 },
-            fortitude: { min: 10, max: 10 },
-            heatResistance: { min: 10, max: 10 },
-            immunity: { min: 10, max: 10 },
-            antimagnet: { min: 10, max: 10 }
+            sturdiness: { min: 20, max: 30 },  // Physical defense
+            structure: { min: 10, max: 10 },   // Elemental defense
+            stability: { min: 10, max: 10 }    // Chemical defense
         },
         healthBonus: { min: 50, max: 100 },
         healthBonusPercentRange: { min: 15, max: 20 },
@@ -48,19 +46,19 @@ const armor = [
 
     {
         name: "Photon Inhibitor Shield",
-        type: "Shield",
-        icon: "icons/photon_inhibitor_shield.png",
+        type: "Armor",
+        icon: "icons/energy_shield.png",
+        damageTypes: {},
+        attackSpeed: 0,
+        criticalChance: 0,
+        criticalMultiplier: 0,
         defenseTypes: {
-            toughness: { min: 10, max: 15 },
-            heatResistance: { min: 10, max: 15 },
-            immunity: { min: 10, max: 15 },
-            fortitude: { min: 10, max: 15 },
-            antimagnet: { min: 10, max: 15 }
+            structure: { min: 30, max: 40 }, // Good against Elemental (pyro, cryo, electric)
+            stability: { min: 10, max: 15 }, // Some Chemical resistance
+            sturdiness: { min: 5, max: 10 }  // Minor Physical resistance
         },
-        healthBonus: { min: 10, max: 30 },
-        healthBonusPercentRange: { min: 5, max: 5 },
-        energyShieldBonus: { min: 30, max: 50 },
-        energyShieldBonusPercentRange: { min: 15, max: 15 },
+        energyShieldBonus: { min: 100, max: 150 },
+        energyShieldBonusPercentRange: { min: 10, max: 15 },
         slot: 'offHand',
         isDisassembleable: true,
         disassembleResults: [
@@ -289,6 +287,152 @@ const armor = [
         isDisassembleable: false,
         disassembleResults: [],
         description: "Metal chest plate fashioned from discarded scrap."
+    },
+
+    {
+        name: "Light Armor",
+        type: "Armor",
+        icon: "icons/light_armor.png",
+        damageTypes: {},
+        attackSpeed: 0,
+        defenseTypes: {
+            sturdiness: { min: 15, max: 20 },
+            structure: { min: 5, max: 10 },
+            stability: { min: 5, max: 10 }
+        },
+        healthBonus: { min: 50, max: 100 },
+        healthBonusPercentRange: { min: 15, max: 20 },
+        slot: 'chest',
+        isDisassembleable: true,
+        disassembleResults: [
+            {
+                name: 'Scrap Metal', quantity: 3
+            },
+        ],
+        effects: [
+            {
+                trigger: 'whenHit',
+                chance: 0.1, // 10% chance
+                action: 'heal',
+                parameters: {
+                    amount: 30
+                }
+            },
+            {
+                trigger: 'whenHit',
+                chance: 0.25, // 10% chance
+                action: 'dealDamage',
+                parameters: {
+                    damageType: 'kinetic',
+                    amount: 15,
+                    ignoreDefenses: true
+                }
+            }
+        ],
+        description: '10% chance when hit to gain 30 life. 25% chance when hit to deal 15 Kinetic damage, ignoring defenses.'
+    },
+
+    {
+        name: "Stealth Suit",
+        type: "Armor",
+        icon: "icons/stealth_armor.png",
+        damageTypes: {},
+        attackSpeed: 0.1,  // +10% attack speed
+        defenseTypes: {
+            sturdiness: { min: 5, max: 10 },
+            structure: { min: 10, max: 15 },
+            stability: { min: 5, max: 10 }
+        },
+        healthBonus: { min: 50, max: 100 },
+        healthBonusPercentRange: { min: 15, max: 20 },
+        slot: 'chest',
+        isDisassembleable: true,
+        disassembleResults: [
+            {
+                name: 'Scrap Metal', quantity: 3
+            },
+        ],
+        effects: [
+            {
+                trigger: 'whenHit',
+                chance: 0.1, // 10% chance
+                action: 'heal',
+                parameters: {
+                    amount: 30
+                }
+            },
+            {
+                trigger: 'whenHit',
+                chance: 0.25, // 10% chance
+                action: 'dealDamage',
+                parameters: {
+                    damageType: 'kinetic',
+                    amount: 15,
+                    ignoreDefenses: true
+                }
+            }
+        ],
+        description: '10% chance when hit to gain 30 life. 25% chance when hit to deal 15 Kinetic damage, ignoring defenses.'
+    },
+
+    {
+        name: "Heavy Gauntlets",
+        type: "Armor",
+        icon: "icons/heavy_gauntlets.png",
+        damageTypes: {
+            kinetic: { min: 3, max: 6 }
+        },
+        defenseTypes: {
+            sturdiness: { min: 10, max: 15 }
+        },
+        healthBonus: { min: 30, max: 30 },
+        healthBonusPercentRange: { min: 10, max: 15 },
+        slot: 'gloves',
+        isDisassembleable: true,
+        disassembleResults: [
+            {
+                name: 'Scrap Metal', quantity: 2
+            },
+        ],
+        description: 'Defensive gloves.'
+    },
+
+    {
+        name: "Thermal Insulated Boots",
+        type: "Armor",
+        icon: "icons/thermal_boots.png",
+        defenseTypes: {
+            structure: { min: 15, max: 25 } // Good against pyro, cryo, electric
+        },
+        healthBonus: { min: 30, max: 30 },
+        healthBonusPercentRange: { min: 10, max: 15 },
+        slot: 'feet',
+        isDisassembleable: true,
+        disassembleResults: [
+            {
+                name: 'Scrap Metal', quantity: 2
+            },
+        ],
+        description: 'Defensive boots.'
+    },
+
+    {
+        name: "Anti-Radiation Helmet",
+        type: "Armor",
+        icon: "icons/anti_radiation_helmet.png",
+        defenseTypes: {
+            stability: { min: 20, max: 30 } // Good against corrosive, radiation
+        },
+        healthBonus: { min: 20, max: 20 },
+        healthBonusPercentRange: { min: 8, max: 10 },
+        slot: 'head',
+        isDisassembleable: true,
+        disassembleResults: [
+            {
+                name: 'Scrap Metal', quantity: 2
+            },
+        ],
+        description: 'Light defensive helmet, adds some Precision.'
     }
 ];
 

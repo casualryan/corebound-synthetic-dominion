@@ -52,6 +52,34 @@ function getItemTooltipContent(item, showRanges = false) {
     let statsContent = '';
     let hasStats = false;
     
+    // Add this function to group damage types by their category
+    function getDamageTypeCategory(damageType) {
+        // Physical Group
+        if (damageType === 'kinetic' || damageType === 'slashing') {
+            return 'Physical';
+        }
+        // Elemental Group
+        else if (damageType === 'pyro' || damageType === 'cryo' || damageType === 'electric') {
+            return 'Elemental';
+        }
+        // Chemical Group
+        else if (damageType === 'corrosive' || damageType === 'radiation') {
+            return 'Chemical';
+        }
+        // Legacy support
+        else if (damageType === 'mental') {
+            return 'Physical (Legacy)';
+        }
+        else if (damageType === 'magnetic') {
+            return 'Elemental (Legacy)';
+        }
+        else if (damageType === 'chemical') {
+            return 'Chemical (Legacy)';
+        }
+        
+        return 'Unknown';
+    }
+
     // Damage Types
     if (item.damageTypes && Object.keys(item.damageTypes).length > 0) {
         if (!hasStats) {
@@ -59,15 +87,93 @@ function getItemTooltipContent(item, showRanges = false) {
             hasStats = true;
         }
         
+        // Group damage types by category
+        const damageByCategory = {};
+        
         for (let damageType in item.damageTypes) {
-            const damageValue = item.damageTypes[damageType];
-            if (showRanges && typeof damageValue === 'object' && damageValue.min !== undefined && damageValue.max !== undefined) {
-                statsContent += `<span style="color: #ff6b6b;">${capitalize(damageType)} Damage:</span> ${damageValue.min} - ${damageValue.max}<br>`;
-            } else if (typeof damageValue === 'object') {
-                // Handle cases where damageValue is an object without min/max
-                statsContent += `<span style="color: #ff6b6b;">${capitalize(damageType)} Damage:</span> ${damageValue.value || 0}<br>`;
+            const category = getDamageTypeCategory(damageType);
+            if (!damageByCategory[category]) {
+                damageByCategory[category] = [];
+            }
+            
+            damageByCategory[category].push({
+                type: damageType,
+                value: item.damageTypes[damageType]
+            });
+        }
+        
+        // Display damage types by category
+        for (let category in damageByCategory) {
+            statsContent += `<div style="margin-top: 4px;"><span style="color: #ffcc00;">${category} Damage:</span></div>`;
+            
+            for (let damage of damageByCategory[category]) {
+                const damageValue = damage.value;
+                const damageType = capitalize(damage.type);
+                
+                if (
+                    showRanges &&
+                    typeof damageValue === 'object' &&
+                    damageValue.min !== undefined &&
+                    damageValue.max !== undefined
+                ) {
+                    statsContent += `<div><span style="color: #ffcc00;">• ${damageType}:</span> <span style="color: #ffffff;">${damageValue.min}-${damageValue.max}</span></div>`;
+                } else if (typeof damageValue === 'object') {
+                    // Fix for [object Object] display - show min value if available
+                    const minVal = damageValue.min !== undefined ? damageValue.min : 0;
+                    const maxVal = damageValue.max !== undefined ? damageValue.max : minVal;
+                    
+                    if (minVal === maxVal) {
+                        statsContent += `<div><span style="color: #ffcc00;">• ${damageType}:</span> <span style="color: #ffffff;">${minVal}</span></div>`;
+                    } else {
+                        statsContent += `<div><span style="color: #ffcc00;">• ${damageType}:</span> <span style="color: #ffffff;">${minVal}-${maxVal}</span></div>`;
+                    }
+                } else {
+                    statsContent += `<div><span style="color: #ffcc00;">• ${damageType}:</span> <span style="color: #ffffff;">${damageValue}</span></div>`;
+                }
+            }
+        }
+    }
+
+    // After displaying damage types, add a section for damage group modifiers
+    if (item.statModifiers && item.statModifiers.damageGroups && Object.keys(item.statModifiers.damageGroups).length > 0) {
+        if (!hasStats) {
+            statsContent += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
+            hasStats = true;
+        }
+        
+        // Display group damage modifiers
+        statsContent += `<div style="margin-top: 4px;"><span style="color: #ffcc00;">Damage Group Modifiers:</span></div>`;
+        
+        // Define group display names
+        const groupDisplayNames = {
+            'physical': 'Physical Damage',
+            'elemental': 'Elemental Damage',
+            'chemical': 'Chemical Damage'
+        };
+        
+        for (let group in item.statModifiers.damageGroups) {
+            const modValue = item.statModifiers.damageGroups[group];
+            const displayName = groupDisplayNames[group] || capitalize(group);
+            
+            if (
+                showRanges &&
+                typeof modValue === 'object' &&
+                modValue.min !== undefined &&
+                modValue.max !== undefined
+            ) {
+                statsContent += `<div><span style="color: #ffcc00;">• ${displayName}:</span> <span style="color: #ffffff;">+${modValue.min}% to +${modValue.max}%</span></div>`;
+            } else if (typeof modValue === 'object') {
+                // Fix for [object Object] display - show min value if available
+                const minVal = modValue.min !== undefined ? modValue.min : 0;
+                const maxVal = modValue.max !== undefined ? modValue.max : minVal;
+                
+                if (minVal === maxVal) {
+                    statsContent += `<div><span style="color: #ffcc00;">• ${displayName}:</span> <span style="color: #ffffff;">+${minVal}%</span></div>`;
+                } else {
+                    statsContent += `<div><span style="color: #ffcc00;">• ${displayName}:</span> <span style="color: #ffffff;">+${minVal}% to +${maxVal}%</span></div>`;
+                }
             } else {
-                statsContent += `<span style="color: #ff6b6b;">${capitalize(damageType)} Damage:</span> ${damageValue}<br>`;
+                statsContent += `<div><span style="color: #ffcc00;">• ${displayName}:</span> <span style="color: #ffffff;">+${modValue}%</span></div>`;
             }
         }
     }
@@ -151,27 +257,32 @@ function getItemTooltipContent(item, showRanges = false) {
             hasStats = true;
         }
         
+        // Define defense type descriptions
+        const defenseDescriptions = {
+            'sturdiness': 'Physical Defense',
+            'structure': 'Elemental Defense',
+            'stability': 'Chemical Defense',
+            // Legacy support
+            'toughness': 'Physical Defense (Legacy)',
+            'fortitude': 'Mental Defense (Legacy)',
+            'heatResistance': 'Heat Defense (Legacy)',
+            'immunity': 'Chemical Defense (Legacy)',
+            'antimagnet': 'Magnetic Defense (Legacy)'
+        };
+        
         for (let defenseType in item.defenseTypes) {
             const defenseValue = item.defenseTypes[defenseType];
+            const description = defenseDescriptions[defenseType] || capitalize(defenseType);
+            
             if (
                 showRanges &&
                 typeof defenseValue === 'object' &&
                 defenseValue.min !== undefined &&
                 defenseValue.max !== undefined
             ) {
-                statsContent += `<span style="color: #64dfdf;">+${defenseValue.min} - +${defenseValue.max} ${capitalize(defenseType)}</span><br>`;
-            } else if (typeof defenseValue === 'object') {
-                // Fix for [object Object] display - show min value if available
-                const minVal = defenseValue.min !== undefined ? defenseValue.min : 0;
-                const maxVal = defenseValue.max !== undefined ? defenseValue.max : minVal;
-                
-                if (minVal === maxVal) {
-                    statsContent += `<span style="color: #64dfdf;">+${minVal} ${capitalize(defenseType)}</span><br>`;
-                } else {
-                    statsContent += `<span style="color: #64dfdf;">+${minVal} - +${maxVal} ${capitalize(defenseType)}</span><br>`;
-                }
+                statsContent += `<div><span style="color: #64dfdf;">${description}:</span> <span style="color: #ffffff;">${defenseValue.min}-${defenseValue.max}</span></div>`;
             } else {
-                statsContent += `<span style="color: #64dfdf;">+${defenseValue} ${capitalize(defenseType)}</span><br>`;
+                statsContent += `<div><span style="color: #64dfdf;">${description}:</span> <span style="color: #ffffff;">${defenseValue}</span></div>`;
             }
         }
     }

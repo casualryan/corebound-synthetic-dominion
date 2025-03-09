@@ -2009,3 +2009,140 @@ hr {
     animation: bionicPulse 4s infinite;
 }
 
+/* Pulse animation for attack progress bars */
+@keyframes pulse {
+    0% { opacity: 0.8; }
+    50% { opacity: 1; }
+    100% { opacity: 0.8; }
+}
+
+/* Red pulse animation for low health */
+@keyframes pulse-red {
+    0% { opacity: 0.8; box-shadow: 0 0 5px rgba(255, 89, 89, 0.5); }
+    50% { opacity: 1; box-shadow: 0 0 15px rgba(255, 89, 89, 0.8); }
+    100% { opacity: 0.8; box-shadow: 0 0 5px rgba(255, 89, 89, 0.5); }
+}
+
+/* Shield pulse animation */
+@keyframes shield-pulse {
+    0% { opacity: 0.8; box-shadow: 0 0 10px rgba(84, 101, 255, 0.4); }
+    50% { opacity: 1; box-shadow: 0 0 20px rgba(84, 101, 255, 0.7); }
+    100% { opacity: 0.8; box-shadow: 0 0 10px rgba(84, 101, 255, 0.4); }
+}
+
+/* Make progress bars look better */
+.progress-bar {
+    transition: width 0.3s ease-out;
+    border-radius: 3px;
+}
+
+.attack-bar {
+    height: 100%;
+    border-radius: 3px;
+}
+
+/* Delve UI Styles */
+.hp-bar-container, .es-bar-container {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 5px;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.hp-bar, .es-bar {
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease-out;
+}
+
+.hp-text, .es-text {
+    text-align: center;
+    margin-bottom: 10px;
+    font-weight: bold;
+    color: #e0f2ff;
+    text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+}
+
+.hp-text {
+    color: #e0f2ff;
+}
+
+.es-text {
+    color: #56cfe1;
+}
+
+/* Styling for the HP slice animation */
+.hp-slice {
+    position: absolute;
+    height: 100%;
+    background-color: rgba(255, 0, 0, 0.5);
+    top: 0;
+    animation: fade-out 1s forwards;
+    pointer-events: none;
+}
+
+@keyframes fade-out {
+    0% { opacity: 0.7; }
+    100% { opacity: 0; }
+}
+
+/* Styling for damage number animation */
+.damage-number {
+    position: absolute;
+    color: #ff5959;
+    font-weight: bold;
+    text-shadow: 0 0 3px black;
+    animation: float-up 1.5s forwards;
+    pointer-events: none;
+}
+
+@keyframes float-up {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-30px); }
+}
+
+/* Delve button styles */
+.delve-button {
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.delve-button.danger {
+    background: linear-gradient(135deg, #d62828, #f94144);
+    color: white;
+    border: none;
+    box-shadow: 0 0 15px rgba(249, 65, 68, 0.5);
+}
+
+.delve-button.danger:hover {
+    background: linear-gradient(135deg, #f94144, #d62828);
+    box-shadow: 0 0 20px rgba(249, 65, 68, 0.7);
+}
+
+.delve-location-button {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #003559, #005f73);
+    color: #e0f2ff;
+    border: 1px solid #00a6fb;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(0, 166, 251, 0.3);
+    font-weight: bold;
+    min-width: 150px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.delve-location-button:hover {
+    background: linear-gradient(135deg, #005f73, #003559);
+    box-shadow: 0 0 15px rgba(0, 166, 251, 0.5);
+    transform: translateY(-2px);
+}
+

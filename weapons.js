@@ -6,13 +6,16 @@ const weapons = [
         icon: "icons/ironsword.png",
         bAttackSpeed: 2,
         damageTypes: {
-            kinetic: { min: 3, max: 6 }, // Flat Damage
-            mental: { min: 3, max: 6 }
+            kinetic: { min: 3, max: 6 },
+            slashing: { min: 3, max: 6 }
         },
         statModifiers: {
             damageTypes: {
-                kinetic: { min: 10, max: 20 }, // Percent Damage
+                kinetic: { min: 10, max: 20 }, // Specific damage type modifier
             },
+            damageGroups: {
+                physical: { min: 5, max: 15 } // Group modifier for physical damage
+            }
         },
         attackSpeedModifierRange: { min: 5, max: 10 },
         criticalChanceModifierRange: { min: 10, max: 20 },
@@ -31,7 +34,7 @@ const weapons = [
         isDisassembleable: true,
         effects: [
             {
-                trigger: 'onHit', // or 'whenHit', 'onHit', etc.
+                trigger: 'onHit',
                 chance: .2, // 20% chance
                 action: 'dealDamage',
                 parameters: {
@@ -40,32 +43,79 @@ const weapons = [
                 }
             }
         ],
-        description: '20% chance on hit to deal 5 kinetic damage, ignoring defense.'
+        description: '20% chance on hit to deal 5 kinetic damage, ignoring defense. Adds bonus physical damage.'
     },
 
     {
-        name: 'Poison Pistol',
+        name: 'Elemental Staff',
         type: "Weapon",
-        weaponType: "Pistol",
-        icon: "icons/poison_pistol.png",
-        slot: 'mainHand',
+        weaponType: "Staff",
+        icon: "icons/staff.png",
+        bAttackSpeed: 1.5,
         damageTypes: {
-            chemical: { min: 12, max: 25 },
+            pyro: { min: 10, max: 15 },
+            electric: { min: 5, max: 10 }
         },
         statModifiers: {
             damageTypes: {
-                chemical: { min: 30, max: 35 },
+                pyro: { min: 15, max: 25 },
             },
+            damageGroups: {
+                elemental: { min: 20, max: 30 } // Group modifier for all elemental damage
+            }
         },
-        attackSpeedModifierRange: { min: 50, max: 75 },
+        criticalChanceModifierRange: { min: 10, max: 15 },
+        criticalMultiplierModifierRange: { min: 20, max: 30 },
+        defenseTypes: {},
+        slot: 'mainHand',
         disassembleResults: [
-            {name: 'Synthetic Poison Gland', quantity: 1,},
-            {name: 'Minor Electronic Circuit', quantity: 1},
+            { name: 'Scrap Metal', quantity: 2 },
+            { name: 'Energy Cell', quantity: 1 }
         ],
         isDisassembleable: true,
-        description: 'Made from Synthetic Poison parts harvested from various arachnid-bots'
+        description: 'A staff that channels elemental energy. Increases all elemental damage.'
     },
 
+    {
+        name: 'Toxic Blade',
+        type: "Weapon",
+        weaponType: "Dagger",
+        icon: "icons/toxic_blade.png",
+        bAttackSpeed: 2.2,
+        damageTypes: {
+            slashing: { min: 5, max: 8 },
+            corrosive: { min: 8, max: 12 }
+        },
+        statModifiers: {
+            damageTypes: {
+                corrosive: { min: 30, max: 50 },
+            },
+            damageGroups: {
+                chemical: { min: 15, max: 25 } // Group modifier for all chemical damage
+            }
+        },
+        attackSpeedModifierRange: { min: 15, max: 25 },
+        criticalChanceModifierRange: { min: 15, max: 25 },
+        defenseTypes: {},
+        slot: 'mainHand',
+        effects: [
+            {
+                trigger: 'onHit',
+                chance: 0.25,
+                action: 'applyStatusEffect',
+                parameters: {
+                    effect: 'Corroded',
+                    duration: 5
+                }
+            }
+        ],
+        isDisassembleable: true,
+        disassembleResults: [
+            { name: 'Scrap Metal', quantity: 1 },
+            { name: 'Toxic Residue', quantity: 1 }
+        ],
+        description: '25% chance on hit to apply Corroded for 5 seconds. Increases all chemical damage.'
+    },
     {
         name: "Scorpion Sword",
         type: "Weapon",
@@ -139,7 +189,7 @@ const weapons = [
                 chance: .3,
                 action: 'dealDamage',
                 parameters: {
-                    damageType: 'magnetic',
+                    damageType: 'electric',
                     amount: 10,
                     ignoreDefense: true
                 }
@@ -150,7 +200,7 @@ const weapons = [
             { name: 'Crystalized Light', quantity: 1 },
             { name: 'Minor Electronic Circuit', quantity: 1 }
         ],
-        description: '30% chance on hit to deal 10 Kinetic, or 10 Magnetic damage, or both, ignoring defense.',
+        description: '30% chance on hit to deal 10 Kinetic, or 10 Electric damage, or both, ignoring defense.',
         isDisassembleable: true,
     },
 
@@ -160,6 +210,7 @@ const weapons = [
         weaponType: "Pistol",
         icon: "icons/flame_thrower.png",
         slot: 'mainHand',
+        bAttackSpeed: 4,
         damageTypes: {
             pyro: { min: 17, max: 25 },
         },
@@ -168,7 +219,6 @@ const weapons = [
                 pyro: { min: 40, max: 45 },
             },
         },
-        attackSpeedModifierRange: { min: 200, max: 275 },
         defenseTypes: {},
         disassembleResults: [
             { name: 'Flame Shell', quantity: 1 },
@@ -186,12 +236,12 @@ const weapons = [
         slot: 'mainHand',
         bAttackSpeed: 1.25, // Base Attack Speed
         damageTypes: {
-            mental: { min: 210, max: 270
+            slashing: { min: 210, max: 270
         }
         },
         statModifiers: {
             damageTypes: {
-                mental: { min: 100, max: 125 },
+                slashing: { min: 100, max: 125 },
             },
         },
         effects: [
@@ -200,7 +250,7 @@ const weapons = [
                 chance: 1,
                 action: 'dealDamage',
                 parameters: {
-                    damageType: 'mental',
+                    damageType: 'slashing',
                     amount: 200,
                     ignoreDefense: true
                 }
@@ -233,7 +283,7 @@ const weapons = [
                 // Apply Zapped status effect
                 applyStatusEffect(target, 'Zapped');
                 // Deal 10 Mental Damage upon application
-                let damageTypes = { mental: 10 };
+                let damageTypes = { slashing: 10 };
                 applyDamage(target, 0, target.name, damageTypes);
                 logMessage(`${target.name} takes 10 Mental Damage from Zap effect!`);
             }

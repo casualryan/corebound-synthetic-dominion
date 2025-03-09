@@ -21,12 +21,12 @@ const passives = [
         passiveTier: 1
     },
     {
-        name: "Mental Prowess",
-        description: "Increases your mental damage.",
-        icon: "icons/mental_prowess.png",
+        name: "Blade Master",
+        description: "Increases your slashing damage.",
+        icon: "icons/mental_prowess.png", // Reusing icon for now
         statChanges: {
             damageTypes: {
-                mental: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
+                slashing: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
             }
         },
         passiveTier: 1
@@ -43,23 +43,45 @@ const passives = [
         passiveTier: 1
     },
     {
-        name: "Toxicologist",
-        description: "Increases your chemical damage.",
-        icon: "icons/toxicologist.png",
+        name: "Corrosive Specialist",
+        description: "Increases your corrosive damage.",
+        icon: "icons/toxicologist.png", // Reusing icon for now
         statChanges: {
             damageTypes: {
-                chemical: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
+                corrosive: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
             }
         },
         passiveTier: 1
     },
     {
-        name: "Electromagnetic",
-        description: "Increases your magnetic damage.",
-        icon: "icons/electromagnetic.png",
+        name: "Electrician",
+        description: "Increases your electric damage.",
+        icon: "icons/electrician.png", // Need new icon
         statChanges: {
             damageTypes: {
-                magnetic: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
+                electric: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
+            }
+        },
+        passiveTier: 1
+    },
+    {
+        name: "Cryomancer",
+        description: "Increases your cryo damage.",
+        icon: "icons/cryomancer.png", // Need new icon
+        statChanges: {
+            damageTypes: {
+                cryo: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
+            }
+        },
+        passiveTier: 1
+    },
+    {
+        name: "Radiation Expert",
+        description: "Increases your radiation damage.",
+        icon: "icons/radiation.png", // Need new icon
+        statChanges: {
+            damageTypes: {
+                radiation: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
             }
         },
         passiveTier: 1
@@ -104,7 +126,63 @@ const passives = [
         },
         passiveTier: 2
     },
-    
+    {
+        name: "Toughened Hide",
+        description: "Increases your physical defense.",
+        icon: "icons/toughened_hide.png",
+        statChanges: {
+            defenseTypes: {
+                sturdiness: [0, 5, 10, 15, 20, 25, 30]  // Flat increases
+            }
+        },
+        passiveTier: 2
+    },
+    {
+        name: "Mental Fortitude",
+        description: "Increases your elemental defense.",
+        icon: "icons/mental_fortitude.png",
+        statChanges: {
+            defenseTypes: {
+                structure: [0, 5, 10, 15, 20, 25, 30]  // Flat increases
+            }
+        },
+        passiveTier: 2
+    },
+    {
+        name: "Heat Shield",
+        description: "Increases your chemical defense.",
+        icon: "icons/heat_shield.png",
+        statChanges: {
+            defenseTypes: {
+                stability: [0, 5, 10, 15, 20, 25, 30]  // Flat increases
+            }
+        },
+        passiveTier: 2
+    },
+    {
+        name: "Immunology",
+        description: "Increases all your defenses.",
+        icon: "icons/immunology.png",
+        statChanges: {
+            defenseTypes: {
+                sturdiness: [0, 3, 6, 9, 12, 15, 18],  // Flat increases
+                structure: [0, 3, 6, 9, 12, 15, 18],   // Flat increases
+                stability: [0, 3, 6, 9, 12, 15, 18]    // Flat increases
+            }
+        },
+        passiveTier: 2
+    },
+    {
+        name: "Anti-Magnetic Field",
+        description: "Increases your elemental defense significantly.",
+        icon: "icons/anti_magnetic_field.png",
+        statChanges: {
+            defenseTypes: {
+                structure: [0, 10, 20, 30, 40, 50, 60]  // Flat increases
+            }
+        },
+        passiveTier: 2
+    },
 
     // TIER 3 PASSIVES
     {
@@ -128,45 +206,23 @@ const passives = [
         passiveTier: 3
     },
     {
-        name: "Mental Fortitude",
-        description: "Increases your fortitude defense.",
-        icon: "icons/mental_fortitude.png",
-        statChanges: {
-            defenseTypes: {
-                fortitude: [0, 5, 10, 15, 20, 25, 30]  // Flat increases
-            }
-        },
-        passiveTier: 3
-    },
-    {
         name: "Thermal Regulation",
-        description: "Increases your heat resistance defense.",
+        description: "Increases your elemental defense.",
         icon: "icons/thermal_regulation.png",
         statChanges: {
             defenseTypes: {
-                heatResistance: [0, 5, 10, 15, 20, 25, 30]  // Flat increases
-            }
-        },
-        passiveTier: 3
-    },
-    {
-        name: "Immunology",
-        description: "Increases your immunity defense.",
-        icon: "icons/immunology.png",
-        statChanges: {
-            defenseTypes: {
-                immunity: [0, 5, 10, 15, 20, 25, 30]  // Flat increases
+                structure: [0, 5, 10, 15, 20, 25, 30]  // Flat increases
             }
         },
         passiveTier: 3
     },
     {
         name: "Faraday Protection",
-        description: "Increases your antimagnet defense.",
+        description: "Increases your elemental defense.",
         icon: "icons/faraday_protection.png",
         statChanges: {
             defenseTypes: {
-                antimagnet: [0, 5, 10, 15, 20, 25, 30]  // Flat increases
+                structure: [0, 5, 10, 15, 20, 25, 30]  // Flat increases
             }
         },
         passiveTier: 3
@@ -190,7 +246,7 @@ const passives = [
         icon: "icons/mind_blast.png",
         statChanges: {
             flatDamageTypes: {
-                mental: [0, 3, 6, 9, 12, 15, 18]  // Flat increases
+                slashing: [0, 3, 6, 9, 12, 15, 18]  // Flat increases
             }
         },
         passiveTier: 4
@@ -212,18 +268,18 @@ const passives = [
         icon: "icons/toxin_expert.png",
         statChanges: {
             flatDamageTypes: {
-                chemical: [0, 3, 6, 9, 12, 15, 18]  // Flat increases
+                corrosive: [0, 3, 6, 9, 12, 15, 18]  // Flat increases
             }
         },
         passiveTier: 4
     },
     {
         name: "Field Generator",
-        description: "Adds flat magnetic damage to your attacks.",
+        description: "Adds flat electric damage to your attacks.",
         icon: "icons/field_generator.png",
         statChanges: {
             flatDamageTypes: {
-                magnetic: [0, 3, 6, 9, 12, 15, 18]  // Flat increases
+                electric: [0, 3, 6, 9, 12, 15, 18]  // Flat increases
             }
         },
         passiveTier: 4
@@ -263,5 +319,39 @@ const passives = [
             deflection: [0, 3, 6, 9, 12, 15, 18]  // Flat increases
         },
         passiveTier: 4
+    },
+    // Add group damage passives as tier 3
+    {
+        name: "Physical Mastery",
+        description: "Increases all physical damage (kinetic and slashing).",
+        icon: "icons/physical_mastery.png", // Replace with appropriate icon
+        statChanges: {
+            damageGroups: {
+                physical: [0, 10, 20, 30, 50, 70, 100]  // Percentage increases for the physical group
+            }
+        },
+        passiveTier: 3
+    },
+    {
+        name: "Elemental Mastery",
+        description: "Increases all elemental damage (pyro, cryo, electric).",
+        icon: "icons/elemental_mastery.png", // Replace with appropriate icon
+        statChanges: {
+            damageGroups: {
+                elemental: [0, 10, 20, 30, 50, 70, 100]  // Percentage increases for the elemental group
+            }
+        },
+        passiveTier: 3
+    },
+    {
+        name: "Chemical Mastery",
+        description: "Increases all chemical damage (corrosive and radiation).",
+        icon: "icons/chemical_mastery.png", // Replace with appropriate icon
+        statChanges: {
+            damageGroups: {
+                chemical: [0, 10, 20, 30, 50, 70, 100]  // Percentage increases for the chemical group
+            }
+        },
+        passiveTier: 3
     }
 ];

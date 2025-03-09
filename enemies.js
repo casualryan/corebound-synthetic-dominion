@@ -11,7 +11,9 @@ const enemies = [
             kinetic: 3
         },
         defenseTypes: {
-            
+            sturdiness: 0,
+            structure: 0,
+            stability: 0
         },
         lootConfig: {
             baseDropChance: 0.5,
@@ -40,7 +42,9 @@ const enemies = [
             kinetic: 5
         },
         defenseTypes: {
-            
+            sturdiness: 10,
+            structure: 0,
+            stability: 0
         },
         lootConfig: {
             baseDropChance: 0.65,
@@ -269,7 +273,7 @@ const enemies = [
         criticalMultiplier: 2,
         damageTypes: {
             kinetic: 30,
-            magnetic: 10
+            electric: 10
         },
         defenseTypes: {
             toughness: 10,
@@ -327,6 +331,229 @@ const enemies = [
         ],
         experienceValue: 500,
         statusEffects: []
+    },
+    {
+        name: "Screeching Drone",
+        health: 75,
+        energyShield: 25,
+        attackSpeed: 1.2,
+        criticalChance: 0.05,
+        criticalMultiplier: 1.5,
+        damageTypes: {
+            slashing: 10,
+            electric: 5
+        },
+        defenseTypes: {
+            sturdiness: 5,
+            structure: 15,
+            stability: 10
+        },
+        lootConfig: {
+            baseDropChance: 0.8,
+            minItems: 1,
+            maxItems: 3,
+            poolsByTier: {
+                1: ["lowRoboParts", "arachnidParts"],
+                2: ["basicComponents", "genericUncommon"],
+                3: ["midRobotParts", "genericRare"],
+                4: ["advancedComponents"],
+                5: ["epicTech"],
+                6: ["legendaryComponents"]
+            }
+        },
+        currencyDrop: {
+            min: 5,
+            max: 10,
+            dropRate: 1
+        },
+        experienceValue: 10,
+        statusEffects: [],        
+    },
+    {
+        name: "Super Screeching Drone",
+        health: 130,
+        energyShield: 60,
+        attackSpeed: 1.5,
+        criticalChance: 0.1,
+        criticalMultiplier: 1.5,
+        damageTypes: {
+            slashing: 20,
+            electric: 15,
+            pyro: 10
+        },
+        defenseTypes: {
+            sturdiness: 15,
+            structure: 25,
+            stability: 15
+        },
+        lootConfig: {
+            baseDropChance: 0.8,
+            minItems: 1,
+            maxItems: 3,
+            poolsByTier: {
+                1: ["lowRoboParts", "arachnidParts"],
+                2: ["basicComponents", "genericUncommon"],
+                3: ["midRobotParts", "genericRare"],
+                4: ["advancedComponents"],
+                5: ["epicTech"],
+                6: ["legendaryComponents"]
+            }
+        },
+        currencyDrop: {
+            min: 5,
+            max: 10,
+            dropRate: 1
+        },
+        experienceValue: 10,
+        statusEffects: [],        
+    },
+    {
+        name: "Combat Robot",
+        health: 150,
+        energyShield: 30,
+        attackSpeed: 0.8,
+        criticalChance: 0.05,
+        criticalMultiplier: 2,
+        damageTypes: {
+            kinetic: 15,
+            electric: 10
+        },
+        defenseTypes: {
+            sturdiness: 20,
+            structure: 15,
+            stability: 5
+        },
+        lootConfig: {
+            baseDropChance: 0.8,
+            minItems: 1,
+            maxItems: 3,
+            poolsByTier: {
+                1: ["lowRoboParts", "arachnidParts"],
+                2: ["basicComponents", "genericUncommon"],
+                3: ["midRobotParts", "genericRare"],
+                4: ["advancedComponents"],
+                5: ["epicTech"],
+                6: ["legendaryComponents"]
+            }
+        },
+        currencyDrop: {
+            min: 5,
+            max: 10,
+            dropRate: 1
+        },
+        experienceValue: 10,
+        statusEffects: [],        
+    },
+    {
+        name: "Pyro Bot",
+        health: 90,
+        energyShield: 10,
+        attackSpeed: 1,
+        criticalChance: 0.05,
+        criticalMultiplier: 1.5,
+        damageTypes: {
+            pyro: 25,
+            kinetic: 5
+        },
+        defenseTypes: {
+            sturdiness: 15,
+            structure: 25,
+            stability: 0
+        },
+        lootConfig: {
+            baseDropChance: 0.8,
+            minItems: 1,
+            maxItems: 3,
+            poolsByTier: {
+                1: ["lowRoboParts", "arachnidParts"],
+                2: ["basicComponents", "genericUncommon"],
+                3: ["midRobotParts", "genericRare"],
+                4: ["advancedComponents"],
+                5: ["epicTech"],
+                6: ["legendaryComponents"]
+            }
+        },
+        currencyDrop: {
+            min: 5,
+            max: 10,
+            dropRate: 1
+        },
+        experienceValue: 10,
+        statusEffects: [],        
+    },
+    {
+        name: "Acid Spitter",
+        health: 80,
+        energyShield: 0,
+        attackSpeed: 0.9,
+        criticalChance: 0.1,
+        criticalMultiplier: 1.8,
+        damageTypes: {
+            corrosive: 20,
+            radiation: 10
+        },
+        defenseTypes: {
+            sturdiness: 5,
+            structure: 10,
+            stability: 30
+        },
+        lootConfig: {
+            baseDropChance: 0.8,
+            minItems: 1,
+            maxItems: 3,
+            poolsByTier: {
+                1: ["lowRoboParts", "arachnidParts"],
+                2: ["basicComponents", "genericUncommon"],
+                3: ["midRobotParts", "genericRare"],
+                4: ["advancedComponents"],
+                5: ["epicTech"],
+                6: ["legendaryComponents"]
+            }
+        },
+        currencyDrop: {
+            min: 5,
+            max: 10,
+            dropRate: 1
+        },
+        experienceValue: 10,
+        statusEffects: [],        
+    },
+    {
+        name: "Ice Elemental",
+        health: 100,
+        energyShield: 50,
+        attackSpeed: 0.7,
+        criticalChance: 0.2,
+        criticalMultiplier: 1.5,
+        damageTypes: {
+            cryo: 30,
+            electric: 5
+        },
+        defenseTypes: {
+            sturdiness: 10,
+            structure: 30,
+            stability: 10
+        },
+        lootConfig: {
+            baseDropChance: 0.8,
+            minItems: 1,
+            maxItems: 3,
+            poolsByTier: {
+                1: ["lowRoboParts", "arachnidParts"],
+                2: ["basicComponents", "genericUncommon"],
+                3: ["midRobotParts", "genericRare"],
+                4: ["advancedComponents"],
+                5: ["epicTech"],
+                6: ["legendaryComponents"]
+            }
+        },
+        currencyDrop: {
+            min: 5,
+            max: 10,
+            dropRate: 1
+        },
+        experienceValue: 10,
+        statusEffects: [],        
     },
     // Continue adding enemies as needed
 ];

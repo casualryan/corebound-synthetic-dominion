@@ -33,7 +33,8 @@ if (!player.passiveBonuses) {
         healthRegen: 0,
         precision: 0,
         deflection: 0,
-        defenseTypes: {}
+        defenseTypes: {},
+        damageGroups: {} // Add damage groups
     };
 }
 
@@ -144,6 +145,16 @@ function getPassiveTooltipContent(passive) {
                 for (const defenseType in changes) {
                     const defenseValue = changes[defenseType][Math.min(effectiveRank, changes[defenseType].length - 1)];
                     tip += `<div style="padding: 2px 0;"><span style="color: #ffffff;">+${defenseValue} ${capitalize(defenseType)}</span></div>`;
+                }
+                break;
+                
+            case 'damageGroups':
+                for (const groupType in changes) {
+                    if (!player.passiveBonuses.damageGroups[groupType]) {
+                        player.passiveBonuses.damageGroups[groupType] = 0;
+                    }
+                    const groupIndex = Math.min(effectiveRank, changes[groupType].length - 1);
+                    player.passiveBonuses.damageGroups[groupType] += changes[groupType][groupIndex];
                 }
                 break;
                 
@@ -307,6 +318,17 @@ function getPassiveTooltipContent(passive) {
                     }
                     break;
                     
+                case 'damageGroups':
+                    for (const groupType in changes) {
+                        if (nextRank < changes[groupType].length) {
+                            if (hasAddedNextStats) tip += `<br>`;
+                            hasAddedNextStats = true;
+                            const nextValue = changes[groupType][nextRank];
+                            tip += `<div style="padding: 2px 0;"><span style="color: #ffffff;">+${nextValue} ${capitalize(groupType)} Damage</span></div>`;
+                        }
+                    }
+                    break;
+                
                 default:
                     break;
             }
@@ -550,7 +572,8 @@ function applyAllPassivesToPlayer() {
         healthRegen: 0,
         precision: 0,
         deflection: 0,
-        defenseTypes: {}
+        defenseTypes: {},
+        damageGroups: {} // Add damage groups
     };
     
     // Process each passive that player has allocated points to
@@ -589,6 +612,33 @@ function applyAllPassivesToPlayer() {
 }
 
 function applyPassiveEffect(passive, level) {
+    // Skip if no stat changes or invalid level
+    if (!passive.statChanges || level < 1) return;
+    
+    // Make sure player.passiveBonuses exists
+    if (!player.passiveBonuses) {
+        player.passiveBonuses = {
+            attackSpeed: 0,
+            criticalChance: 0,
+            criticalMultiplier: 0,
+            precision: 0,
+            deflection: 0,
+            flatHealth: 0,
+            flatEnergyShield: 0,
+            healthRegen: 0,
+            damageTypes: {},
+            flatDamageTypes: {},
+            defenseTypes: {},
+            damageGroups: {} // Add damage groups
+        };
+    }
+    
+    // Ensure all subobjects exist
+    if (!player.passiveBonuses.damageTypes) player.passiveBonuses.damageTypes = {};
+    if (!player.passiveBonuses.flatDamageTypes) player.passiveBonuses.flatDamageTypes = {};
+    if (!player.passiveBonuses.defenseTypes) player.passiveBonuses.defenseTypes = {};
+    if (!player.passiveBonuses.damageGroups) player.passiveBonuses.damageGroups = {}; // Add damage groups
+    
     // For each stat category in the passive
     for (const statCategory in passive.statChanges) {
         const changes = passive.statChanges[statCategory];
@@ -671,6 +721,16 @@ function applyPassiveEffect(passive, level) {
                     }
                     const defIndex = Math.min(level, changes[defenseType].length - 1);
                     player.passiveBonuses.defenseTypes[defenseType] += changes[defenseType][defIndex];
+                }
+                break;
+                
+            case 'damageGroups':
+                for (const groupType in changes) {
+                    if (!player.passiveBonuses.damageGroups[groupType]) {
+                        player.passiveBonuses.damageGroups[groupType] = 0;
+                    }
+                    const groupIndex = Math.min(level, changes[groupType].length - 1);
+                    player.passiveBonuses.damageGroups[groupType] += changes[groupType][groupIndex];
                 }
                 break;
                 

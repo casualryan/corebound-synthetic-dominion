@@ -43,6 +43,22 @@ function generateItemInstance(template) {
         }
     }
 
+    // Roll percentage damage group modifiers
+    if (template.statModifiers && template.statModifiers.damageGroups) {
+        if (!item.statModifiers) item.statModifiers = {};
+        item.statModifiers.damageGroups = {};
+        
+        for (let groupType in template.statModifiers.damageGroups) {
+            const range = template.statModifiers.damageGroups[groupType];
+            if (typeof range === 'object' && range.min !== undefined && range.max !== undefined) {
+                const percent = getRandomInt(range.min, range.max);
+                item.statModifiers.damageGroups[groupType] = percent;
+            } else {
+                item.statModifiers.damageGroups[groupType] = template.statModifiers.damageGroups[groupType];
+            }
+        }
+    }
+
     // Roll health bonus
     if (template.healthBonus) {
         if (typeof template.healthBonus === 'object') {

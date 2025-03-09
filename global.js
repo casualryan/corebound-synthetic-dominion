@@ -81,7 +81,7 @@ function applyItemModifiers(stats, item) {
         }
     }
     
-    // Percentage Damage Modifiers
+    // Percentage Damage Modifiers - specific types
     if (item.statModifiers && item.statModifiers.damageTypes) {
         if (!stats.damageTypeModifiers) stats.damageTypeModifiers = {};
         for (let damageType in item.statModifiers.damageTypes) {
@@ -92,6 +92,27 @@ function applyItemModifiers(stats, item) {
             if (typeof modVal !== "number") { modVal = 0; }
             // Apply additively instead of multiplicatively
             stats.damageTypeModifiers[damageType] += modVal / 100;
+        }
+    }
+    
+    // Percentage Damage Modifiers - group types
+    if (item.statModifiers && item.statModifiers.damageGroups) {
+        if (!stats.damageGroupModifiers) stats.damageGroupModifiers = {};
+        
+        // Initialize group modifiers if they don't exist
+        const groups = ['physical', 'elemental', 'chemical'];
+        for (const group of groups) {
+            if (stats.damageGroupModifiers[group] === undefined) {
+                stats.damageGroupModifiers[group] = 1;
+            }
+        }
+        
+        // Apply group modifiers
+        for (let group in item.statModifiers.damageGroups) {
+            let modVal = item.statModifiers.damageGroups[group];
+            if (typeof modVal !== "number") { modVal = 0; }
+            // Apply additively
+            stats.damageGroupModifiers[group] += modVal / 100;
         }
     }
     
@@ -181,27 +202,24 @@ function applyItemModifiers(stats, item) {
 // }
 
 // Updated playerBaseStats (removed inherent attackSpeed)
-let playerBaseStats = {
-    health: 100,
-    healthRegen: 1,
-    energyShield: 0,
-    criticalChance: 0,
+const playerBaseStats = {
+    level: 1,
+    maxHealth: 100,
+    maxEnergyShield: 0,
+    healthRegen: 1, // Health regenerated per second
+    attackSpeed: 1,
+    criticalChance: 0.05,
     criticalMultiplier: 1.5,
     precision: 0,
     deflection: 0,
     damageTypes: {
-        kinetic: 0,
-        mental: 0,
-        pyro: 0,
-        chemical: 0,
-        magnetic: 0
+        
     },
+    // New defense types
     defenseTypes: {
-        toughness: 0,
-        fortitude: 0,
-        heatResistance: 0,
-        immunity: 0,
-        antimagnet: 0
+        sturdiness: 0,  // Counters Physical damage (kinetic, slashing)
+        structure: 0,   // Counters Elemental damage (pyro, cryo, electric)
+        stability: 0    // Counters Chemical damage (corrosive, radiation)
     }
 };
 
@@ -214,6 +232,7 @@ let player = {
     baseStats: JSON.parse(JSON.stringify(playerBaseStats)),
     totalStats: {},
     statusEffects: [],
+    effects: [],
     equipment: {
         mainHand: null,
         offHand: null,
@@ -236,7 +255,6 @@ let player = {
         // Add other skills as needed
     },
     activeBuffs: [],
-    effects: [],
     // This property holds the cumulative passive bonus (e.g., 0.30 for +30%)
     passiveAttackSpeedBonus: 0,
 
@@ -261,7 +279,7 @@ let player = {
     },
 
     calculateStats: function() {
-        // Start with a fresh copy of base stats.
+        // Start with a fresh copy of base stats
         let stats = JSON.parse(JSON.stringify(playerBaseStats));
         
         // Initialize bonus fields
@@ -270,10 +288,17 @@ let player = {
         stats.energyShieldBonus = 0;
         stats.energyShieldBonusPercent = 0;
         stats.damageTypeModifiers = {}; // Initialize as empty object to avoid inheriting modifiers
+        stats.damageGroupModifiers = {}; // Initialize group modifiers
         
         // Initialize each damage type modifier to base value of 1.0 (100%)
         for (let damageType in stats.damageTypes) {
             stats.damageTypeModifiers[damageType] = 1.0;
+        }
+
+        // Initialize each damage group modifier to base value of 1.0 (100%)
+        const damageGroups = ['physical', 'elemental', 'chemical'];
+        for (const group of damageGroups) {
+            stats.damageGroupModifiers[group] = 1.0;
         }
         
         // Apply passive bonuses to stats
@@ -341,6 +366,16 @@ let player = {
                 // Add percentage as decimal (e.g., +15% becomes +0.15)
                 stats.damageTypeModifiers[damageType] += this.passiveBonuses.damageTypes[damageType] / 100;
             }
+
+            // Apply damage group % bonuses from passives
+            if (this.passiveBonuses && this.passiveBonuses.damageGroups) {
+                for (const groupType in this.passiveBonuses.damageGroups) {
+                    if (!stats.damageGroupModifiers[groupType]) {
+                        stats.damageGroupModifiers[groupType] = 1.0;
+                    }
+                    stats.damageGroupModifiers[groupType] += this.passiveBonuses.damageGroups[groupType] / 100;
+                }
+            }
         }
         
         // Determine base attack speed from equipped weapon (default 1.0)
@@ -400,23 +435,36 @@ let player = {
             stats.damageTypes[dt] = Math.round(stats.damageTypes[dt]);
         }
         
-        // Apply health and energy shield bonuses.
-        stats.health += stats.healthBonus;
-        stats.health *= 1 + stats.healthBonusPercent;
-        stats.health = Math.round(stats.health);
+        // Calculate final health and energy shield values with a more explicit approach
+        // Health calculation
+        stats.health = stats.maxHealth + stats.healthBonus;
+        stats.health *= (1 + stats.healthBonusPercent);
+        stats.health = Math.max(Math.round(stats.health), 1); // Never less than 1 health
         
-        stats.energyShield += stats.energyShieldBonus;
-        stats.energyShield *= 1 + stats.energyShieldBonusPercent;
-        stats.energyShield = Math.round(stats.energyShield);
+        // Energy Shield calculation
+        stats.energyShield = stats.maxEnergyShield + stats.energyShieldBonus;
+        stats.energyShield *= (1 + stats.energyShieldBonusPercent);
+        stats.energyShield = Math.max(Math.round(stats.energyShield), 0); // Can be 0
         
+        // Assign the newly calculated stats
         this.totalStats = stats;
         
-        if (this.currentHealth === null || this.currentHealth === undefined) {
+        // Initialize current health/shield on first calculation or if they're invalid
+        if (this.currentHealth === null || isNaN(this.currentHealth) || this.currentHealth === undefined) {
+            console.log("Initializing player currentHealth to", stats.health);
             this.currentHealth = stats.health;
         }
-        if (this.currentShield === null || this.currentShield === undefined) {
+        
+        if (this.currentShield === null || isNaN(this.currentShield) || this.currentShield === undefined) {
+            console.log("Initializing player currentShield to", stats.energyShield);
             this.currentShield = stats.energyShield;
         }
+        
+        // Make sure current values don't exceed maximums
+        this.currentHealth = Math.min(this.currentHealth, stats.health);
+        this.currentShield = Math.min(this.currentShield, stats.energyShield);
+        
+        return stats;
     },
 };
 
@@ -521,14 +569,14 @@ function checkLevelUp() {
     if (player.experience >= xpForNextLevel) {
         player.level++;
         player.experience -= xpForNextLevel;
-        player.passivePoints = (player.passivePoints||0) + 2;  // Award 2 passive points per level
+        player.passivePoints = (player.passivePoints||0) + 1;  // Award 1 passive point per level (changed from 2)
         
         // Play level up sound
         if (window.playSound) {
             playSound('LEVEL_UP', 0.5);
         }
         
-        logMessage(`Congratulations! You've reached level ${player.level} and gained 2 passive points!`);
+        logMessage(`Congratulations! You've reached level ${player.level} and gained 1 passive point!`);
         
         // If we've reached max level, cap experience and show a message
         if (player.level >= MAX_PLAYER_LEVEL) {
@@ -606,6 +654,59 @@ function saveGame(isAutoSave = false) {
     }
 }
 
+// Function to migrate from old defense types to new ones
+function migrateDefenseTypes(entity) {
+    // Skip if entity doesn't exist or already has new defense types
+    if (!entity || !entity.totalStats || !entity.totalStats.defenseTypes) return;
+
+    const defenseTypes = entity.totalStats.defenseTypes;
+    
+    // Check if we need to migrate (if any old defense type exists)
+    const needsMigration = defenseTypes.toughness !== undefined || 
+                         defenseTypes.fortitude !== undefined || 
+                         defenseTypes.heatResistance !== undefined || 
+                         defenseTypes.immunity !== undefined || 
+                         defenseTypes.antimagnet !== undefined;
+    
+    if (!needsMigration) return;
+    
+    // Initialize new defense types if they don't exist
+    if (defenseTypes.sturdiness === undefined) defenseTypes.sturdiness = 0;
+    if (defenseTypes.structure === undefined) defenseTypes.structure = 0;
+    if (defenseTypes.stability === undefined) defenseTypes.stability = 0;
+    
+    // Migrate old values to new ones
+    // Physical Group
+    if (defenseTypes.toughness !== undefined) {
+        defenseTypes.sturdiness += defenseTypes.toughness;
+    }
+    if (defenseTypes.fortitude !== undefined) {
+        defenseTypes.sturdiness += defenseTypes.fortitude / 2; // Split mental defense
+    }
+    
+    // Elemental Group
+    if (defenseTypes.heatResistance !== undefined) {
+        defenseTypes.structure += defenseTypes.heatResistance;
+    }
+    if (defenseTypes.antimagnet !== undefined) {
+        defenseTypes.structure += defenseTypes.antimagnet;
+    }
+    
+    // Chemical Group
+    if (defenseTypes.immunity !== undefined) {
+        defenseTypes.stability += defenseTypes.immunity;
+    }
+    
+    // Remove old defense types
+    delete defenseTypes.toughness;
+    delete defenseTypes.fortitude;
+    delete defenseTypes.heatResistance;
+    delete defenseTypes.immunity;
+    delete defenseTypes.antimagnet;
+    
+    console.log("Defense types migrated to new system");
+}
+
 function loadGame() {
     const savedState = localStorage.getItem('idleCombatGameSave');
     if (savedState) {
@@ -644,6 +745,10 @@ function loadGame() {
             } else {
                 nextShopRefreshTime = Date.now() + SHOP_REFRESH_INTERVAL;
             }
+            
+            // Apply migration for the new defense system
+            migrateDefenseTypes(player);
+            
             player.calculateStats();
             updatePlayerStatsDisplay();
             updateInventoryDisplay();
@@ -663,9 +768,81 @@ function loadGame() {
     window.dispatchEvent(event);
 }
 
+// Function to migrate item defense types
+function migrateItemDefenseTypes(item) {
+    if (!item || !item.defenseTypes) return item;
+    
+    // Check if we need to migrate
+    const needsMigration = item.defenseTypes.toughness !== undefined || 
+                         item.defenseTypes.fortitude !== undefined || 
+                         item.defenseTypes.heatResistance !== undefined || 
+                         item.defenseTypes.immunity !== undefined || 
+                         item.defenseTypes.antimagnet !== undefined;
+    
+    if (!needsMigration) return item;
+    
+    // Initialize new defense types
+    if (item.defenseTypes.sturdiness === undefined) item.defenseTypes.sturdiness = 0;
+    if (item.defenseTypes.structure === undefined) item.defenseTypes.structure = 0;
+    if (item.defenseTypes.stability === undefined) item.defenseTypes.stability = 0;
+    
+    // Migrate values
+    if (item.defenseTypes.toughness !== undefined) {
+        item.defenseTypes.sturdiness += item.defenseTypes.toughness;
+        delete item.defenseTypes.toughness;
+    }
+    
+    if (item.defenseTypes.fortitude !== undefined) {
+        item.defenseTypes.sturdiness += Math.ceil(item.defenseTypes.fortitude / 2);
+        delete item.defenseTypes.fortitude;
+    }
+    
+    if (item.defenseTypes.heatResistance !== undefined) {
+        item.defenseTypes.structure += item.defenseTypes.heatResistance;
+        delete item.defenseTypes.heatResistance;
+    }
+    
+    if (item.defenseTypes.antimagnet !== undefined) {
+        item.defenseTypes.structure += item.defenseTypes.antimagnet;
+        delete item.defenseTypes.antimagnet;
+    }
+    
+    if (item.defenseTypes.immunity !== undefined) {
+        item.defenseTypes.stability += item.defenseTypes.immunity;
+        delete item.defenseTypes.immunity;
+    }
+    
+    return item;
+}
+
 function restoreItem(savedItem) {
+    if (!savedItem) return null;
+    
     // Find the item template
     const itemTemplate = items.find(item => item.name === savedItem.name);
+    
+    // Migrate defense types if needed
+    savedItem = migrateItemDefenseTypes(savedItem);
+    
+    // Migrate damageTypes as well (if it has old damage types)
+    if (savedItem.damageTypes) {
+        // Check for and convert old damage types to new ones
+        if (savedItem.damageTypes.mental !== undefined) {
+            savedItem.damageTypes.slashing = savedItem.damageTypes.mental;
+            delete savedItem.damageTypes.mental;
+        }
+        
+        if (savedItem.damageTypes.magnetic !== undefined) {
+            savedItem.damageTypes.electric = savedItem.damageTypes.magnetic;
+            delete savedItem.damageTypes.magnetic;
+        }
+        
+        if (savedItem.damageTypes.chemical !== undefined) {
+            savedItem.damageTypes.corrosive = savedItem.damageTypes.chemical;
+            delete savedItem.damageTypes.chemical;
+        }
+    }
+    
     if (itemTemplate) {
         // Create a new item instance from the template
         const itemInstance = generateItemInstance(itemTemplate);
@@ -681,6 +858,17 @@ function restoreItem(savedItem) {
 }
 
 function restoreEquipment(savedEquipment) {
+    if (!savedEquipment) return {
+        mainHand: null,
+        offHand: null,
+        head: null,
+        chest: null,
+        legs: null,
+        feet: null,
+        gloves: null,
+        bionicSlots: [null, null, null, null],
+    };
+    
     const equipment = {};
 
     // Restore standard slots
@@ -703,7 +891,7 @@ function restoreEquipment(savedEquipment) {
             }
         });
     }
-
+    
     return equipment;
 }
 
