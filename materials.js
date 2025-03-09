@@ -122,6 +122,7 @@ const materials = [
         type: "Material",
         icon: "icons/spider_leg.png",
         description: "A segment from a robotic spider's leg. Could be useful for crafting.",
+        stackable: true,
         quantity: 1,
         sellValue: 4,
         isDisassembleable: false
@@ -131,6 +132,7 @@ const materials = [
         type: "Material",
         icon: "icons/optic_sensor.png",
         description: "A basic optical sensor from a robot. Still functional.",
+        stackable: true,
         quantity: 1,
         sellValue: 6,
         isDisassembleable: false
@@ -140,6 +142,7 @@ const materials = [
         type: "Material",
         icon: "icons/fasteners.png",
         description: "Assorted screws, bolts, and fasteners. Common but necessary.",
+        stackable: true,
         quantity: 1,
         sellValue: 2,
         isDisassembleable: false
@@ -149,6 +152,7 @@ const materials = [
         type: "Material",
         icon: "icons/basic_servo.png",
         description: "A simple servo motor used in basic robotics.",
+        stackable: true,
         quantity: 1,
         sellValue: 8,
         isDisassembleable: false
@@ -160,6 +164,7 @@ const materials = [
         type: "Material",
         icon: "icons/power_cell.png",
         description: "A compact power cell that still holds a charge.",
+        stackable: true,
         quantity: 1,
         sellValue: 12,
         isDisassembleable: false
@@ -169,6 +174,7 @@ const materials = [
         type: "Material",
         icon: "icons/copper_coil.png",
         description: "A coil of copper wire used in electromagnetic components.",
+        stackable: true,
         quantity: 1,
         sellValue: 10,
         isDisassembleable: false
@@ -178,6 +184,7 @@ const materials = [
         type: "Material",
         icon: "icons/memory_chip.png",
         description: "A small memory chip salvaged from a robot.",
+        stackable: true,
         quantity: 1,
         sellValue: 15,
         isDisassembleable: false
@@ -187,6 +194,7 @@ const materials = [
         type: "Material",
         icon: "icons/stabilizer.png",
         description: "A component used to stabilize robotic movements.",
+        stackable: true,
         quantity: 1,
         sellValue: 14,
         isDisassembleable: false
@@ -196,6 +204,7 @@ const materials = [
         type: "Material",
         icon: "icons/sensor_array.png",
         description: "A collection of basic sensors that can detect various inputs.",
+        stackable: true,
         quantity: 1,
         sellValue: 18,
         isDisassembleable: false
@@ -207,6 +216,7 @@ const materials = [
         type: "Material",
         icon: "icons/advanced_servo.png",
         description: "A high-quality servo motor with precision movement capabilities.",
+        stackable: true,
         quantity: 1,
         sellValue: 35,
         isDisassembleable: false
@@ -216,6 +226,7 @@ const materials = [
         type: "Material",
         icon: "icons/targeting_module.png",
         description: "A sophisticated aiming system from a combat robot.",
+        stackable: true,
         quantity: 1,
         sellValue: 40,
         isDisassembleable: false
@@ -225,6 +236,7 @@ const materials = [
         type: "Material",
         icon: "icons/power_converter.png",
         description: "Efficiently converts energy between different forms.",
+        stackable: true,
         quantity: 1,
         sellValue: 38,
         isDisassembleable: false
@@ -234,6 +246,7 @@ const materials = [
         type: "Material",
         icon: "icons/titanium_plating.png",
         description: "Durable titanium armor segment from a reinforced robot.",
+        stackable: true,
         quantity: 1,
         sellValue: 42,
         isDisassembleable: false
@@ -243,6 +256,7 @@ const materials = [
         type: "Material",
         icon: "icons/neural_processor.png",
         description: "A specialized processor that mimics neural connections.",
+        stackable: true,
         quantity: 1,
         sellValue: 45,
         isDisassembleable: false
@@ -254,6 +268,7 @@ const materials = [
         type: "Material",
         icon: "icons/quantum_capacitor.png",
         description: "Advanced energy storage device using quantum principles.",
+        stackable: true,
         quantity: 1,
         sellValue: 80,
         isDisassembleable: false
@@ -263,6 +278,7 @@ const materials = [
         type: "Material",
         icon: "icons/hd_power_cell.png",
         description: "Stores an incredible amount of energy in a compact form.",
+        stackable: true,
         quantity: 1,
         sellValue: 75,
         isDisassembleable: false
@@ -272,6 +288,7 @@ const materials = [
         type: "Material",
         icon: "icons/neural_network.png",
         description: "A complex module capable of machine learning operations.",
+        stackable: true,
         quantity: 1,
         sellValue: 85,
         isDisassembleable: false
@@ -283,6 +300,7 @@ const materials = [
         type: "Material",
         icon: "icons/phase_converter.png",
         description: "Experimental technology that can manipulate the phase of matter.",
+        stackable: true,
         quantity: 1,
         sellValue: 150,
         isDisassembleable: false
@@ -292,6 +310,7 @@ const materials = [
         type: "Material",
         icon: "icons/ai_core.png",
         description: "A fragment of an advanced AI core. Extremely valuable for research.",
+        stackable: true,
         quantity: 1,
         sellValue: 180,
         isDisassembleable: false
@@ -301,6 +320,7 @@ const materials = [
         type: "Material",
         icon: "icons/biofluid.png",
         description: "A mysterious fluid that bridges the gap between organic and synthetic.",
+        stackable: true,
         quantity: 1,
         sellValue: 160,
         isDisassembleable: false
@@ -312,6 +332,7 @@ const materials = [
         type: "Material",
         icon: "icons/quantum_core.png",
         description: "A complete quantum computing core. Extraordinarily rare and valuable.",
+        stackable: true,
         quantity: 1,
         sellValue: 350,
         isDisassembleable: false
@@ -321,6 +342,7 @@ const materials = [
         type: "Material",
         icon: "icons/temporal_stabilizer.png",
         description: "Rumored to have effects on the flow of time itself.",
+        stackable: true,
         quantity: 1,
         sellValue: 400,
         isDisassembleable: false
@@ -330,6 +352,7 @@ const materials = [
         type: "Material",
         icon: "icons/nanite_cluster.png",
         description: "A swarm of microscopic robots that can reshape material at the atomic level.",
+        stackable: true,
         quantity: 1,
         sellValue: 380,
         isDisassembleable: false
