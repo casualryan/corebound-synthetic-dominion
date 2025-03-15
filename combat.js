@@ -2096,9 +2096,9 @@ function updateDelveBagUI() {
         }
     }
     
-    // Show/hide based on delve status
+    // Always show the delve bag (removed conditional display)
     if (delveBagContainer) {
-        delveBagContainer.style.display = isDelveInProgress ? 'block' : 'none';
+        delveBagContainer.style.display = 'block';
     }
 }
 

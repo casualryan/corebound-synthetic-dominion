@@ -45,7 +45,7 @@ const weapons = [
         ],
         description: '20% chance on hit to deal 5 kinetic damage, ignoring defense. Adds bonus physical damage.'
     },
-
+    
     {
         name: 'Elemental Staff',
         type: "Weapon",
@@ -312,7 +312,335 @@ const weapons = [
             { name: 'Synthetic Poison Gland', quantity: 1 }
         ],
         isDisassembleable: true,
-    }
+    },
+
+    {
+        name: "Phase Reaver",
+        type: "Weapon",
+        weaponType: "Sword",
+        icon: "icons/phase_reaver.png",
+        level: 10,
+        bAttackSpeed: 2.5,
+        damageTypes: {
+            kinetic: { min: 18, max: 25 },
+            slashing: { min: 8, max: 12 }
+        },
+        statModifiers: {
+            damageTypes: {
+                slashing: { min: 25, max: 40 },
+            },
+            damageGroups: {
+                physical: { min: 15, max: 20 }
+            }
+        },
+        attackSpeedModifierRange: { min: 10, max: 20 },
+        criticalChanceModifierRange: { min: 15, max: 25 },
+        criticalMultiplierModifierRange: { min: 30, max: 40 },
+        deflection: { min: 10, max: 15 },
+        defenseTypes: {},
+        slot: 'mainHand',
+        effects: [
+            {
+                trigger: 'onCritical',
+                chance: 0.4,
+                action: 'applyStatusEffect',
+                parameters: {
+                    effect: 'Phased',
+                    duration: 3
+                }
+            }
+        ],
+        isDisassembleable: true,
+        disassembleResults: [
+            { name: 'Unstable Phase Core', quantity: 1 },
+            { name: 'Advanced Alloy', quantity: 2 }
+        ],
+        description: 'A fast-striking blade that occasionally phases targets out of reality. 40% chance on critical hits to apply Phased status for 3 seconds.'
+    },
+
+    {
+        name: "Frost Cannon",
+        type: "Weapon",
+        weaponType: "Rifle",
+        icon: "icons/frost_cannon.png",
+        level: 10,
+        bAttackSpeed: 1.0,
+        damageTypes: {
+            cryo: { min: 35, max: 45 }
+        },
+        statModifiers: {
+            damageTypes: {
+                cryo: { min: 30, max: 50 }
+            },
+            damageGroups: {
+                elemental: { min: 10, max: 15 }
+            }
+        },
+        criticalChanceModifierRange: { min: 10, max: 15 },
+        criticalMultiplierModifierRange: { min: 20, max: 30 },
+        defenseTypes: {
+            cryo: { min: 10, max: 15 }
+        },
+        slot: 'mainHand',
+        effects: [
+            {
+                trigger: 'onHit',
+                chance: 0.3,
+                action: 'applyStatusEffect',
+                parameters: {
+                    effect: 'Frozen',
+                    duration: 2,
+                    stacks: 1,
+                    maxStacks: 3
+                }
+            }
+        ],
+        isDisassembleable: true,
+        disassembleResults: [
+            { name: 'Cryo Cell', quantity: 2 },
+            { name: 'Advanced Barrel', quantity: 1 }
+        ],
+        description: 'Slow but powerful cryo weapon. 30% chance to apply stacking Frozen effect, slowing enemies and increasing damage taken.'
+    },
+
+    {
+        name: "Neurotoxin Needler",
+        type: "Weapon",
+        weaponType: "Crossbow",
+        icon: "icons/needler.png",
+        level: 10,
+        bAttackSpeed: 3.0,
+        damageTypes: {
+            kinetic: { min: 8, max: 12 },
+            corrosive: { min: 12, max: 18 }
+        },
+        statModifiers: {
+            damageTypes: {
+                corrosive: { min: 35, max: 45 },
+                kinetic: { min: 15, max: 25 }
+            },
+            damageGroups: {
+                chemical: { min: 15, max: 25 }
+            }
+        },
+        attackSpeedModifierRange: { min: 15, max: 25 },
+        criticalChanceModifierRange: { min: 20, max: 30 },
+        defenseTypes: {},
+        slot: 'mainHand',
+        effects: [
+            {
+                trigger: 'onHit',
+                chance: 0.65,
+                action: 'applyStatusEffect',
+                parameters: {
+                    effect: 'Corroded',
+                    duration: 4,
+                    dotDamage: {
+                        corrosive: 8
+                    },
+                    statReduction: {
+                        attackSpeed: 10
+                    }
+                }
+            }
+        ],
+        isDisassembleable: true,
+        disassembleResults: [
+            { name: 'Toxic Residue', quantity: 2 },
+            { name: 'Precision Mechanism', quantity: 1 }
+        ],
+        description: 'Rapidly fires toxic darts. 65% chance to apply Corroded for 4 seconds, dealing corrosive damage over time and reducing attack speed.'
+    },
+
+    {
+        name: "Pyro Blaster",
+        type: "Weapon",
+        weaponType: "Energy Cannon",
+        icon: "icons/pyro_blaster.png",
+        level: 10,
+        bAttackSpeed: 0.8,
+        damageTypes: {
+            pyro: { min: 40, max: 55 }
+        },
+        statModifiers: {
+            damageTypes: {
+                pyro: { min: 40, max: 50 }
+            },
+            damageGroups: {
+                elemental: { min: 20, max: 25 }
+            }
+        },
+        criticalChanceModifierRange: { min: 15, max: 20 },
+        criticalMultiplierModifierRange: { min: 40, max: 60 },
+        defenseTypes: {},
+        slot: 'mainHand',
+        effects: [
+            {
+                trigger: 'onHit',
+                chance: 0.4,
+                action: 'areaEffect',
+                parameters: {
+                    radius: 2,
+                    damageType: 'pyro',
+                    damageAmount: { min: 15, max: 20 }
+                }
+            }
+        ],
+        isDisassembleable: true,
+        disassembleResults: [
+            { name: 'Pyro Core', quantity: 1 },
+            { name: 'Advanced Electronic Circuit', quantity: 2 }
+        ],
+        description: 'Slow but devastating fire weapon. 40% chance to create a fiery explosion that damages nearby enemies.'
+    },
+
+    {
+        name: "Lightning Gauntlet",
+        type: "Weapon",
+        weaponType: "Gauntlet",
+        icon: "icons/lightning_gauntlet.png",
+        level: 10,
+        bAttackSpeed: 2.2,
+        damageTypes: {
+            electric: { min: 15, max: 28 }
+        },
+        statModifiers: {
+            damageTypes: {
+                electric: { min: 45, max: 60 }
+            },
+            damageGroups: {
+                elemental: { min: 15, max: 20 }
+            }
+        },
+        attackSpeedModifierRange: { min: 20, max: 30 },
+        criticalChanceModifierRange: { min: 5, max: 15 },
+        criticalMultiplierModifierRange: { min: 10, max: 20 },
+        defenseTypes: {
+            electric: { min: 15, max: 25 }
+        },
+        slot: 'mainHand',
+        effects: [
+            {
+                trigger: 'onHit',
+                chance: 0.25,
+                action: 'chainLightning',
+                parameters: {
+                    jumps: 3,
+                    damageReduction: 0.3,
+                    damageType: 'electric',
+                    baseAmount: { min: 12, max: 18 }
+                }
+            }
+        ],
+        isDisassembleable: true,
+        disassembleResults: [
+            { name: 'Lightning Cell', quantity: 2 },
+            { name: 'Conductive Alloy', quantity: 1 }
+        ],
+        description: 'Fast-striking electric gauntlet. 25% chance to release chain lightning that jumps to nearby enemies with reduced damage.'
+    },
+
+    {
+        name: "Acidic Ripper",
+        type: "Weapon",
+        weaponType: "Claws",
+        icon: "icons/acid_claws.png",
+        level: 10,
+        bAttackSpeed: 3.5,
+        damageTypes: {
+            slashing: { min: 6, max: 10 },
+            corrosive: { min: 10, max: 15 }
+        },
+        statModifiers: {
+            damageTypes: {
+                corrosive: { min: 35, max: 50 }
+            },
+            damageGroups: {
+                physical: { min: 10, max: 15 },
+                chemical: { min: 15, max: 20 }
+            }
+        },
+        attackSpeedModifierRange: { min: 25, max: 40 },
+        criticalChanceModifierRange: { min: 15, max: 25 },
+        defenseTypes: {
+            corrosive: { min: 20, max: 30 }
+        },
+        slot: 'mainHand',
+        effects: [
+            {
+                trigger: 'onHit',
+                chance: 0.45,
+                action: 'applyStatusEffect',
+                parameters: {
+                    effect: 'Corroded',
+                    duration: 3,
+                    stacks: 1,
+                    maxStacks: 5,
+                    defenseReduction: {
+                        physical: 5,
+                        stacking: true
+                    }
+                }
+            }
+        ],
+        isDisassembleable: true,
+        disassembleResults: [
+            { name: 'Corrosive Fluid', quantity: 2 },
+            { name: 'Enhanced Cutting Edge', quantity: 1 }
+        ],
+        description: 'Extremely fast acid-coated claws. 45% chance to apply Corroded for 3 seconds, reducing physical defenses with each stack.'
+    },
+
+    {
+        name: "Radiation Scepter",
+        type: "Weapon",
+        weaponType: "Staff",
+        icon: "icons/rad_scepter.png",
+        level: 10,
+        bAttackSpeed: 1.8,
+        damageTypes: {
+            radiation: { min: 20, max: 30 }
+        },
+        statModifiers: {
+            damageTypes: {
+                radiation: { min: 40, max: 60 }
+            },
+            damageGroups: {
+                chemical: { min: 15, max: 25 }
+            }
+        },
+        attackSpeedModifierRange: { min: 10, max: 20 },
+        criticalChanceModifierRange: { min: 20, max: 30 },
+        criticalMultiplierModifierRange: { min: 25, max: 35 },
+        defenseTypes: {
+            radiation: { min: 15, max: 25 }
+        },
+        slot: 'mainHand',
+        effects: [
+            {
+                trigger: 'onCritical',
+                chance: 0.5,
+                action: 'applyStatusEffect',
+                parameters: {
+                    effect: 'Irradiated',
+                    duration: 2,
+                    dotDamage: {
+                        radiation: 10
+                    },
+                    statReduction: {
+                        allDefenses: 30,
+                        duration: 3
+                    }
+                }
+            }
+        ],
+        isDisassembleable: true,
+        disassembleResults: [
+            { name: 'Radiation Core', quantity: 1 },
+            { name: 'Energy Focuser', quantity: 1 }
+        ],
+        description: 'A staff that channels deadly radiation. 50% chance on critical hits to apply Irradiated, dealing radiation damage over time and reducing all defenses.'
+    },
 ];
 
 // Export the weapons array

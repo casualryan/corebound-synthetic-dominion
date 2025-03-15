@@ -259,12 +259,11 @@ hr {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    margin: 20px 0;
-    gap: 20px;
+    width: 100%;
 }
 
 .container > div {
-    flex: 1 1 32%; 
+    position: relative;
 }
 
 /* Stat Lists */
@@ -2041,38 +2040,256 @@ hr {
     border-radius: 3px;
 }
 
-/* Delve UI Styles */
+/* HP and Energy Shield Bar Containers */
 .hp-bar-container, .es-bar-container {
     position: relative;
     width: 100%;
     height: 20px;
-    background-color: rgba(0, 0, 0, 0.3);
+    margin: 5px 0;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 200, 255, 0.5);
     border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: 5px;
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    overflow: visible; /* Allow text to display over the bar */
+    box-shadow: 0 0 10px rgba(0, 150, 200, 0.2) inset, 0 0 5px rgba(0, 200, 255, 0.3);
 }
 
-.hp-bar, .es-bar {
+/* HP Bar */
+.hp-bar {
     height: 100%;
-    width: 0%;
+    width: 0%; /* Let JavaScript control it */
+    background: linear-gradient(90deg, rgba(220, 50, 50, 0.7) 0%, rgba(255, 70, 70, 0.9) 100%);
+    position: absolute;
+    left: 0;
+    top: 0;
     transition: width 0.3s ease-out;
+    box-shadow: 0 0 15px rgba(255, 70, 70, 0.5) inset;
+    border-radius: 2px;
 }
 
+.hp-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.hp-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 10px,
+        rgba(255, 255, 255, 0.1) 10px,
+        rgba(255, 255, 255, 0.1) 20px
+    );
+    animation: scan-hp 2s linear infinite;
+}
+
+@keyframes scan-hp {
+    0% { background-position: 0 0; }
+    100% { background-position: 40px 0; }
+}
+
+/* Energy Shield Bar */
+.es-bar {
+    height: 100%;
+    width: 0%; /* Let JavaScript control it */
+    background: linear-gradient(90deg, rgba(30, 120, 255, 0.7) 0%, rgba(50, 150, 255, 0.9) 100%);
+    position: absolute;
+    left: 0;
+    top: 0;
+    transition: width 0.3s ease-out;
+    box-shadow: 0 0 15px rgba(70, 130, 255, 0.5) inset, 0 0 5px rgba(100, 200, 255, 0.3);
+    border-radius: 2px;
+}
+
+.es-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.es-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(150, 220, 255, 0.2) 10px,
+        rgba(150, 220, 255, 0.2) 20px
+    );
+    animation: pulse-shield 3s ease-in-out infinite;
+}
+
+@keyframes pulse-shield {
+    0% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+    100% { opacity: 0.3; }
+}
+
+/* HP and ES Bar + Text Container */
+.hp-bar-container, .es-bar-container {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    margin: 5px 0;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 200, 255, 0.5);
+    border-radius: 3px;
+    overflow: visible; /* Allow text to display over the bar */
+    box-shadow: 0 0 10px rgba(0, 150, 200, 0.2) inset, 0 0 5px rgba(0, 200, 255, 0.3);
+}
+
+/* HP/ES Text Positioning - make sure it overlays exactly on the bars */
 .hp-text, .es-text {
+    position: absolute;
+    width: 100%;
+    height: 20px;
+    line-height: 20px;
     text-align: center;
-    margin-bottom: 10px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
     font-weight: bold;
-    color: #e0f2ff;
-    text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+    z-index: 100; /* Ensure it's above everything */
+    pointer-events: none;
+    margin-top: -20px; /* Position it over the bar that comes right before it */
+    left: 0;
+    /* Strong text outline for better readability */
+    text-shadow: 
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        1px 1px 0 #000,
+        0 0 3px #000,
+        0 0 3px #000; /* Double shadow for stronger effect */
 }
 
 .hp-text {
-    color: #e0f2ff;
+    color: rgba(255, 255, 255, 1);
 }
 
 .es-text {
-    color: #56cfe1;
+    color: rgba(200, 230, 255, 1);
+}
+
+/* Attack Progress Bar Container */
+.progress-container {
+    position: relative;
+    width: 100%;
+    height: 15px;
+    margin: 5px 0 15px 0;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 255, 200, 0.4);
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: 0 0 8px rgba(0, 200, 150, 0.2) inset;
+}
+
+/* Enhanced Attack Progress Bar */
+.progress-bar.attack-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(0, 200, 100, 0.5), rgba(0, 255, 150, 0.8));
+    position: relative;
+    transition: width 0.05s linear;
+    box-shadow: 0 0 10px rgba(0, 255, 150, 0.4);
+}
+
+.progress-bar.attack-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 10px;
+    height: 100%;
+    background: rgba(0, 255, 200, 0.8);
+    box-shadow: 0 0 15px 5px rgba(0, 255, 200, 0.6);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.progress-bar.attack-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 5px,
+        rgba(0, 255, 150, 0.2) 5px,
+        rgba(0, 255, 150, 0.2) 10px
+    );
+    animation: scan-attack 1s linear infinite;
+}
+
+@keyframes scan-attack {
+    0% { background-position: 0 0; }
+    100% { background-position: 20px 0; }
+}
+
+/* Stat sections */
+.stats p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #cccccc;
+}
+
+.stats p span {
+    color: #ffffff;
+    font-weight: 500;
+}
+
+/* Damage Types and Defense Types Lists */
+.stat-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 5px 0 15px 0;
+    font-size: 14px;
+}
+
+.stat-list li {
+    margin: 5px 0;
+    color: #cccccc;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Active Effects */
+#player-active-effects, #enemy-active-effects {
+    border-top: 1px solid rgba(0, 255, 204, 0.2);
+    padding-top: 5px;
+    margin-top: 15px;
+}
+
+/* Total DPS Display */
+#player-total-dps, #enemy-total-dps {
+    margin-top: 10px;
+    padding: 8px;
+    background: rgba(200, 50, 50, 0.2);
+    border: 1px solid rgba(255, 100, 100, 0.3);
+    border-radius: 4px;
+    color: #ff9999;
+    font-weight: bold;
+    text-align: center;
 }
 
 /* Styling for the HP slice animation */
@@ -2098,11 +2315,107 @@ hr {
     text-shadow: 0 0 3px black;
     animation: float-up 1.5s forwards;
     pointer-events: none;
+    z-index: 20;
 }
 
 @keyframes float-up {
     0% { opacity: 1; transform: translateY(0); }
     100% { opacity: 0; transform: translateY(-30px); }
+}
+
+/* Delve Bag Display */
+#delve-bag, #delve-bag-container {
+    flex: 1;
+    min-width: 180px;
+    position: relative;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+    color: #fff;
+    margin: 0;
+    height: auto;
+    overflow-y: auto;
+    max-height: 600px;
+    z-index: 10;
+}
+
+.delve-bag {
+    flex: 1;
+    min-width: 180px;
+    position: relative;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(0, 255, 204, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.8), 0 0 5px rgba(0, 255, 204, 0.2);
+    color: #fff;
+    margin-bottom: 15px;
+    height: auto;
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+#delve-bag h3, .delve-bag h3 {
+    color: #00ffcc;
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 16px;
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+}
+
+#delve-bag-items {
+    list-style-type: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+}
+
+#delve-bag-items li {
+    padding: 8px 10px;
+    margin-bottom: 5px;
+    background: rgba(0, 30, 60, 0.4);
+    border-radius: 4px;
+    border-left: 3px solid #00ffcc;
+    position: relative;
+    transition: background 0.2s ease;
+    cursor: pointer;
+}
+
+#delve-bag-items li:hover {
+    background: rgba(0, 40, 80, 0.6);
+}
+
+#delve-bag-credits {
+    background: rgba(0, 40, 80, 0.3);
+    padding: 8px 12px;
+    border-radius: 4px;
+    text-align: center;
+    margin-bottom: 10px;
+    font-family: 'Orbitron', sans-serif;
+    color: #ffcc00;
+    text-shadow: 0 0 8px rgba(255, 204, 0, 0.4);
+    border: 1px solid rgba(255, 204, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1000px) {
+    .container {
+        flex-wrap: wrap;
+    }
+    
+    .stats, #delve-bag, .combat-log {
+        min-width: 40%;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 600px) {
+    .stats, #delve-bag, .combat-log {
+        min-width: 100%;
+    }
 }
 
 /* Delve button styles */
@@ -2112,6 +2425,7 @@ hr {
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease;
+    margin: 5px;
 }
 
 .delve-button.danger {
@@ -2138,11 +2452,468 @@ hr {
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease;
+    margin: 5px;
 }
 
-.delve-location-button:hover {
-    background: linear-gradient(135deg, #005f73, #003559);
-    box-shadow: 0 0 15px rgba(0, 166, 251, 0.5);
-    transform: translateY(-2px);
+/* Attack Progress Section */
+.stats h3 {
+    margin-top: 15px;
+    margin-bottom: 8px;
+    border-top: 1px solid rgba(0, 255, 204, 0.2);
+    padding-top: 10px;
+    color: #00ffcc;
 }
 
+/* Combat Container - Ensures proper layout */
+.container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+/* Stats Panels for Player and Enemy */
+.stats {
+    flex: 1;
+    min-width: 220px;
+    max-width: none;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid #333;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 15px;
+    margin: 0;
+    height: 100%;
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+#player-stats, #enemy-stats {
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.stats h2 {
+    color: #00ffcc;
+    font-size: 20px;
+    margin-bottom: 15px;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+}
+
+/* Combat Log */
+.combat-log {
+    flex: 1;
+    min-width: 220px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid #333;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 15px;
+    margin: 0;
+    height: 100%;
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+.combat-log h2 {
+    color: #00ffcc;
+    font-size: 20px;
+    margin-bottom: 10px;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+}
+
+#log-messages {
+    height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+    color: #cccccc;
+    line-height: 1.5;
+}
+
+/* Delve Screen Specific Styling */
+#adventure-screen {
+    position: relative;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(0, 17, 51, 0.9), rgba(0, 34, 85, 0.9));
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(0, 255, 204, 0.15);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+#adventure-screen h2 {
+    color: #00ffcc;
+    font-family: 'Orbitron', sans-serif;
+    margin-bottom: 15px;
+    text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+}
+
+#adventure-screen h3 {
+    font-family: 'Orbitron', sans-serif;
+    color: #00ccff;
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+/* Codex Styles */
+/* ... existing code ... */
+
+#codex-screen {
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    border: 1px solid #333;
+    position: relative;
+    overflow: hidden;
+}
+
+#codex-screen::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(0, 40, 80, 0.3), rgba(0, 0, 0, 0));
+    pointer-events: none;
+    z-index: 0;
+}
+
+#codex-screen h2 {
+    color: #00ffcc;
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+    border-bottom: 1px solid rgba(0, 255, 204, 0.3);
+    padding-bottom: 10px;
+}
+
+.codex-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.codex-category-button {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    background: linear-gradient(to bottom, #001833, #000d1a);
+    border: 1px solid #00ffcc;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.codex-category-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(0, 255, 204, 0.1), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+.codex-category-button:hover::before, 
+.codex-category-button.active::before {
+    transform: translateX(0);
+}
+
+.codex-category-button img {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    filter: brightness(0.8);
+    transition: filter 0.3s ease;
+}
+
+.codex-category-button:hover img,
+.codex-category-button.active img {
+    filter: brightness(1.2);
+}
+
+.codex-category-button span {
+    color: #cccccc;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.codex-category-button:hover span,
+.codex-category-button.active span {
+    color: #ffffff;
+    text-shadow: 0 0 8px rgba(0, 255, 204, 0.7);
+}
+
+.codex-category-button.active {
+    background: linear-gradient(to bottom, #002e5c, #001c33);
+    box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+}
+
+.codex-content {
+    background: rgba(0, 10, 20, 0.6);
+    border-radius: 8px;
+    border: 1px solid #002640;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+    min-height: 400px;
+}
+
+.codex-title {
+    color: #00ffcc;
+    font-size: 22px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+}
+
+.codex-section {
+    margin-bottom: 30px;
+}
+
+.codex-subtitle {
+    color: #66ccff;
+    font-size: 18px;
+    margin-bottom: 15px;
+    position: relative;
+    padding-left: 15px;
+}
+
+.codex-subtitle::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 5px;
+    height: 70%;
+    background-color: #00ffcc;
+    border-radius: 2px;
+}
+
+.codex-text {
+    color: #ddd;
+    line-height: 1.6;
+    font-size: 15px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Enemy Codex Specific Styles */
+
+.codex-filter {
+    margin-bottom: 20px;
+}
+
+#enemy-search {
+    width: 100%;
+    padding: 10px 15px;
+    background: rgba(0, 20, 40, 0.8);
+    border: 1px solid #00ffcc;
+    border-radius: 5px;
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    transition: all 0.3s ease;
+}
+
+#enemy-search:focus {
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+}
+
+#enemy-search::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.codex-enemy {
+    margin-bottom: 15px;
+    border-radius: 5px;
+    overflow: hidden;
+    background: rgba(0, 15, 30, 0.5);
+    border: 1px solid #002640;
+    transition: all 0.3s ease;
+}
+
+.codex-enemy:hover {
+    border-color: rgba(0, 255, 204, 0.5);
+}
+
+.codex-enemy-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: linear-gradient(to right, rgba(0, 30, 60, 0.8), rgba(0, 15, 30, 0.5));
+    cursor: pointer;
+}
+
+.codex-enemy-header h4 {
+    margin: 0;
+    color: #00ffcc;
+    font-size: 16px;
+}
+
+.expand-button {
+    width: 24px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #00ffcc;
+    border-radius: 50%;
+    color: #00ffcc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.expand-button:hover {
+    background: rgba(0, 255, 204, 0.2);
+}
+
+.codex-enemy-details {
+    padding: 15px;
+    border-top: 1px solid #002640;
+}
+
+.codex-details-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.codex-column {
+    flex: 1;
+    min-width: 250px;
+}
+
+.codex-stats-section {
+    margin-bottom: 20px;
+}
+
+.codex-stats-section h5 {
+    color: #66ccff;
+    font-size: 16px;
+    margin: 0 0 10px 0;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(102, 204, 255, 0.3);
+}
+
+.codex-stats-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.codex-stats-list li {
+    padding: 5px 0;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-name {
+    color: #bbb;
+}
+
+.stat-value {
+    color: #fff;
+    font-weight: bold;
+}
+
+.codex-loot-section,
+.codex-description-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(0, 255, 204, 0.2);
+}
+
+.codex-loot-section h5,
+.codex-description-section h5 {
+    color: #66ccff;
+    font-size: 16px;
+    margin: 0 0 10px 0;
+}
+
+.codex-loot-info p {
+    margin: 5px 0;
+}
+
+.loot-label {
+    color: #bbb;
+    display: inline-block;
+    min-width: 150px;
+}
+
+.loot-value {
+    color: #fff;
+    font-weight: bold;
+}
+
+.codex-loot-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.codex-loot-table th {
+    text-align: left;
+    padding: 8px;
+    background: rgba(0, 30, 60, 0.5);
+    color: #00ffcc;
+}
+
+.codex-loot-table td {
+    padding: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.codex-legacy-loot {
+    list-style: none;
+    padding: 0;
+}
+
+.codex-legacy-loot li {
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.codex-description {
+    color: #ddd;
+    line-height: 1.6;
+    font-style: italic;
+}
+
+/* Media Queries for Responsive Design */
+@media (max-width: 768px) {
+    .codex-details-columns {
+        flex-direction: column;
+    }
+    
+    .codex-column {
+        min-width: 100%;
+    }
+    
+    .codex-categories {
+        justify-content: center;
+    }
+}

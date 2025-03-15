@@ -67,6 +67,13 @@ const npcs = [
                 levelReq: 1
             },
             {
+                itemName: "Phase Reaver",
+                price: 1,
+                stock: 5,
+                defaultStock: 5,
+                levelReq: 1
+            },
+            {
                 itemName: "Minor Electronic Circuit",
                 price: 20,
                 stock: 10,

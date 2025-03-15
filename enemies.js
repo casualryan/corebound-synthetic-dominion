@@ -29,7 +29,8 @@ const enemies = [
             dropRate: .5
         },
         experienceValue: 3,
-        statusEffects: [],        
+        statusEffects: [], 
+        description: "Found in a box in the storage room of your ship. You can likely smack this thing for some basic combat experience, and maybe even some generic parts."       
     },
     {
         name: "Training Dummy Mk. II",
