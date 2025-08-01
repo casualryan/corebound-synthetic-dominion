@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="style.css">
     <!-- Add Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+    
+    <!-- Vite entry point - load before any other scripts that depend on window.weapons -->
+    <script type="module" src="/src/main.js"></script>
 </head>
 
 <body>
@@ -181,6 +184,11 @@
                     <div id="player-damage-type-modifiers" style="list-style-type: none;"></div>
                     <h3>Active Effects</h3>
                     <ul id="player-active-effects" class="stat-list"></ul>
+                    
+                    <!-- Debuff container -->
+                    <h3>Active Debuffs</h3>
+                    <div id="player-debuffs" class="debuff-container"></div>
+
                 </div>
                 <!-- Enemy Stats -->
                 <div class="stats" id="enemy-stats">
@@ -216,6 +224,11 @@
                     <ul id="enemy-defense-types" class="stat-list"></ul>
                     <h3>Active Effects</h3>
                     <ul id="enemy-active-effects" class="stat-list"></ul>
+                    
+                    <!-- Debuff container -->
+                    <h3>Active Debuffs</h3>
+                    <div id="enemy-debuffs" class="debuff-container"></div>
+
                 </div>
                 <!-- Combat Log -->
                 <div class="combat-log">
@@ -281,12 +294,14 @@
     </div>
 
     <!-- Load all item category files before the main items.js -->
-    <script src="weapons.js"></script>
-    <script src="armor.js"></script>
-    <script src="bionics.js"></script>
-    <script src="materials.js"></script>
-    <script src="components.js"></script>
-    <script src="items.js"></script>
+    <!-- All item types now loaded via Vite modules in main.js -->
+    <!-- <script src="weapons.js"></script> --> <!-- Replaced by Vite bundle -->
+    <!-- <script src="armor.js"></script> --> <!-- Replaced by Vite bundle -->
+    <!-- <script src="bionics.js"></script> --> <!-- Replaced by Vite bundle -->
+    <!-- <script src="materials.js"></script> --> <!-- Replaced by Vite bundle -->
+    <!-- <script src="components.js"></script> --> <!-- Replaced by Vite bundle -->
+    <script src="items.js"></script> <!-- Load base items first -->
+    <script src="stats.js"></script> <!-- Load stats calculations -->
     <script src="recipes.js"></script>
     <script src="enemies.js"></script>
     <script src="injectors.js"></script>
@@ -307,8 +322,12 @@
     <script src="disassemble.js"></script>
     <script src="lootPools.js"></script>
     <script src="lootHandler.js"></script>
+    <script src="debuffs.js"></script>
     <script src="combat.js"></script>
     <script src="codex.js"></script>
+    
+    <!-- Item verification script to ensure weapons are properly loaded -->
+    <script type="module" src="/src/itemsVerifier.js"></script>
 
     <!-- Popups -->
     <div id="damage-popups-container"></div>
