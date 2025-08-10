@@ -13,6 +13,10 @@ import neurotoxinNeedler from './neurotoxinNeedler.js';
 import pyroBlaster from './pyroBlaster.js';
 import acidicRipper from './acidicRipper.js';
 import orrDevastatingCarbine from './orrDevastatingCarbine.js';
+import comboTestSword from './comboTestSword.js';
+import nanonicPhaseSword from './nanonicPhaseSword.js';
+import modPoolTestBlade from './modPoolTestBlade.js';
+import dualPoolTestStaff from './dualPoolTestStaff.js';
 
 // Add all weapons to this array
 const weapons = [
@@ -29,7 +33,11 @@ const weapons = [
   neurotoxinNeedler,
   pyroBlaster,
   acidicRipper,
-  orrDevastatingCarbine
+  orrDevastatingCarbine,
+  comboTestSword,
+  nanonicPhaseSword,
+  modPoolTestBlade,
+  dualPoolTestStaff
 ];
 
 export default weapons;

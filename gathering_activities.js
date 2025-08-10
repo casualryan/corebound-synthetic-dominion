@@ -10,7 +10,11 @@ const gatheringActivities = [
             quantity: 1
         },
         experience: 5,
-        requiredLevel: 1
+        requiredLevel: 1,
+        rareFind: {
+            name: "Pristine Metal Plate",
+            quantity: 1
+        }
     },
     {
         name: "Mine Iron Ore",
@@ -21,7 +25,11 @@ const gatheringActivities = [
             quantity: 1
         },
         experience: 8,
-        requiredLevel: 3
+        requiredLevel: 3,
+        rareFind: {
+            name: "Pure Iron Nugget",
+            quantity: 1
+        }
     },
     {
         name: "Mine Copper Ore",
@@ -32,7 +40,11 @@ const gatheringActivities = [
             quantity: 1
         },
         experience: 10,
-        requiredLevel: 5
+        requiredLevel: 5,
+        rareFind: {
+            name: "Copper Vein Sample",
+            quantity: 1
+        }
     },
     {
         name: "Extract Titanium",
@@ -43,7 +55,11 @@ const gatheringActivities = [
             quantity: 1
         },
         experience: 15,
-        requiredLevel: 10
+        requiredLevel: 10,
+        rareFind: {
+            name: "Titanium Alloy Fragment",
+            quantity: 1
+        }
     },
     
     // Foraging Activities - for future implementation
@@ -56,7 +72,11 @@ const gatheringActivities = [
             quantity: 1
         },
         experience: 6,
-        requiredLevel: 1
+        requiredLevel: 1,
+        rareFind: {
+            name: "Rare Herb",
+            quantity: 1
+        }
     },
     
     // Salvaging Activities - for future implementation
@@ -69,6 +89,10 @@ const gatheringActivities = [
             quantity: 1
         },
         experience: 7,
-        requiredLevel: 1
+        requiredLevel: 1,
+        rareFind: {
+            name: "Quantum Processor",
+            quantity: 1
+        }
     }
 ]; 

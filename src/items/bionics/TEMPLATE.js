@@ -30,6 +30,9 @@ export default {
     criticalMultiplierModifierRange: { min: 10, max: 20 },
     precision: { min: 2, max: 5 },
     deflection: { min: 2, max: 5 },
+    // New stats - remove if not needed
+    bionicEfficiency: { min: 5, max: 20 }, // Increases bionic proc effect chances
+    bionicSync: { min: 10, max: 30 }, // Increases stats gained from ALL bionics
     
     // Stat modifiers (optional)
     statModifiers: {

@@ -71,14 +71,19 @@ function gatheringLoop(skillName) {
 
     // Get the correct progress bar element for the skill
     const progressElement = document.getElementById(`${skillName.toLowerCase()}-progress-bar`);
-    const activityTime = currentActivity.activity.time;
+    const skillLevel = player.gatheringSkills?.[skillName]?.level || 1;
+    
+    // Apply time bonus (reduces time needed)
+    const timeBonus = skillLevel === 1 ? 0 : (skillLevel - 1) * 0.5;
+    const basActivityTime = currentActivity.activity.time;
+    const modifiedActivityTime = basActivityTime * (1 - timeBonus / 100);
 
-    gatheringProgress = Math.min((gatheringTimer / activityTime) * 100, 100);
+    gatheringProgress = Math.min((gatheringTimer / modifiedActivityTime) * 100, 100);
     if (progressElement) {
         progressElement.style.width = gatheringProgress + '%';
     }
 
-    if (gatheringTimer >= activityTime) {
+    if (gatheringTimer >= modifiedActivityTime) {
         // Perform the gathering action
         performGatheringAction(currentActivity.skillName, currentActivity.activity);
 
@@ -141,12 +146,28 @@ function displayLootPopup(message) {
 
 // Perform the gathering action upon completion
 function performGatheringAction(skillName, activity) {
+    const skillLevel = player.gatheringSkills?.[skillName]?.level || 1;
+    
+    // Calculate bonuses
+    const yieldBonusChance = skillLevel === 1 ? 0 : (skillLevel - 1) * 0.1;
+    const rareFindChance = skillLevel * 0.02;
+    
     // Get the item template from items.js
     const itemTemplate = items.find(i => i.name === activity.item.name);
     if (itemTemplate) {
         // Create an item instance
         const gatheredItem = generateItemInstance(itemTemplate);
-        gatheredItem.quantity = activity.item.quantity || 1;
+        let baseQuantity = activity.item.quantity || 1;
+        
+        // Check for yield bonus (doubles the yield)
+        const yieldRoll = Math.random() * 100;
+        if (yieldRoll < yieldBonusChance) {
+            baseQuantity *= 2;
+            displayLootPopup(`Yield Bonus! Double resources!`);
+        }
+        
+        gatheredItem.quantity = baseQuantity;
+        
         // Add to inventory
         addItemToInventory(gatheredItem);
 
@@ -161,13 +182,30 @@ function performGatheringAction(skillName, activity) {
         console.error(`Item template not found for ${activity.item.name}`);
     }
 
+    // Check for rare find
+    if (activity.rareFind) {
+        const rareFindRoll = Math.random() * 100;
+        if (rareFindRoll < rareFindChance) {
+            const rareItemTemplate = items.find(i => i.name === activity.rareFind.name);
+            if (rareItemTemplate) {
+                const rareItem = generateItemInstance(rareItemTemplate);
+                rareItem.quantity = activity.rareFind.quantity || 1;
+                addItemToInventory(rareItem);
+                
+                displayLootPopup(`Rare Find! You discovered ${activity.rareFind.name}!`);
+            } else {
+                console.error(`Rare item template not found for ${activity.rareFind.name}`);
+            }
+        }
+    }
+
     // Gain experience
     gainGatheringExperience(skillName, activity.experience);
 
     console.log(`You have gathered ${activity.item.name}.`);
 
-    // Update gathering skill stats
-    updateGatheringSkillStats();
+    // Update gathering skill stats for the current skill
+    updateGatheringSkillDisplay(skillName);
 }
 
 // Display the gathering activities for a given skill
@@ -179,7 +217,7 @@ function displaySkillActivities(skillName) {
     
     const skillLevel = player.gatheringSkills?.[skillName]?.level || 1;
     const skillXP = player.gatheringSkills?.[skillName]?.experience || 0;
-    const xpForNextLevel = getXPForNextLevel(skillLevel);
+    const xpForNextLevel = getGatheringXPForNextLevel(skillLevel);
     const progressPercent = (skillXP / xpForNextLevel) * 100;
     
     // Find the activities container for this skill
@@ -247,15 +285,20 @@ function displaySkillActivities(skillName) {
                     document.getElementById('gathering-skill-stats');
     
     if (statsDiv) {
+        // Calculate bonuses
+        const timeBonus = skillLevel === 1 ? 0 : (skillLevel - 1) * 0.5;
+        const yieldBonus = skillLevel === 1 ? 0 : (skillLevel - 1) * 0.1;
+        const rareFindBonus = skillLevel * 0.02;
+        
         statsDiv.className = 'mining-stats';
         statsDiv.innerHTML = `
             <h3>${skillName} Stats</h3>
             <ul>
                 <li><span class="stat-name">Current Level:</span> <span class="stat-value">${skillLevel}</span></li>
-                <li><span class="stat-name">Experience:</span> <span class="stat-value">${skillXP} / ${xpForNextLevel}</span></li>
-                <li><span class="stat-name">Progress:</span> <span class="stat-value">${progressPercent.toFixed(1)}%</span></li>
-                <li><span class="stat-name">Time Bonus:</span> <span class="stat-value">-${(skillLevel * 2)}%</span></li>
-                <li><span class="stat-name">Yield Bonus:</span> <span class="stat-value">+${(skillLevel * 1.5).toFixed(1)}%</span></li>
+                <li><span class="stat-name">Experience:</span> <span class="stat-value">${skillXP} / ${xpForNextLevel} (${progressPercent.toFixed(1)}%)</span></li>
+                <li><span class="stat-name">Time Bonus:</span> <span class="stat-value">${timeBonus > 0 ? '-' : ''}${timeBonus.toFixed(1)}%</span></li>
+                <li><span class="stat-name">Yield Bonus:</span> <span class="stat-value">+${yieldBonus.toFixed(1)}%</span></li>
+                <li><span class="stat-name">Rare Find:</span> <span class="stat-value">+${rareFindBonus.toFixed(2)}%</span></li>
             </ul>
         `;
     }
@@ -304,6 +347,43 @@ function updateGatheringSkillStats() {
     }
 }
 
+// Update the display for a specific gathering skill (maintains detailed format)
+function updateGatheringSkillDisplay(skillName) {
+    const skill = player.gatheringSkills?.[skillName];
+    if (!skill) {
+        console.error(`Skill ${skillName} not found in player.gatheringSkills`);
+        return;
+    }
+
+    const skillLevel = skill.level || 1;
+    const skillXP = skill.experience || 0;
+    const xpForNextLevel = getGatheringXPForNextLevel(skillLevel);
+    const progressPercent = (skillXP / xpForNextLevel) * 100;
+    
+    // Find the stats div for this skill
+    const statsDiv = document.getElementById(`${skillName.toLowerCase()}-skill-stats`) || 
+                    document.getElementById('gathering-skill-stats');
+    
+    if (statsDiv) {
+        // Calculate bonuses
+        const timeBonus = skillLevel === 1 ? 0 : (skillLevel - 1) * 0.5;
+        const yieldBonus = skillLevel === 1 ? 0 : (skillLevel - 1) * 0.1;
+        const rareFindBonus = skillLevel * 0.02;
+        
+        statsDiv.className = 'mining-stats';
+        statsDiv.innerHTML = `
+            <h3>${skillName} Stats</h3>
+            <ul>
+                <li><span class="stat-name">Current Level:</span> <span class="stat-value">${skillLevel}</span></li>
+                <li><span class="stat-name">Experience:</span> <span class="stat-value">${skillXP} / ${xpForNextLevel} (${progressPercent.toFixed(1)}%)</span></li>
+                <li><span class="stat-name">Time Bonus:</span> <span class="stat-value">${timeBonus > 0 ? '-' : ''}${timeBonus.toFixed(1)}%</span></li>
+                <li><span class="stat-name">Yield Bonus:</span> <span class="stat-value">+${yieldBonus.toFixed(1)}%</span></li>
+                <li><span class="stat-name">Rare Find:</span> <span class="stat-value">+${rareFindBonus.toFixed(2)}%</span></li>
+            </ul>
+        `;
+    }
+}
+
 // Gathering skills data
 // const gatheringSkills = [
 //     {
@@ -334,13 +414,16 @@ document.addEventListener('DOMContentLoaded', () => {
     updateGatheringSkillStats();
 
     // Add event listeners for stop buttons
-    gatheringSkills.forEach(skill => {
-        const stopButton = document.getElementById(`stop-${skill.name.toLowerCase()}`);
-        if (stopButton) {
-            stopButton.addEventListener('click', stopGatheringActivity);
-        }
+    // Use the skill names from player.gatheringSkills instead of a separate array
+    if (player && player.gatheringSkills) {
+        Object.keys(player.gatheringSkills).forEach(skillName => {
+            const stopButton = document.getElementById(`stop-${skillName.toLowerCase()}`);
+            if (stopButton) {
+                stopButton.addEventListener('click', stopGatheringActivity);
+            }
 
-        // Display activities for each skill
-        displaySkillActivities(skill.name);
-    });
+            // Display activities for each skill
+            displaySkillActivities(skillName);
+        });
+    }
 });

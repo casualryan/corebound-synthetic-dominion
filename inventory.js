@@ -12,19 +12,41 @@ function notifyInventoryChange() {
     window.inventoryChangeListeners.forEach(listener => listener());
 }
 
+// Function to get current number of used inventory slots
+function getUsedInventorySlots() {
+    return window.inventory.length;
+}
+
+// Function to check if inventory has space for new items
+function hasInventorySpace(slotsNeeded = 1) {
+    return getUsedInventorySlots() + slotsNeeded <= player.maxInventorySlots;
+}
+
 // Function to add an item to the inventory, handling stackable items
 function addItemToInventory(newItem) {
     console.log('Adding item to inventory:', newItem);
+    
     if (newItem.stackable) {
         const existingItem = window.inventory.find(item => item.name === newItem.name);
         if (existingItem) {
+            // Stacking with existing item - no slot check needed
             existingItem.quantity += newItem.quantity;
             console.log(`Updated quantity of ${existingItem.name} to ${existingItem.quantity}`);
         } else {
+            // Adding new stackable item - check slots
+            if (!hasInventorySpace(1)) {
+                logMessage(`Inventory full! Cannot add ${newItem.name}. (${getUsedInventorySlots()}/${player.maxInventorySlots} slots used)`);
+                return false;
+            }
             window.inventory.push(newItem);
             console.log(`Added new stackable item: ${newItem.name}`);
         }
     } else {
+        // Adding non-stackable item - check slots
+        if (!hasInventorySpace(1)) {
+            logMessage(`Inventory full! Cannot add ${newItem.name}. (${getUsedInventorySlots()}/${player.maxInventorySlots} slots used)`);
+            return false;
+        }
         window.inventory.push(newItem);
         console.log(`Added new non-stackable item: ${newItem.name}`);
     }
@@ -41,6 +63,8 @@ function addItemToInventory(newItem) {
     if (window.playSound && !window.isSilentItemAdd) {
         playSound('ITEM_PICKUP', 0.2);
     }
+    
+    return true; // Successfully added item
 }
 
 // Function to remove an item from the inventory
@@ -73,8 +97,21 @@ function removeItemFromInventory(itemName, quantity = 1) {
 }
 
 
+// Function to update the inventory header with slot count
+function updateInventoryHeader() {
+    const inventoryHeader = document.getElementById('inventory-header');
+    if (inventoryHeader) {
+        const usedSlots = getUsedInventorySlots();
+        const maxSlots = player.maxInventorySlots;
+        inventoryHeader.textContent = `Inventory (${usedSlots}/${maxSlots} slots)`;
+    }
+}
+
 // Function to update the inventory display
 function updateInventoryDisplay() {
+    // Update the header first
+    updateInventoryHeader();
+    
     const inventoryList = document.getElementById('inventory');
     inventoryList.innerHTML = '';  // Clear current inventory list
 
@@ -136,6 +173,13 @@ function updateInventoryDisplay() {
 function equipItem(item) {
     if (!item || !item.slot) {
         console.error('Invalid item or slot.');
+        return;
+    }
+    
+    // Additional check to prevent non-equippable items (like materials) from being equipped
+    if (!isEquippableItem(item)) {
+        console.error(`Cannot equip ${item.name}: not an equippable item type.`);
+        logMessage(`${item.name} cannot be equipped.`);
         return;
     }
 
@@ -261,7 +305,7 @@ function updateEquipmentDisplay() {
                     wrapper.classList.add('clicked');
                     setTimeout(() => wrapper.classList.remove('clicked'), 300);
                     
-                    unequipItemWithConfirmation(slotName, event);
+                    showEquipmentSelectionWindow(slotName);
                 });
                 
                 // Add a subtle entrance animation
@@ -278,6 +322,12 @@ function updateEquipmentDisplay() {
                 // Add a subtle pulse effect to empty slots
                 slotElement.classList.add('pulse-empty');
                 setTimeout(() => slotElement.classList.remove('pulse-empty'), 1000);
+                
+                // Add click handler for empty slots
+                slotElement.addEventListener('click', () => {
+                    showEquipmentSelectionWindow(slotName);
+                });
+                slotElement.style.cursor = 'pointer';
             }
         }, index * 100); // Stagger the updates by 100ms per slot
     });
@@ -324,7 +374,7 @@ function updateEquipmentDisplay() {
                     wrapper.classList.add('clicked');
                     setTimeout(() => wrapper.classList.remove('clicked'), 300);
                     
-                    unequipItemWithConfirmation(`bionic-slot-${index}`, event);
+                    showEquipmentSelectionWindow('bionic', index);
                 });
                 
                 // Add a subtle entrance animation
@@ -341,6 +391,12 @@ function updateEquipmentDisplay() {
                 // Add a subtle pulse effect to empty slots
                 slotElement.classList.add('pulse-empty');
                 setTimeout(() => slotElement.classList.remove('pulse-empty'), 1000);
+                
+                // Add click handler for empty bionic slots
+                slotElement.addEventListener('click', () => {
+                    showEquipmentSelectionWindow('bionic', index);
+                });
+                slotElement.style.cursor = 'pointer';
             }
         }, (slots.length + index) * 100); // Continue the staggered timing from regular equipment
     });
@@ -623,8 +679,283 @@ function useItem(item) {
     }
 }
 
+// Function to show equipment selection window for a specific slot
+function showEquipmentSelectionWindow(slotName, bionicIndex = null) {
+    // Check if overlay already exists and remove it
+    const existingOverlay = document.getElementById('equipment-selection-overlay');
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'equipment-selection-overlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    document.body.appendChild(overlay);
+
+    // Create main window
+    const window = document.createElement('div');
+    window.className = 'equipment-selection-window';
+    window.style.cssText = `
+        background: linear-gradient(to bottom, #001a33, #000d1a);
+        border: 2px solid #00ffcc;
+        border-radius: 8px;
+        padding: 20px;
+        max-width: 500px;
+        max-height: 70vh;
+        overflow-y: auto;
+        box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+    `;
+
+    // Title
+    const title = document.createElement('h3');
+    title.style.cssText = `
+        color: #00ffcc;
+        margin: 0 0 15px 0;
+        text-align: center;
+        font-family: 'Orbitron', sans-serif;
+    `;
+    
+    if (slotName === 'bionic') {
+        title.textContent = `Select Bionic for Slot ${bionicIndex + 1}`;
+    } else {
+        title.textContent = `Select ${capitalize(slotName.replace('Hand', ' Hand'))} Equipment`;
+    }
+    window.appendChild(title);
+
+    // Check if there's currently equipped item and add unequip button
+    let currentItem = null;
+    if (slotName === 'bionic') {
+        currentItem = player.equipment.bionicSlots[bionicIndex];
+    } else {
+        currentItem = player.equipment[slotName];
+    }
+
+    if (currentItem) {
+        const unequipSection = document.createElement('div');
+        unequipSection.style.cssText = `
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 100, 100, 0.1);
+            border-radius: 4px;
+            border-left: 3px solid #ff6464;
+        `;
+
+        const currentItemLabel = document.createElement('p');
+        currentItemLabel.style.cssText = `
+            margin: 0 0 10px 0;
+            color: #ffffff;
+            font-weight: bold;
+        `;
+        currentItemLabel.textContent = `Currently equipped: ${currentItem.name}`;
+        unequipSection.appendChild(currentItemLabel);
+
+        const unequipButton = document.createElement('button');
+        unequipButton.textContent = 'Unequip';
+        unequipButton.style.cssText = `
+            background: linear-gradient(to bottom, #cc3333, #aa1111);
+            color: white;
+            border: 1px solid #ff6464;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            transition: all 0.2s ease;
+        `;
+        unequipButton.addEventListener('mouseover', () => {
+            unequipButton.style.background = 'linear-gradient(to bottom, #ff4444, #cc3333)';
+        });
+        unequipButton.addEventListener('mouseout', () => {
+            unequipButton.style.background = 'linear-gradient(to bottom, #cc3333, #aa1111)';
+        });
+        unequipButton.addEventListener('click', () => {
+            if (slotName === 'bionic') {
+                unequipBionic(bionicIndex);
+            } else {
+                unequipItem(slotName);
+            }
+            document.body.removeChild(overlay);
+            updateEquipmentDisplay();
+        });
+        unequipSection.appendChild(unequipButton);
+        window.appendChild(unequipSection);
+    }
+
+    // Get available items for this slot
+    const availableItems = inventory.filter(item => {
+        if (slotName === 'bionic') {
+            return item.slot === 'bionic' && item.type === 'Bionic';
+        } else {
+            return item.slot === slotName && isEquippableItem(item);
+        }
+    });
+
+    // Items container
+    const itemsContainer = document.createElement('div');
+    itemsContainer.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 10px;
+        margin-bottom: 15px;
+    `;
+
+    if (availableItems.length === 0) {
+        const noItemsMsg = document.createElement('p');
+        noItemsMsg.style.cssText = `
+            color: #888888;
+            text-align: center;
+            font-style: italic;
+            margin: 20px 0;
+        `;
+        noItemsMsg.textContent = 'No compatible items in inventory';
+        itemsContainer.appendChild(noItemsMsg);
+    } else {
+        availableItems.forEach(item => {
+            const itemElement = document.createElement('div');
+            itemElement.style.cssText = `
+                background: linear-gradient(to bottom, #003366, #001133);
+                border: 1px solid #00306e;
+                border-radius: 4px;
+                padding: 8px;
+                cursor: pointer;
+                text-align: center;
+                transition: all 0.2s ease;
+                position: relative;
+            `;
+
+            const itemIcon = document.createElement('img');
+            itemIcon.src = item.icon || 'icons/default-icon.png';
+            itemIcon.style.cssText = `
+                width: 40px;
+                height: 40px;
+                display: block;
+                margin: 0 auto 5px auto;
+            `;
+            itemElement.appendChild(itemIcon);
+
+            const itemName = document.createElement('div');
+            itemName.style.cssText = `
+                color: #ffffff;
+                font-size: 12px;
+                word-wrap: break-word;
+            `;
+            itemName.textContent = item.name;
+            itemElement.appendChild(itemName);
+
+            // Add quantity if stackable
+            if (item.stackable && item.quantity > 1) {
+                const quantityLabel = document.createElement('div');
+                quantityLabel.style.cssText = `
+                    position: absolute;
+                    top: 2px;
+                    right: 2px;
+                    background: rgba(0, 255, 204, 0.8);
+                    color: #000;
+                    font-size: 10px;
+                    padding: 1px 3px;
+                    border-radius: 2px;
+                    font-weight: bold;
+                `;
+                quantityLabel.textContent = item.quantity;
+                itemElement.appendChild(quantityLabel);
+            }
+
+            // Hover effects
+            itemElement.addEventListener('mouseover', () => {
+                itemElement.style.background = 'linear-gradient(to bottom, #004080, #002255)';
+                itemElement.style.borderColor = '#00ffcc';
+                itemElement.style.boxShadow = '0 0 8px rgba(0, 255, 204, 0.4)';
+            });
+            itemElement.addEventListener('mouseout', () => {
+                itemElement.style.background = 'linear-gradient(to bottom, #003366, #001133)';
+                itemElement.style.borderColor = '#00306e';
+                itemElement.style.boxShadow = 'none';
+            });
+
+            // Click to equip
+            itemElement.addEventListener('click', () => {
+                equipItem(item);
+                document.body.removeChild(overlay);
+                updateEquipmentDisplay();
+            });
+
+            itemsContainer.appendChild(itemElement);
+        });
+    }
+
+    window.appendChild(itemsContainer);
+
+    // Close button
+    const closeButton = document.createElement('button');
+    closeButton.textContent = 'Close';
+    closeButton.style.cssText = `
+        background: linear-gradient(to bottom, #003366, #001133);
+        color: #00ffcc;
+        border: 1px solid #00ffcc;
+        border-radius: 4px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-family: 'Orbitron', sans-serif;
+        width: 100%;
+        transition: all 0.2s ease;
+    `;
+    closeButton.addEventListener('mouseover', () => {
+        closeButton.style.background = 'linear-gradient(to bottom, #004080, #002255)';
+        closeButton.style.boxShadow = '0 0 8px rgba(0, 255, 204, 0.6)';
+    });
+    closeButton.addEventListener('mouseout', () => {
+        closeButton.style.background = 'linear-gradient(to bottom, #003366, #001133)';
+        closeButton.style.boxShadow = 'none';
+    });
+    closeButton.addEventListener('click', () => {
+        document.body.removeChild(overlay);
+    });
+    window.appendChild(closeButton);
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            document.body.removeChild(overlay);
+        }
+    });
+
+    overlay.appendChild(window);
+}
+
+// Function to check if an item is actually equippable
+function isEquippableItem(item) {
+    // Define valid equipment slots
+    const validEquipmentSlots = [
+        'mainHand', 'offHand',           // Weapons
+        'head', 'chest', 'legs', 'feet', 'gloves',  // Armor
+        'bionic'                         // Bionics
+    ];
+    
+    // Item must have a valid equipment slot and not be a material
+    return item.slot && 
+           validEquipmentSlots.includes(item.slot) && 
+           item.type !== 'Material';
+}
+
 // Function to show item options popup
 function showItemOptionsPopup(item, clickEvent) {
+    // Check if overlay already exists and remove it
+    const existingOverlay = document.getElementById('overlay');
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
+    
     // Create overlay
     const overlay = document.createElement('div');
     overlay.id = 'overlay';
@@ -641,8 +972,8 @@ function showItemOptionsPopup(item, clickEvent) {
     const buttonsContainer = document.createElement('div');
     buttonsContainer.className = 'popup-buttons';
 
-    // Equip Button (only if item is equippable)
-    if (item.slot) {
+    // Equip Button (only if item is actually equippable - not materials)
+    if (item.slot && item.type !== 'Material' && isEquippableItem(item)) {
         const equipButton = document.createElement('button');
         equipButton.textContent = 'Equip';
         equipButton.addEventListener('click', () => {

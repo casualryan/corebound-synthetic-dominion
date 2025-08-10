@@ -23,6 +23,121 @@ function getItemTooltipContent(item, showRanges = false) {
     }
     content += `</div>`;
     
+    // Roll Groups (Possible Mods) - structured preview for shop/fabricator
+    if (showRanges && Array.isArray(item.rollGroups) && item.rollGroups.length > 0) {
+        const formatRange = (val, suffix = '') => {
+            if (val === undefined || val === null) return '';
+            if (typeof val === 'string') {
+                return `${val}${suffix}`;
+            }
+            if (typeof val === 'number') {
+                return `${val}${suffix}`;
+            }
+            if (typeof val === 'object' && val.min !== undefined && val.max !== undefined) {
+                return `${val.min}${suffix}-${val.max}${suffix}`;
+            }
+            return '';
+        };
+        const toTitle = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+        const groupLabel = key => ({
+            physical: 'Physical', elemental: 'Elemental', chemical: 'Chemical'
+        })[key] || toTitle(key);
+        const isTopLevelPercent = k => (
+            k === 'attackSpeedModifier' || k === 'criticalChanceModifier' ||
+            k === 'criticalMultiplierModifier' || k === 'healthBonusPercent' ||
+            k === 'energyShieldBonusPercent'
+        );
+        const dmgTypeDisplay = t => ({ pyro: 'Fire', cryo: 'Cold', electric: 'Elec', kinetic: 'Kinetic', slashing: 'Slashing', corrosive: 'Corrosive', radiation: 'Radiation' }[t] || toTitle(t));
+        const dmgTypeGroup = t => {
+            if (t === 'kinetic' || t === 'slashing') return 'Physical';
+            if (t === 'pyro' || t === 'cryo' || t === 'electric') return 'Elemental';
+            if (t === 'corrosive' || t === 'radiation') return 'Chemical';
+            return 'Mods';
+        };
+        const nicerTopName = key => ({
+            attackSpeedModifier: 'Attack Speed',
+            criticalChanceModifier: 'Critical Chance',
+            criticalMultiplierModifier: 'Critical Multiplier',
+            healthBonusPercent: 'Health %',
+            energyShieldBonusPercent: 'Energy Shield %',
+        })[key] || toTitle(key);
+        const fmtChoice = (choice) => {
+            if (!choice || !choice.path) return '';
+            const parts = choice.path.split('.');
+            const key = parts[0];
+            const sub = parts[1];
+            const restName = parts.slice(1).join('.');
+            const val = choice.value;
+            switch (key) {
+                case 'damageTypes':
+                    return `${dmgTypeDisplay(sub)} ${formatRange(val)}`;
+                case 'defenseTypes':
+                    return `${toTitle(sub)} +${formatRange(val)}`;
+                case 'statModifiers':
+                    if (sub === 'damageTypes') {
+                        const dtype = parts[2];
+                        return `+${formatRange(val, '%')} ${dmgTypeDisplay(dtype)} dmg`;
+                    }
+                    if (sub === 'damageGroups') {
+                        const g = parts[2];
+                        return `+${formatRange(val, '%')} ${groupLabel(g)}`;
+                    }
+                    return `${toTitle(parts.slice(1).join(' '))}: +${formatRange(val)}`;
+                case 'passiveBonuses': {
+                    const pName = restName; // supports spaces
+                    return `+${formatRange(val)} to ${pName}`;
+                }
+                default: {
+                    // top-level fields
+                    if (isTopLevelPercent(key)) {
+                        return `+${formatRange(val, '%')} ${nicerTopName(key)}`;
+                    }
+                    return `${toTitle(key)} +${formatRange(val)}`;
+                }
+            }
+        };
+        const fmtPick = (pick) => {
+            if (typeof pick === 'number') return `${pick}`;
+            if (typeof pick === 'string') return pick;
+            if (pick && pick.min !== undefined && pick.max !== undefined) return `${pick.min}-${pick.max}`;
+            return '?';
+        };
+
+        // Build grouped sections as requested (Category (N slots) + bullets)
+        let poolsHtml = '';
+        item.rollGroups.forEach((grp) => {
+            if (!grp || !Array.isArray(grp.from) || grp.from.length === 0) return;
+            const pickTxt = fmtPick(grp.pick);
+
+            // Derive a sensible group title
+            let title = 'Enhancements';
+            const kinds = new Set();
+            grp.from.forEach(ch => {
+                if (!ch || !ch.path) return;
+                const p = ch.path.split('.');
+                if (p[0] === 'damageTypes') kinds.add(dmgTypeGroup(p[1]));
+                else if (p[0] === 'statModifiers' && p[1] === 'damageTypes') kinds.add(dmgTypeGroup(p[2]));
+                else if (p[0] === 'statModifiers' && p[1] === 'damageGroups') kinds.add(groupLabel(p[2]));
+            });
+            if (kinds.size === 1) title = Array.from(kinds)[0];
+
+            const bullets = grp.from.map(fmtChoice).filter(Boolean).map(line => `* ${line}`).join('<br>');
+            if (bullets) {
+                const slotsLabel = `(${pickTxt} ${pickTxt === '1' ? 'slot' : 'slots'})`;
+                poolsHtml += `<div style="margin-top:6px;">
+                    <div style="color:#66ffcc; font-weight:bold; margin-bottom:2px;">${title} ${slotsLabel}</div>
+                    <div style="color:#cfe6ff;">${bullets}</div>
+                </div>`;
+            }
+        });
+
+        if (poolsHtml) {
+            content += `<div style="background: rgba(0, 20, 45, 0.6); padding: 6px; margin-bottom: 6px; border-radius: 4px; border-left: 2px solid #00ffcc;">
+                ${poolsHtml}
+            </div>`;
+        }
+    }
+
     // Show passive bonuses if any - only create section if there are bonuses
     if (item.passiveBonuses && Object.keys(item.passiveBonuses).length > 0) {
         let hasPassives = false;
@@ -501,6 +616,158 @@ function getItemTooltipContent(item, showRanges = false) {
         } else {
             content += `<span style="color: #ffd166;">Deflection:</span> +${item.deflection}<br>`;
         }
+        content += `</div>`;
+    }
+
+    // Efficiency Stats - Handle both ranges (for shop) and actual values (for inventory)
+    const hasEfficiencyStats = (showRanges && (item.armorEfficiency !== undefined || item.weaponEfficiency !== undefined || item.bionicEfficiency !== undefined)) ||
+                              (!showRanges && (item.armorEfficiency !== undefined || item.weaponEfficiency !== undefined || item.bionicEfficiency !== undefined));
+                              
+    if (hasEfficiencyStats) {
+        content += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
+        content += `<span style="color: #a8e6cf; font-weight: bold;">Efficiency:</span><br>`;
+        
+        if (item.armorEfficiency !== undefined) {
+            let armorEff;
+            if (showRanges && typeof item.armorEfficiency === 'object' && item.armorEfficiency.min !== undefined) {
+                armorEff = `${item.armorEfficiency.min}% - ${item.armorEfficiency.max}%`;
+            } else {
+                armorEff = `${item.armorEfficiency}%`;
+            }
+            content += `<span style="color: #a8e6cf;">Armor Efficiency:</span> +${armorEff}<br>`;
+        }
+        
+        if (item.weaponEfficiency !== undefined) {
+            let weaponEff;
+            if (showRanges && typeof item.weaponEfficiency === 'object' && item.weaponEfficiency.min !== undefined) {
+                weaponEff = `${item.weaponEfficiency.min}% - ${item.weaponEfficiency.max}%`;
+            } else {
+                weaponEff = `${item.weaponEfficiency}%`;
+            }
+            content += `<span style="color: #ffd3a5;">Weapon Efficiency:</span> +${weaponEff}<br>`;
+        }
+        
+        if (item.bionicEfficiency !== undefined) {
+            let bionicEff;
+            if (showRanges && typeof item.bionicEfficiency === 'object' && item.bionicEfficiency.min !== undefined) {
+                bionicEff = `${item.bionicEfficiency.min}% - ${item.bionicEfficiency.max}%`;
+            } else {
+                bionicEff = `${item.bionicEfficiency}%`;
+            }
+            content += `<span style="color: #c5a3ff;">Bionic Efficiency:</span> +${bionicEff}<br>`;
+        }
+        
+        content += `</div>`;
+    }
+
+    // Bionic Sync
+    if (item.bionicSync !== undefined) {
+        content += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
+        content += `<span style="color: #b19cd9; font-weight: bold;">Bionic Enhancement:</span><br>`;
+        let bionicSync;
+        if (showRanges && typeof item.bionicSync === 'object' && item.bionicSync.min !== undefined) {
+            bionicSync = `${item.bionicSync.min}% - ${item.bionicSync.max}%`;
+        } else {
+            bionicSync = `${item.bionicSync}%`;
+        }
+        content += `<span style="color: #b19cd9;">Bionic Sync:</span> +${bionicSync}<br>`;
+        content += `</div>`;
+    }
+
+    // Combo System Stats
+    const hasComboStats = item.comboAttack !== undefined || item.comboEffectiveness !== undefined || item.additionalComboAttacks !== undefined;
+    if (hasComboStats) {
+        content += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
+        content += `<span style="color: #ff9999; font-weight: bold;">Combo System:</span><br>`;
+        
+        if (item.comboAttack !== undefined) {
+            let comboAttack;
+            if (showRanges && typeof item.comboAttack === 'object' && item.comboAttack.min !== undefined) {
+                comboAttack = `${item.comboAttack.min}% - ${item.comboAttack.max}%`;
+            } else {
+                comboAttack = `${item.comboAttack}%`;
+            }
+            content += `<span style="color: #ff9999;">Combo Attack:</span> +${comboAttack}<br>`;
+        }
+        
+        if (item.comboEffectiveness !== undefined) {
+            let comboEff;
+            if (showRanges && typeof item.comboEffectiveness === 'object' && item.comboEffectiveness.min !== undefined) {
+                comboEff = `${item.comboEffectiveness.min}% - ${item.comboEffectiveness.max}%`;
+            } else {
+                comboEff = `${item.comboEffectiveness}%`;
+            }
+            content += `<span style="color: #ffb366;">Combo Effectiveness:</span> +${comboEff}<br>`;
+        }
+        
+        if (item.additionalComboAttacks !== undefined) {
+            let additionalCombo;
+            if (showRanges && typeof item.additionalComboAttacks === 'object' && item.additionalComboAttacks.min !== undefined) {
+                additionalCombo = `${Math.floor(item.additionalComboAttacks.min)} - ${Math.floor(item.additionalComboAttacks.max)}`;
+            } else {
+                additionalCombo = `${Math.floor(item.additionalComboAttacks)}`;
+            }
+            content += `<span style="color: #ff6b6b;">Additional Combo Attacks:</span> +${additionalCombo}<br>`;
+        }
+        
+        content += `</div>`;
+    }
+
+    // Mastery System
+    const hasMasteryStats = item.kineticMastery !== undefined || item.slashingMastery !== undefined;
+    if (hasMasteryStats) {
+        content += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
+        content += `<span style="color: #ffa500; font-weight: bold;">Mastery:</span><br>`;
+        
+        if (item.kineticMastery !== undefined) {
+            let kineticMast;
+            if (showRanges && typeof item.kineticMastery === 'object' && item.kineticMastery.min !== undefined) {
+                kineticMast = `${item.kineticMastery.min} - ${item.kineticMastery.max}`;
+            } else {
+                kineticMast = `${item.kineticMastery}`;
+            }
+            content += `<span style="color: #ffa500;">Kinetic Mastery:</span> +${kineticMast}<br>`;
+        }
+        
+        if (item.slashingMastery !== undefined) {
+            let slashingMast;
+            if (showRanges && typeof item.slashingMastery === 'object' && item.slashingMastery.min !== undefined) {
+                slashingMast = `${item.slashingMastery.min} - ${item.slashingMastery.max}`;
+            } else {
+                slashingMast = `${item.slashingMastery}`;
+            }
+            content += `<span style="color: #dc143c;">Slashing Mastery:</span> +${slashingMast}<br>`;
+        }
+        
+        content += `</div>`;
+    }
+
+    // Combat Mechanics
+    const hasCombatMechanics = item.severedLimbChance !== undefined || item.maxSeveredLimbs !== undefined;
+    if (hasCombatMechanics) {
+        content += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
+        content += `<span style="color: #8b0000; font-weight: bold;">Combat Mechanics:</span><br>`;
+        
+        if (item.severedLimbChance !== undefined) {
+            let severedChance;
+            if (showRanges && typeof item.severedLimbChance === 'object' && item.severedLimbChance.min !== undefined) {
+                severedChance = `${item.severedLimbChance.min}% - ${item.severedLimbChance.max}%`;
+            } else {
+                severedChance = `${item.severedLimbChance}%`;
+            }
+            content += `<span style="color: #8b0000;">Severed Limb Chance:</span> +${severedChance}<br>`;
+        }
+        
+        if (item.maxSeveredLimbs !== undefined) {
+            let maxLimbs;
+            if (showRanges && typeof item.maxSeveredLimbs === 'object' && item.maxSeveredLimbs.min !== undefined) {
+                maxLimbs = `${item.maxSeveredLimbs.min} - ${item.maxSeveredLimbs.max}`;
+            } else {
+                maxLimbs = `${item.maxSeveredLimbs}`;
+            }
+            content += `<span style="color: #8b0000;">Max Severed Limbs:</span> +${maxLimbs}<br>`;
+        }
+        
         content += `</div>`;
     }
 

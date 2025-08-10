@@ -8,33 +8,41 @@ export default {
     type: "Weapon",
     weaponType: "Sword", // Sword, Staff, Dagger, Pistol, etc.
     icon: "icons/your_icon.png",
-    bAttackSpeed: 1.0, // Base attack speed
+    // Base attack speed can now be a fixed number or a range string/object
+    // Examples: 1.0 or "1.0-1.0" or { min: 1.0, max: 1.2 }
+    bAttackSpeed: "1.0-1.0",
     damageTypes: {
-        // Add appropriate damage types with min/max values
-        kinetic: { min: 10, max: 20 },
+        // Add appropriate damage types (each value can be number, "min-max", or {min,max})
+        kinetic: "10-20",
         // Additional damage types...
     },
     statModifiers: {
         damageTypes: {
-            // Specific damage type modifiers
-            kinetic: { min: 5, max: 10 },
+            // Specific damage type modifiers in %
+            kinetic: "5-10",
         },
         damageGroups: {
             // Group modifiers (physical, elemental, chemical)
-            physical: { min: 5, max: 10 }
+            physical: "5-10"
         }
     },
     // Optional fields - remove if not needed
-    attackSpeedModifierRange: { min: 5, max: 10 },
-    criticalChanceModifierRange: { min: 5, max: 10 },
-    criticalMultiplierModifierRange: { min: 10, max: 20 },
-    deflection: { min: 0, max: 0 },
+    // Use the simplified range format for all numeric stats
+    attackSpeedModifier: "5-10",     // %
+    criticalChanceModifier: "5-10",  // %
+    criticalMultiplierModifier: "10-20", // %
+    deflection: "0-0",
+    // New stats - remove if not needed
+    weaponEfficiency: "5-15", // flat
+    comboAttack: "3-8", // % chance for additional strikes
+    comboEffectiveness: "10-25", // % increases combo damage beyond base 20%
+    additionalComboAttacks: "0-1", // Extra hits per combo (usually 0 or 1)
     defenseTypes: {
         // Add defense types if the weapon provides them
     },
     slot: 'mainHand', // mainHand, offHand, etc.
     passiveBonuses: {
-        // Add passive bonuses if any
+        // Add passive bonuses if any (values can be number or "min-max")
     },
     // Special effects
     effects: [

@@ -1,11 +1,7 @@
 // npcshops.js
 console.log('npcshops.js loaded');
 
-// How often to reset NPC stock (in milliseconds)
-const SHOP_REFRESH_INTERVAL = 60_000_0; // e.g., 60 seconds
-
-// We'll track when the next refresh is due
-let nextShopRefreshTime = Date.now() + SHOP_REFRESH_INTERVAL;
+// Stock/restock mechanics removed per design
 
 // Example NPC array with new properties:
 // - defaultStock: resets to this after timer
@@ -34,18 +30,20 @@ const npcs = [
                 stock: 10,
                 defaultStock: 1,
                 levelReq: 1
-            }
+            },
+            { itemName: "Mod Pool Test Blade", price: 1, stock: 999, defaultStock: 999, levelReq: 1 },
+            { itemName: "Dual Pool Test Staff", price: 1, stock: 999, defaultStock: 999, levelReq: 1 }
         ]
     },
     {
-        name: "Shady Dealer",
+        name: "Nurse Jen",
         inventory: [
             {
-                itemName: "Broken Phase Sword",
-                price: 1,
-                stock: 1,
-                defaultStock: 1,
-                levelReq: 1
+                itemName: "Empty Injector",
+                price: 50,
+                stock: 30,
+                defaultStock: 30,
+                levelReq: 10
             },
             {
                 itemName: "Unstable Photon",
@@ -79,58 +77,40 @@ const npcs = [
                 stock: 10,
                 defaultStock: 10,
                 levelReq: 1
+            },
+            {
+                itemName: "Combo Test Sword",
+                price: 100,
+                stock: 3,
+                defaultStock: 3,
+                levelReq: 1
+            },
+            {
+                itemName: "Nanonic Phase Sword of Incision",
+                price: 1,
+                stock: 1,
+                defaultStock: 1,
+                levelReq: 1
+            }
+        ]
+    },
+    {
+        name: "Account Manager Zara",
+        inventory: [
+            {
+                itemName: "Inventory Slot Expansion",
+                price: 5000,
+                stock: 999, // Unlimited
+                defaultStock: 999,
+                levelReq: 1,
+                isService: true, // Special flag for services
+                description: "Permanently increases your inventory capacity by 1 slot. Maximum 500 slots total."
             }
         ]
     }
 ];
 
-// Start the timer that periodically resets NPC stocks
-function startShopRefreshTimer() {
-    // Refresh every second to update countdown & possibly do a stock reset
-    setInterval(() => {
-        const now = Date.now();
-        if (now >= nextShopRefreshTime) {
-            resetNPCStocks(); 
-            nextShopRefreshTime = now + SHOP_REFRESH_INTERVAL;
-        }
-        updateShopTimerDisplay(); 
-    }, 1000);
-}
-
-// Resets each item's stock to its defaultStock
-function resetNPCStocks() {
-    console.log("Resetting all NPC shop stocks to default...");
-    npcs.forEach(npc => {
-        npc.inventory.forEach(invItem => {
-            invItem.stock = invItem.defaultStock;
-        });
-    });
-    // If a shop is currently open, refresh it
-    if (window.currentNPC) {
-        displayNPCShop(window.currentNPC);
-    }
-}
-
-// Updates the "time until next refresh" display
-function updateShopTimerDisplay() {
-    const timerElement = document.getElementById('shop-timer');
-    if (!timerElement) return;
-
-    const now = Date.now();
-    let remaining = nextShopRefreshTime - now;
-
-    if (remaining <= 0) {
-        timerElement.textContent = "Shop Refresh: Now!";
-    } else {
-        // Convert to total seconds
-        let totalSeconds = Math.floor(remaining / 1000);
-        let minutes = Math.floor(totalSeconds / 60);
-        let seconds = totalSeconds % 60;
-        // Pad seconds with a leading zero if < 10
-        let secondsString = seconds < 10 ? `0${seconds}` : `${seconds}`;
-        timerElement.textContent = `Shop Refresh in: ${minutes}:${secondsString}`;
-    }
-}
+// Timer/stocks removed
 
 // Display NPC list in #npc-list
 function displayNPCList() {
@@ -144,7 +124,7 @@ function displayNPCList() {
     npcs.forEach(npc => {
         const npcButton = document.createElement('button');
         npcButton.textContent = npc.name;
-        npcButton.style.margin = '5px';
+        npcButton.className = 'shop-npc-button';
         npcButton.addEventListener('click', () => {
             displayNPCShop(npc);
         });
@@ -162,62 +142,85 @@ function displayNPCShop(npc) {
     }
     shopContainer.innerHTML = '';
 
-    const heading = document.createElement('h3');
-    heading.textContent = `Welcome to ${npc.name}'s shop!`;
-    shopContainer.appendChild(heading);
+    shopContainer.classList.add('shop-container');
 
-    // Show player's currency
-    const currencyP = document.createElement('p');
-    currencyP.textContent = `Credits Available: ${playerCurrency}`;
-    shopContainer.appendChild(currencyP);
+    // Header (show only credits on the left; NPC name removed to avoid redundancy)
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'shop-header';
+    const currencyP = document.createElement('div');
+    currencyP.className = 'shop-currency';
+    currencyP.textContent = `Credits: ${playerCurrency}`;
+    headerDiv.appendChild(currencyP);
+    shopContainer.appendChild(headerDiv);
 
-    // Timer info (optional, if you want it displayed inside each NPC's shop)
-    const timerP = document.createElement('p');
-    timerP.id = 'shop-timer'; // So updateShopTimerDisplay can find it
-    shopContainer.appendChild(timerP);
-    updateShopTimerDisplay(); // Immediately show current countdown
+    // Grid container
+    const grid = document.createElement('div');
+    grid.className = 'shop-grid';
+    shopContainer.appendChild(grid);
 
     // List items for sale
     npc.inventory.forEach((invItem, index) => {
         const itemTemplate = items.find(i => i.name === invItem.itemName);
         const itemName = itemTemplate ? itemTemplate.name : invItem.itemName;
         const itemPrice = invItem.price;
-        const itemStock = invItem.stock;
-        const itemLevelReq = invItem.levelReq || 1; 
+        // Stock removed; items are always available (unless level/currency gated)
+        const itemLevelReq = invItem.levelReq || 1;
+        
+        // Special handling for services
+        const isService = invItem.isService || false; 
 
-        // Outer item box
+        // Card
         const itemDiv = document.createElement('div');
-        itemDiv.className = 'shop-item';
-        itemDiv.style.border = '1px solid #333';
-        itemDiv.style.borderRadius = '5px';
-        itemDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-        itemDiv.style.width = '220px';
-        itemDiv.style.padding = '5px';
-        itemDiv.style.margin = '10px';
-        itemDiv.style.display = 'inline-block';
-        itemDiv.style.verticalAlign = 'top';
-        itemDiv.style.position = 'relative';
+        itemDiv.className = 'shop-card';
 
         // Item name
         const itemNameP = document.createElement('p');
         itemNameP.textContent = itemName;
-        itemNameP.style.fontWeight = 'bold';
+        itemNameP.className = 'shop-item-name';
 
         // Price
         const priceP = document.createElement('p');
-        priceP.textContent = `Price: ${itemPrice} credits`;
+        priceP.className = 'shop-item-price';
+        priceP.textContent = `${itemPrice} credits`;
 
-        // Stock
-        const stockP = document.createElement('p');
-        stockP.textContent = `Stock: ${itemStock}`;
+        // Service info
+        const serviceInfo = document.createElement('p');
+        serviceInfo.className = 'shop-item-service';
+        if (isService && invItem.itemName === "Inventory Slot Expansion") {
+            const currentSlots = player.maxInventorySlots;
+            const maxSlots = 500;
+            const remaining = maxSlots - currentSlots;
+            serviceInfo.innerHTML = `Current Slots: ${currentSlots}/500<br>Available: ${remaining} more slots`;
+            serviceInfo.style.color = remaining > 0 ? '#00ffcc' : '#ff6464';
+        }
 
         // Level requirement
         const levelReqP = document.createElement('p');
+        levelReqP.className = 'shop-item-req';
         levelReqP.textContent = `Req. Level: ${itemLevelReq}`;
+
+        // Description for services
+        let descriptionP = null;
+        if (isService && invItem.description) {
+            descriptionP = document.createElement('p');
+            descriptionP.textContent = invItem.description;
+            descriptionP.className = 'shop-item-desc';
+        }
 
         // Buy button
         const buyButton = document.createElement('button');
-        buyButton.textContent = 'Buy 1';
+        buyButton.className = 'shop-buy-button';
+        if (isService && invItem.itemName === "Inventory Slot Expansion") {
+            buyButton.textContent = 'Purchase Expansion';
+            // Check if player is at max slots
+            if (player.maxInventorySlots >= 500) {
+                buyButton.disabled = true;
+                buyButton.textContent = 'Max Slots Reached';
+                buyButton.title = 'You already have the maximum number of inventory slots (500)';
+            }
+        } else {
+            buyButton.textContent = 'Buy 1';
+        }
 
         // If player's level < itemLevelReq, lock the item
         if (player.level < itemLevelReq) {
@@ -239,11 +242,14 @@ function displayNPCShop(npc) {
         // Append everything
         itemDiv.appendChild(itemNameP);
         itemDiv.appendChild(priceP);
-        itemDiv.appendChild(stockP);
+        if (isService) itemDiv.appendChild(serviceInfo);
         itemDiv.appendChild(levelReqP);
+        if (descriptionP) {
+            itemDiv.appendChild(descriptionP);
+        }
         itemDiv.appendChild(buyButton);
 
-        shopContainer.appendChild(itemDiv);
+        grid.appendChild(itemDiv);
     });
 }
 
@@ -261,25 +267,65 @@ function buyItemFromNPC(npc, itemIndex, quantity) {
         logMessage(`You don't have enough credits to buy ${quantity} of ${invItem.itemName}!`);
         return;
     }
-    // Check if stock is sufficient
-    if (invItem.stock < quantity) {
-        logMessage(`${npc.name} doesn't have enough stock of ${invItem.itemName}.`);
-        return;
-    }
-
-    // Deduct currency & reduce stock
+    // Deduct currency
     playerCurrency -= cost;
-    invItem.stock -= quantity;
 
-    // Add the item(s) to player's inventory
-    const itemTemplate = items.find(i => i.name === invItem.itemName);
-    if (itemTemplate) {
-        const purchasedItem = generateItemInstance(itemTemplate);
-        purchasedItem.quantity = quantity;
-        addItemToInventory(purchasedItem);
-        logMessage(`You bought ${quantity}x ${invItem.itemName} for ${cost} credits.`);
+    // Handle services vs regular items
+    if (invItem.isService) {
+        // Special handling for services
+        if (invItem.itemName === "Inventory Slot Expansion") {
+            // Check if player is already at max slots
+            if (player.maxInventorySlots >= 500) {
+                logMessage("You already have the maximum number of inventory slots (500)!");
+                // Refund the purchase
+                playerCurrency += cost;
+                return;
+            }
+            
+            // Check if this purchase would exceed the limit
+            const newSlotCount = player.maxInventorySlots + quantity;
+            if (newSlotCount > 500) {
+                const maxPurchasable = 500 - player.maxInventorySlots;
+                logMessage(`You can only buy ${maxPurchasable} more inventory slots to reach the maximum of 500.`);
+                // Refund the purchase
+                playerCurrency += cost;
+                return;
+            }
+            
+            // Apply the expansion
+            player.maxInventorySlots += quantity;
+            logMessage(`Inventory expanded! You now have ${player.maxInventorySlots} slots (purchased ${quantity} slot${quantity > 1 ? 's' : ''} for ${cost} credits).`);
+            
+            // Update inventory display to show new slot count
+            updateInventoryDisplay();
+        } else {
+            logMessage(`Unknown service: ${invItem.itemName}`);
+            // Refund unknown services
+            playerCurrency += cost;
+            invItem.stock += quantity;
+            return;
+        }
     } else {
-        logMessage(`Error: item template for ${invItem.itemName} not found in items.js.`);
+        // Regular item handling
+        const itemTemplate = items.find(i => i.name === invItem.itemName);
+        if (itemTemplate) {
+            const purchasedItem = generateItemInstance(itemTemplate);
+            purchasedItem.quantity = quantity;
+            const success = addItemToInventory(purchasedItem);
+            if (success) {
+                logMessage(`You bought ${quantity}x ${invItem.itemName} for ${cost} credits.`);
+            } else {
+                // Inventory was full, refund the purchase
+                playerCurrency += cost;
+                invItem.stock += quantity;
+                return;
+            }
+        } else {
+            logMessage(`Error: item template for ${invItem.itemName} not found in items.js.`);
+            // Refund on error
+            playerCurrency += cost;
+            return;
+        }
     }
 
     // Refresh NPC shop display
@@ -295,12 +341,9 @@ function cleanupShopUI() {
     }
 }
 
-// Initialize shops
-document.addEventListener('DOMContentLoaded', () => {
-    // Start the auto-refresh timer
-    startShopRefreshTimer();
-
-    // Listen for screen changes so we can show NPC list and clean up shop UI
+    // Initialize shops
+    document.addEventListener('DOMContentLoaded', () => {
+        // Listen for screen changes so we can show NPC list and clean up shop UI
     window.addEventListener('screenChanged', (e) => {
         if (e.detail.screenId === 'shops-screen') {
             displayNPCList();

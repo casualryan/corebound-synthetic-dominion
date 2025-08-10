@@ -96,6 +96,16 @@ const enemies = [
         statusEffects: [],        
     },
     {
+        name: "Big Bertha",
+        health: 100000,
+        energyShield: 0,
+        attackSpeed: 1,
+        criticalChance: 0,
+        criticalMultiplier: 1.5,
+        damageTypes: {
+        }
+    },
+    {
         name: "Spiderbot",
         health: 50,
         energyShield: 0,
@@ -263,28 +273,6 @@ const enemies = [
         lootTable: [
         ],
         experienceValue: 100,
-        statusEffects: []
-    },
-    {
-        name: "Electro Wasp",
-        health: 150,
-        energyShield: 10,
-        attackSpeed: 1.5,
-        criticalChance: 0.10,
-        criticalMultiplier: 2,
-        damageTypes: {
-            kinetic: 30,
-            electric: 10
-        },
-        defenseTypes: {
-            toughness: 10,
-            antimagnet: 10
-        },
-        lootTable: [
-            { itemName: "Crystalized Light", minQuantity: 2, maxQuantity: 3, dropRate: .80 },
-            { itemName: "Partical Fuser", minQuantity: 1, maxQuantity: 1, dropRate: 0.5 }
-        ],
-        experienceValue: 55,
         statusEffects: []
     },
     {

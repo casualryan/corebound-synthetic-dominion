@@ -4,7 +4,7 @@ export default {
         type: "Weapon",
         weaponType: "Sword",
         icon: "icons/ironsword.png",
-        bAttackSpeed: 2,
+        bAttackSpeed: 1,
         damageTypes: {
             kinetic: { min: 3, max: 6 },
             slashing: { min: 3, max: 6 }

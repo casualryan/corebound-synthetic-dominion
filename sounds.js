@@ -5,28 +5,28 @@
 // Sound library
 const SOUNDS = {
     // UI Sounds
-    UI_HOVER: 'sounds/ui_hover.mp3',
-    UI_CLICK: 'sounds/ui_click.mp3',
-    UI_SELECT: 'sounds/ui_select.mp3',
-    UI_BACK: 'sounds/ui_back.mp3',
-    UI_ERROR: 'sounds/ui_error.mp3',
+    UI_HOVER: '/sounds/ui_hover.mp3',
+    UI_CLICK: '/sounds/ui_click.mp3',
+    UI_SELECT: '/sounds/ui_select.mp3',
+    UI_BACK: '/sounds/ui_back.mp3',
+    UI_ERROR: '/sounds/ui_error.mp3',
     
     // Combat Sounds
-    ATTACK: 'sounds/attack.mp3',
-    HIT: 'sounds/hit.mp3',
-    CRIT: 'sounds/crit.mp3',
-    PLAYER_HURT: 'sounds/player_hurt.mp3',
-    ENEMY_HURT: 'sounds/enemy_hurt.mp3',
-    ENEMY_DEATH: 'sounds/enemy_death.mp3',
+    ATTACK: '/sounds/attack.mp3',
+    HIT: '/sounds/hit.mp3',
+    CRIT: '/sounds/crit.mp3',
+    PLAYER_HURT: '/sounds/player_hurt.mp3',
+    ENEMY_HURT: '/sounds/enemy_hurt.mp3',
+    ENEMY_DEATH: '/sounds/enemy_death.mp3',
     
     // Item Sounds
-    ITEM_PICKUP: 'sounds/item_pickup.mp3',
-    ITEM_EQUIP: 'sounds/item_equip.mp3',
-    ITEM_DROP: 'sounds/item_drop.mp3',
+    ITEM_PICKUP: '/sounds/item_pickup.mp3',
+    ITEM_EQUIP: '/sounds/item_equip.mp3',
+    ITEM_DROP: '/sounds/item_drop.mp3',
     
     // System Sounds
-    LEVEL_UP: 'sounds/level_up.mp3',
-    SAVE_GAME: 'sounds/save_game.mp3'
+    LEVEL_UP: '/sounds/level_up.mp3',
+    SAVE_GAME: '/sounds/save_game.mp3'
 };
 
 // Audio context and audio elements cache

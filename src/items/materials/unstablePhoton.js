@@ -6,4 +6,6 @@ export default {
     stackable: true,
     isDisassembleable: false,
     disassembleResults: [],
+    description: 'Used for crafting.',
+    description: 'Explodey.'
 }; 

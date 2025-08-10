@@ -11,29 +11,32 @@ export default {
     // Optional damage properties
     damageTypes: {
         // Add if armor provides damage (like gauntlets)
-        // kinetic: { min: 3, max: 6 }
+        // kinetic: "3-6"
     },
-    attackSpeed: 0, // Modifier to attack speed (negative for heavy armor)
-    criticalChance: 0,
-    criticalMultiplier: 0,
+    // Use simplified range syntax for modifiers as needed
+    attackSpeedModifier: "0-0", // % (negative values like "-10--5" are allowed)
+    criticalChanceModifier: "0-0", // %
+    criticalMultiplierModifier: "0-0", // %
     
     // Defense properties
     defenseTypes: {
-        sturdiness: { min: 10, max: 20 }, // Physical defense
-        structure: { min: 5, max: 15 },   // Elemental defense
-        stability: { min: 5, max: 10 }    // Chemical defense
+        sturdiness: "10-20", // Physical defense
+        structure: "5-15",   // Elemental defense
+        stability: "5-10"    // Chemical defense
     },
     
     // Health and shield bonuses
-    healthBonus: { min: 20, max: 50 },
-    healthBonusPercentRange: { min: 10, max: 15 },
-    energyShieldBonus: { min: 30, max: 60 },
-    energyShieldBonusPercentRange: { min: 5, max: 10 },
-    healthRegen: { min: 1, max: 3 },
+    healthBonus: "20-50",
+    healthBonusPercent: "10-15", // %
+    energyShieldBonus: "30-60",
+    energyShieldBonusPercent: "5-10", // %
+    healthRegen: "1-3",
     
     // Combat stats
-    precision: { min: 2, max: 5 },
-    deflection: { min: 2, max: 5 },
+    precision: "2-5",
+    deflection: "2-5",
+    // New stats - remove if not needed
+    armorEfficiency: "3-12", // Increases armor proc effect chances
     
     // Equipment slot
     slot: 'chest', // head, chest, legs, feet, gloves, offHand

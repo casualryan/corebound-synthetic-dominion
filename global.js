@@ -3,7 +3,7 @@ window.currentScreen = '';
 console.log('global.js loaded');
 console.log('window.inventory at the start:', window.inventory);
 
-let playerCurrency = 500;
+let playerCurrency = 1000000;
 
 // Add this near the top of the file with other constants
 const MAX_PLAYER_LEVEL = 51;
@@ -63,140 +63,9 @@ function resetGearPassiveBonuses() {
     }
 }
 
-// Function to apply item modifiers to stats
-function applyItemModifiers(stats, item) {
-    // Apply flat damage types
-    if (!stats || !item) return;
-    
-    // Flat Damage Types
-    if (item.damageTypes) {
-        if (!stats.damageTypes) stats.damageTypes = {};
-        for (let damageType in item.damageTypes) {
-            if (stats.damageTypes[damageType] === undefined) {
-                stats.damageTypes[damageType] = 0;
-            }
-            let val = item.damageTypes[damageType];
-            if (typeof val !== "number") { val = 0; }
-            stats.damageTypes[damageType] += val;
-        }
-    }
-    
-    // Percentage Damage Modifiers - specific types
-    if (item.statModifiers && item.statModifiers.damageTypes) {
-        if (!stats.damageTypeModifiers) stats.damageTypeModifiers = {};
-        for (let damageType in item.statModifiers.damageTypes) {
-            if (stats.damageTypeModifiers[damageType] === undefined) {
-                stats.damageTypeModifiers[damageType] = 1;
-            }
-            let modVal = item.statModifiers.damageTypes[damageType];
-            if (typeof modVal !== "number") { modVal = 0; }
-            // Apply additively instead of multiplicatively
-            stats.damageTypeModifiers[damageType] += modVal / 100;
-        }
-    }
-    
-    // Percentage Damage Modifiers - group types
-    if (item.statModifiers && item.statModifiers.damageGroups) {
-        if (!stats.damageGroupModifiers) stats.damageGroupModifiers = {};
-        
-        // Initialize group modifiers if they don't exist
-        const groups = ['physical', 'elemental', 'chemical'];
-        for (const group of groups) {
-            if (stats.damageGroupModifiers[group] === undefined) {
-                stats.damageGroupModifiers[group] = 1;
-            }
-        }
-        
-        // Apply group modifiers
-        for (let group in item.statModifiers.damageGroups) {
-            let modVal = item.statModifiers.damageGroups[group];
-            if (typeof modVal !== "number") { modVal = 0; }
-            // Apply additively
-            stats.damageGroupModifiers[group] += modVal / 100;
-        }
-    }
-    
-    // Note: We no longer directly apply passive bonuses here
-    // Instead, we use resetGearPassiveBonuses() to rebuild the bonuses completely
-    
-    // Defense Types
-    if (item.defenseTypes) {
-        if (!stats.defenseTypes) stats.defenseTypes = {};
-        for (let defenseType in item.defenseTypes) {
-            if (stats.defenseTypes[defenseType] === undefined) {
-                stats.defenseTypes[defenseType] = 0;
-            }
-            let defVal = item.defenseTypes[defenseType];
-            if (typeof defVal !== "number") { defVal = 0; }
-            stats.defenseTypes[defenseType] += defVal;
-        }
-    }
-    
-    // Health Bonus
-    if (item.healthBonus !== undefined) {
-        stats.healthBonus = (stats.healthBonus || 0) + item.healthBonus;
-    }
-    // Energy Shield Bonus
-    if (item.energyShieldBonus !== undefined) {
-        stats.energyShieldBonus = (stats.energyShieldBonus || 0) + item.energyShieldBonus;
-    }
-    // Percentage Health Bonus
-    if (item.healthBonusPercent !== undefined) {
-        stats.healthBonusPercent = (stats.healthBonusPercent || 0) + item.healthBonusPercent;
-    }
-    // Percentage Energy Shield Bonus
-    if (item.energyShieldBonusPercent !== undefined) {
-        stats.energyShieldBonusPercent = (stats.energyShieldBonusPercent || 0) + item.energyShieldBonusPercent;
-    }
-    // Attack Speed Modifier (flat percentage; e.g., 0.5 means +50%)
-    if (item.attackSpeedModifier !== undefined) {
-        stats.attackSpeedMultiplier *= (1 + item.attackSpeedModifier);
-    }
-    // Critical Chance Modifier
-    if (item.criticalChanceModifier !== undefined) {
-        stats.criticalChance = (stats.criticalChance || 0) + item.criticalChanceModifier;
-    }
-    // Critical Multiplier Modifier
-    if (item.criticalMultiplierModifier !== undefined) {
-        stats.criticalMultiplier = (stats.criticalMultiplier || 1) * (1 + item.criticalMultiplierModifier);
-    }
-    // Precision and Deflection
-    if (item.precision !== undefined) {
-        stats.precision = (stats.precision || 0) + item.precision;
-    }
-    if (item.deflection !== undefined) {
-        stats.deflection = (stats.deflection || 0) + item.deflection;
-    }
-    if (item.healthRegen) {
-        stats.healthRegen += item.healthRegen;
-    }
+// applyItemModifiers function moved to stats.js
 
-    // Apply other stat modifiers, avoiding direct assignment to stats.attackSpeed
-    if (item.statModifiers) {
-        for (let stat in item.statModifiers) {
-            // Skip stats that are already handled or could conflict
-            if (
-                stat === 'damageTypes' ||
-                stat === 'defenseTypes' ||
-                stat === 'damageTypeModifiers' ||
-                stat === 'attackSpeedModifier' ||
-                stat === 'criticalChanceModifier' ||
-                stat === 'criticalMultiplierModifier' ||
-                stat === 'attackSpeed' ||           // Avoid direct assignment to stats.attackSpeed
-                stat === 'attackSpeedMultiplier'    // Avoid direct assignment
-            ) {
-                continue; // Already handled or should be skipped
-            } else if (stat in stats) {
-                stats[stat] += item.statModifiers[stat];
-            } else {
-                stats[stat] = item.statModifiers[stat];
-            }
-        }
-    }
-}
-
-// Helper function to capitalize the first letter
-// Remove duplicate capitalize() and use the one from combat.js
+// Helper function to capitalize the first letter moved to stats.js
 // function capitalize(str) {
 //     return str.charAt(0).toUpperCase() + str.slice(1);
 // }
@@ -212,6 +81,22 @@ const playerBaseStats = {
     criticalMultiplier: 1.5,
     precision: 0,
     deflection: 0,
+    // Efficiency stats - increase proc effect chances
+    armorEfficiency: 0,     // Affects armor slot proc effects
+    weaponEfficiency: 0,    // Affects weapon and offhand proc effects
+    bionicEfficiency: 0,    // Affects bionic slot proc effects
+    // Bionic enhancement
+    bionicSync: 0,          // Increases stats gained from bionics
+    // Combo attack system
+    comboAttack: 0,         // % chance to strike additional time after initial hit
+    comboEffectiveness: 0,  // Increases damage dealt by combo attacks (base 20%)
+    additionalComboAttacks: 0, // Number of additional combo hits beyond the first
+    // Mastery system - increases damage for specific damage types
+    kineticMastery: 0,      // Increases kinetic damage
+    slashingMastery: 0,     // Increases slashing damage
+    // Severed limb system
+    severedLimbChance: 0,   // % chance to sever limbs on critical strikes
+    maxSeveredLimbs: 1,     // Maximum limbs that can be severed on opponent
     damageTypes: {
         
     },
@@ -257,6 +142,8 @@ let player = {
     activeBuffs: [],
     // This property holds the cumulative passive bonus (e.g., 0.30 for +30%)
     passiveAttackSpeedBonus: 0,
+    // Inventory management
+    maxInventorySlots: 30,
 
     applyBuff: function (buffName) {
         const buffDef = buffs.find(b => b.name === buffName);
@@ -278,193 +165,17 @@ let player = {
         this.calculateStats();
     },
 
+    // calculateStats implementation moved to stats.js
     calculateStats: function() {
-        // Start with a fresh copy of base stats
-        let stats = JSON.parse(JSON.stringify(playerBaseStats));
-        
-        // Initialize bonus fields
-        stats.healthBonus = 0;
-        stats.healthBonusPercent = 0;
-        stats.energyShieldBonus = 0;
-        stats.energyShieldBonusPercent = 0;
-        stats.damageTypeModifiers = {}; // Initialize as empty object to avoid inheriting modifiers
-        stats.damageGroupModifiers = {}; // Initialize group modifiers
-        
-        // Initialize each damage type modifier to base value of 1.0 (100%)
-        for (let damageType in stats.damageTypes) {
-            stats.damageTypeModifiers[damageType] = 1.0;
+        // Call the centralized function from stats.js
+        // It will modify this.totalStats, this.currentHealth, this.currentShield directly
+        if (typeof calculatePlayerStats === 'function') {
+            calculatePlayerStats(this);
+        } else {
+            console.error("calculatePlayerStats function not found! Make sure stats.js is loaded.");
         }
-
-        // Initialize each damage group modifier to base value of 1.0 (100%)
-        const damageGroups = ['physical', 'elemental', 'chemical'];
-        for (const group of damageGroups) {
-            stats.damageGroupModifiers[group] = 1.0;
-        }
-        
-        // Apply passive bonuses to stats
-        if (this.passiveBonuses) {
-            // Apply flat bonuses
-            if (this.passiveBonuses.flatHealth > 0) {
-                stats.healthBonus += this.passiveBonuses.flatHealth;
-            }
-            
-            if (this.passiveBonuses.flatEnergyShield > 0) {
-                stats.energyShieldBonus += this.passiveBonuses.flatEnergyShield;
-            }
-            
-            if (this.passiveBonuses.healthRegen > 0) {
-                stats.healthRegen += this.passiveBonuses.healthRegen;
-            }
-            
-            if (this.passiveBonuses.precision > 0) {
-                stats.precision += this.passiveBonuses.precision;
-            }
-            
-            if (this.passiveBonuses.deflection > 0) {
-                stats.deflection += this.passiveBonuses.deflection;
-            }
-            
-            // Apply percentage bonuses
-            if (this.passiveBonuses.healthPercent > 0) {
-                stats.healthBonusPercent += this.passiveBonuses.healthPercent / 100;
-            }
-            
-            if (this.passiveBonuses.energyShieldPercent > 0) {
-                stats.energyShieldBonusPercent += this.passiveBonuses.energyShieldPercent / 100;
-            }
-            
-            // Apply critical chance and multiplier
-            if (this.passiveBonuses.criticalChance > 0) {
-                stats.criticalChance += this.passiveBonuses.criticalChance / 100;
-            }
-            
-            if (this.passiveBonuses.criticalMultiplier > 0) {
-                stats.criticalMultiplier += this.passiveBonuses.criticalMultiplier;
-            }
-            
-            // Apply flat damage bonuses
-            for (const damageType in this.passiveBonuses.flatDamageTypes) {
-                if (!stats.damageTypes[damageType]) {
-                    stats.damageTypes[damageType] = 0;
-                }
-                stats.damageTypes[damageType] += this.passiveBonuses.flatDamageTypes[damageType];
-            }
-            
-            // Apply defense bonuses
-            for (const defenseType in this.passiveBonuses.defenseTypes) {
-                if (!stats.defenseTypes[defenseType]) {
-                    stats.defenseTypes[defenseType] = 0;
-                }
-                stats.defenseTypes[defenseType] += this.passiveBonuses.defenseTypes[defenseType];
-            }
-            
-            // Apply percentage damage bonuses (will be merged with gear bonuses later)
-            for (const damageType in this.passiveBonuses.damageTypes) {
-                if (!stats.damageTypeModifiers[damageType]) {
-                    stats.damageTypeModifiers[damageType] = 1.0; // Base 100%
-                }
-                // Add percentage as decimal (e.g., +15% becomes +0.15)
-                stats.damageTypeModifiers[damageType] += this.passiveBonuses.damageTypes[damageType] / 100;
-            }
-
-            // Apply damage group % bonuses from passives
-            if (this.passiveBonuses && this.passiveBonuses.damageGroups) {
-                for (const groupType in this.passiveBonuses.damageGroups) {
-                    if (!stats.damageGroupModifiers[groupType]) {
-                        stats.damageGroupModifiers[groupType] = 1.0;
-                    }
-                    stats.damageGroupModifiers[groupType] += this.passiveBonuses.damageGroups[groupType] / 100;
-                }
-            }
-        }
-        
-        // Determine base attack speed from equipped weapon (default 1.0)
-        let baseAttackSpeed = 1.0;
-        if (this.equipment.mainHand && this.equipment.mainHand.bAttackSpeed !== undefined) {
-            baseAttackSpeed = this.equipment.mainHand.bAttackSpeed;
-        }
-        
-        // Sum equipment attack speed bonus from items.
-        let equipmentASBonus = 0;
-        Object.keys(this.equipment).forEach(slot => {
-            if (slot === 'bionicSlots') {
-                this.equipment[slot].forEach(bionic => {
-                    if (bionic) {
-                        if (bionic.attackSpeedModifier !== undefined) {
-                            equipmentASBonus += bionic.attackSpeedModifier;
-                        }
-                        applyItemModifiers(stats, bionic);
-                    }
-                });
-            } else if (this.equipment[slot]) {
-                if (this.equipment[slot].attackSpeedModifier !== undefined) {
-                    equipmentASBonus += this.equipment[slot].attackSpeedModifier;
-                }
-                applyItemModifiers(stats, this.equipment[slot]);
-            }
-        });
-        
-        // Sum buffs that affect attack speed.
-        if (this.activeBuffs) {
-            this.activeBuffs.forEach(buff => {
-                if (buff.statChanges && buff.statChanges.attackSpeed !== undefined) {
-                    equipmentASBonus += buff.statChanges.attackSpeed;
-                }
-                if (buff.statChanges) {
-                    for (let stat in buff.statChanges) {
-                        if (stat !== 'attackSpeed' && stat in stats) {
-                            stats[stat] += buff.statChanges[stat];
-                        }
-                    }
-                }
-            });
-        }
-        
-        // Get the passive bonus (already stored in player.passiveAttackSpeedBonus)
-        let passiveBonus = this.passiveAttackSpeedBonus || 0;
-        
-        // Final attack speed = baseAttackSpeed * (1 + (equipment bonus + passive bonus))
-        stats.attackSpeed = baseAttackSpeed * (1 + equipmentASBonus + passiveBonus);
-        stats.attackSpeed = Math.min(Math.max(stats.attackSpeed, 0.1), 10);
-        
-        // Process damage type modifiers (using modifiers that now include both passive and equipment bonuses)
-        for (let dt in stats.damageTypes) {
-            if (stats.damageTypeModifiers[dt]) {
-                stats.damageTypes[dt] *= stats.damageTypeModifiers[dt];
-            }
-            stats.damageTypes[dt] = Math.round(stats.damageTypes[dt]);
-        }
-        
-        // Calculate final health and energy shield values with a more explicit approach
-        // Health calculation
-        stats.health = stats.maxHealth + stats.healthBonus;
-        stats.health *= (1 + stats.healthBonusPercent);
-        stats.health = Math.max(Math.round(stats.health), 1); // Never less than 1 health
-        
-        // Energy Shield calculation
-        stats.energyShield = stats.maxEnergyShield + stats.energyShieldBonus;
-        stats.energyShield *= (1 + stats.energyShieldBonusPercent);
-        stats.energyShield = Math.max(Math.round(stats.energyShield), 0); // Can be 0
-        
-        // Assign the newly calculated stats
-        this.totalStats = stats;
-        
-        // Initialize current health/shield on first calculation or if they're invalid
-        if (this.currentHealth === null || isNaN(this.currentHealth) || this.currentHealth === undefined) {
-            console.log("Initializing player currentHealth to", stats.health);
-            this.currentHealth = stats.health;
-        }
-        
-        if (this.currentShield === null || isNaN(this.currentShield) || this.currentShield === undefined) {
-            console.log("Initializing player currentShield to", stats.energyShield);
-            this.currentShield = stats.energyShield;
-        }
-        
-        // Make sure current values don't exceed maximums
-        this.currentHealth = Math.min(this.currentHealth, stats.health);
-        this.currentShield = Math.min(this.currentShield, stats.energyShield);
-        
-        return stats;
+        // Return the calculated stats (optional, as the function modifies 'this')
+        return this.totalStats;
     },
 };
 
@@ -619,6 +330,7 @@ function saveGame(isAutoSave = false) {
                 activeBuffs: player.activeBuffs,
                 equipment: player.equipment,
                 currency: playerCurrency,
+                maxInventorySlots: player.maxInventorySlots,
                 passives: {
                     allocations: player.passiveAllocations,
                     points: player.passivePoints,
@@ -717,6 +429,15 @@ function loadGame() {
             
             const gameState = JSON.parse(savedState);
             player.baseStats = gameState.player.baseStats || JSON.parse(JSON.stringify(playerBaseStats));
+            
+            // Migrate new stats if they're missing from old saves
+            if (player.baseStats.armorEfficiency === undefined) player.baseStats.armorEfficiency = 0;
+            if (player.baseStats.weaponEfficiency === undefined) player.baseStats.weaponEfficiency = 0;
+            if (player.baseStats.bionicEfficiency === undefined) player.baseStats.bionicEfficiency = 0;
+            if (player.baseStats.bionicSync === undefined) player.baseStats.bionicSync = 0;
+            if (player.baseStats.comboAttack === undefined) player.baseStats.comboAttack = 0;
+            if (player.baseStats.comboEffectiveness === undefined) player.baseStats.comboEffectiveness = 0;
+            if (player.baseStats.additionalComboAttacks === undefined) player.baseStats.additionalComboAttacks = 0;
             player.currentHealth = gameState.player.currentHealth;
             player.currentShield = gameState.player.currentShield;
             player.statusEffects = gameState.player.statusEffects || [];
@@ -726,6 +447,7 @@ function loadGame() {
             player.activeBuffs = gameState.player.activeBuffs || [];
             player.equipment = restoreEquipment(gameState.player.equipment);
             playerCurrency = (typeof gameState.player.currency === 'number') ? gameState.player.currency : playerCurrency;
+            player.maxInventorySlots = gameState.player.maxInventorySlots || 30; // Default to 30 if not saved
             
             // Restore passives data and immediately reapply them.
             if (gameState.player.passives) {
@@ -818,8 +540,7 @@ function migrateItemDefenseTypes(item) {
 function restoreItem(savedItem) {
     if (!savedItem) return null;
     
-    // Find the item template
-    const itemTemplate = items.find(item => item.name === savedItem.name);
+    console.log(`Trying to restore item: ${savedItem.name}`);
     
     // Migrate defense types if needed
     savedItem = migrateItemDefenseTypes(savedItem);
@@ -843,7 +564,12 @@ function restoreItem(savedItem) {
         }
     }
     
+    // Find the template for this item
+    const itemTemplate = window.items.find(item => item.name === savedItem.name);
+    
     if (itemTemplate) {
+        console.log(`Template found for ${savedItem.name}, type: ${itemTemplate.type}`);
+        
         // Create a new item instance from the template
         const itemInstance = generateItemInstance(itemTemplate);
 
@@ -853,6 +579,18 @@ function restoreItem(savedItem) {
         return itemInstance;
     } else {
         console.warn(`Item template not found for ${savedItem.name}`);
+        console.log(`Available weapons: ${window.weapons ? window.weapons.length : 'no weapons'}`);
+        if (window.weapons && window.weapons.length > 0) {
+            console.log(`First few weapon names: ${window.weapons.slice(0, 3).map(w => w.name).join(', ')}`);
+            // Check if the name exists but has a slight mismatch
+            const similarWeapon = window.weapons.find(w => 
+                w.name.toLowerCase().includes(savedItem.name.toLowerCase()) || 
+                savedItem.name.toLowerCase().includes(w.name.toLowerCase())
+            );
+            if (similarWeapon) {
+                console.log(`Found similar weapon name: "${similarWeapon.name}" vs "${savedItem.name}"`);
+            }
+        }
         return savedItem; // Return the saved item as is
     }
 }
@@ -968,7 +706,7 @@ function resetGame() {
             console.warn('Starting item template not found.');
         }
 
-        playerCurrency = 500;
+        playerCurrency = 1000000;
 
         // Recalculate player stats and update UI
         player.calculateStats();
@@ -1007,15 +745,69 @@ function displayAdventureLocations() {
     adventureDiv.innerHTML = ''; // Clear existing content
 
     if (!isCombatActive) {
-        // Display location buttons when not in combat
+        // Display cards when not in combat
+        const grid = document.createElement('div');
+        grid.className = 'adventure-grid';
+        adventureDiv.appendChild(grid);
+
         locations.forEach(location => {
-            const locationButton = document.createElement('button');
-            locationButton.textContent = location.name;
-            locationButton.title = location.description;
-            locationButton.addEventListener('click', () => {
+            const card = document.createElement('div');
+            card.className = 'adventure-card';
+
+            // Header
+            const header = document.createElement('div');
+            header.className = 'adventure-card-header';
+            const title = document.createElement('div');
+            title.className = 'adventure-card-title';
+            title.textContent = location.name;
+            header.appendChild(title);
+            if (location.recommendedLevel) {
+                const badge = document.createElement('span');
+                badge.className = 'adventure-badge';
+                badge.textContent = `Rec. Lv ${location.recommendedLevel}`;
+                header.appendChild(badge);
+            }
+            card.appendChild(header);
+
+            // Body
+            const body = document.createElement('div');
+            body.className = 'adventure-card-body';
+            const desc = document.createElement('div');
+            desc.className = 'adventure-card-desc';
+            desc.textContent = location.description || '';
+            body.appendChild(desc);
+
+            const meta = document.createElement('div');
+            meta.className = 'adventure-card-meta';
+            const fights = document.createElement('span');
+            fights.textContent = `${location.numFights || 0} fights`;
+            meta.appendChild(fights);
+            if (location.locationCategory) {
+                const sep = document.createElement('span');
+                sep.textContent = ' • ';
+                meta.appendChild(sep);
+                const cat = document.createElement('span');
+                cat.textContent = location.locationCategory;
+                meta.appendChild(cat);
+            }
+            body.appendChild(meta);
+            card.appendChild(body);
+
+            // Footer actions
+            const startBtn = document.createElement('button');
+            startBtn.className = 'adventure-start-btn';
+            startBtn.textContent = 'Delve';
+            startBtn.addEventListener('click', () => {
                 startAdventure(location);
             });
-            adventureDiv.appendChild(locationButton);
+            card.appendChild(startBtn);
+
+            // Tooltip
+            card.setAttribute('data-has-tooltip', 'true');
+            card.setAttribute('data-tooltip-source', 'adventure-card');
+            card.setAttribute('data-tooltip-content', location.description || '');
+
+            grid.appendChild(card);
         });
     } else {
         // Display "Flee" button when in combat
@@ -1034,7 +826,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof loadItems === 'function') {
         window.items = loadItems();
         console.log('Items loaded from separate category files');
+        
+        // Double-check if weapons were properly loaded
+        if (window.items && window.weapons && window.weapons.length > 0 && 
+            !window.items.find(item => item.type === 'Weapon')) {
+            console.log('Weapons available but not in items array - reloading items');
+            window.items = loadItems();
+        }
     }
+    
+    // Add a 2-second delayed check to make sure weapons are included in items
+    setTimeout(() => {
+        if (window.loadItems && window.items && window.weapons && 
+            window.weapons.length > 0 && 
+            !window.items.find(item => item.type === 'Weapon')) {
+            console.log('FINAL CHECK: Weapons still missing from items - forcing reload');
+            window.items = window.loadItems();
+            console.log(`After final reload: ${window.items.length} items, including ${window.items.filter(i => i.type === 'Weapon').length} weapons`);
+        }
+    }, 2000);
     
     document.getElementById('save-game').addEventListener('click', () => saveGame(false));
     document.getElementById('load-game').addEventListener('click', loadGame);

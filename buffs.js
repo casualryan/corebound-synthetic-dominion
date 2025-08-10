@@ -27,15 +27,5 @@ const buffs = [
             sturdiness: -30,
         },
         duration: 999999 
-    },
-    {
-        name: "Exposed Weakness",
-        description: "Lose resistances.",
-        type: "debuff",
-        statChanges: {
-            structure: -30,
-            stability: -30,
-            sturdiness: -30,
-        },
     }
 ];

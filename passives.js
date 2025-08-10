@@ -5,7 +5,7 @@ const passives = [
         description: "Increases your attack speed.",
         icon: "icons/swift_strikes.png",
         statChanges: {
-            attackSpeed: [0, 5, 12, 20, 30, 45, 75]  // Percentage increases
+            attackSpeed: [0, 5, 12, 20, 30, 45, 75, 120]  // Percentage increases
         },
         passiveTier: 1
     },
@@ -15,7 +15,7 @@ const passives = [
         icon: "icons/kinetic_focus.png",
         statChanges: {
             damageTypes: {
-                kinetic: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
+                kinetic: [0, 15, 35, 65, 100, 140, 210, 300]  // Percentage increases
             }
         },
         passiveTier: 1
@@ -26,7 +26,7 @@ const passives = [
         icon: "icons/mental_prowess.png", // Reusing icon for now
         statChanges: {
             damageTypes: {
-                slashing: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
+                slashing: [0, 15, 35, 65, 100, 140, 210, 300]  // Percentage increases
             }
         },
         passiveTier: 1
@@ -37,7 +37,7 @@ const passives = [
         icon: "icons/pyromancer.png",
         statChanges: {
             damageTypes: {
-                pyro: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
+                pyro: [0, 15, 35, 65, 100, 140, 210, 300]  // Percentage increases
             }
         },
         passiveTier: 1
@@ -48,7 +48,7 @@ const passives = [
         icon: "icons/toxicologist.png", // Reusing icon for now
         statChanges: {
             damageTypes: {
-                corrosive: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
+                corrosive: [0, 15, 35, 65, 100, 140, 210, 300]  // Percentage increases
             }
         },
         passiveTier: 1
@@ -59,7 +59,7 @@ const passives = [
         icon: "icons/electrician.png", // Need new icon
         statChanges: {
             damageTypes: {
-                electric: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
+                electric: [0, 15, 35, 65, 100, 140, 210, 300]  // Percentage increases
             }
         },
         passiveTier: 1
@@ -70,7 +70,7 @@ const passives = [
         icon: "icons/cryomancer.png", // Need new icon
         statChanges: {
             damageTypes: {
-                cryo: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
+                cryo: [0, 15, 35, 65, 100, 140, 210, 300]  // Percentage increases
             }
         },
         passiveTier: 1
@@ -81,7 +81,7 @@ const passives = [
         icon: "icons/radiation.png", // Need new icon
         statChanges: {
             damageTypes: {
-                radiation: [0, 15, 35, 65, 100, 140, 210]  // Percentage increases
+                radiation: [0, 15, 35, 65, 100, 140, 210, 300]  // Percentage increases
             }
         },
         passiveTier: 1
