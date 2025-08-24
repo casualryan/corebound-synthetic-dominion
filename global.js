@@ -75,10 +75,10 @@ const playerBaseStats = {
     level: 1,
     maxHealth: 100,
     maxEnergyShield: 0,
-    healthRegen: 1, // Health regenerated per second
+    healthRegen: 0, // Health regenerated per second
     attackSpeed: 1,
-    criticalChance: 0.05,
-    criticalMultiplier: 1.5,
+    criticalChance: 0.00,
+    criticalMultiplier: 1,
     precision: 0,
     deflection: 0,
     // Efficiency stats - increase proc effect chances
@@ -665,9 +665,11 @@ function resetGame() {
         player.currentShield = null;
         player.statusEffects = [];
         player.activeBuffs = [];
-        player.effects = [];
+		player.effects = [];
         player.experience = 0;
         player.level = 1;
+		// Reset inventory slots to default
+		player.maxInventorySlots = 30;
         
         // Reset passive system
         player.passivePoints = 1; // Start with 1 point as a new player
@@ -708,7 +710,7 @@ function resetGame() {
 
         playerCurrency = 1000000;
 
-        // Recalculate player stats and update UI
+		// Recalculate player stats and update UI
         player.calculateStats();
         updateInventoryDisplay();
         updateEquipmentDisplay();
@@ -750,6 +752,22 @@ function displayAdventureLocations() {
         grid.className = 'adventure-grid';
         adventureDiv.appendChild(grid);
 
+        // Auto re-deploy toggle UI
+        const controls = document.getElementById('delve-controls');
+        if (controls) {
+            const autoWrap = document.createElement('label');
+            autoWrap.style.cssText = 'display:inline-flex; align-items:center; gap:6px; margin:8px 0; color:#cfe6ff;';
+            const autoChk = document.createElement('input');
+            autoChk.type = 'checkbox';
+            autoChk.checked = localStorage.getItem('autoRedeploy') === 'true';
+            autoChk.addEventListener('change', () => localStorage.setItem('autoRedeploy', autoChk.checked ? 'true' : 'false'));
+            autoWrap.appendChild(autoChk);
+            const autoLbl = document.createElement('span');
+            autoLbl.textContent = 'Auto re-deploy after delve completion';
+            autoWrap.appendChild(autoLbl);
+            controls.appendChild(autoWrap);
+        }
+
         locations.forEach(location => {
             const card = document.createElement('div');
             card.className = 'adventure-card';
@@ -765,6 +783,13 @@ function displayAdventureLocations() {
                 const badge = document.createElement('span');
                 badge.className = 'adventure-badge';
                 badge.textContent = `Rec. Lv ${location.recommendedLevel}`;
+                const delta = (player && player.level ? player.level : 1) - location.recommendedLevel;
+                // Colorize by player level delta
+                if (delta <= -3) badge.setAttribute('data-diff', 'below-3');
+                else if (delta <= -1) badge.setAttribute('data-diff', 'below-1');
+                else if (delta === 0) badge.setAttribute('data-diff', 'even');
+                else if (delta <= 2) badge.setAttribute('data-diff', 'above-1');
+                else badge.setAttribute('data-diff', 'above-3');
                 header.appendChild(badge);
             }
             card.appendChild(header);
@@ -891,8 +916,67 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listener for settings button
     document.getElementById('settings-button').addEventListener('click', () => {
         // Open settings modal
-        document.getElementById('settings-menu').style.display = 'block';
+        const menu = document.getElementById('settings-menu');
+        menu.style.display = 'block';
+        // Close settings on overlay click or ESC
+        const overlayClose = (e) => { if (e.target === menu) { menu.style.display = 'none'; window.removeEventListener('click', overlayClose); document.removeEventListener('keydown', escClose); } };
+        const escClose = (e) => { if (e.key === 'Escape') { menu.style.display = 'none'; window.removeEventListener('click', overlayClose); document.removeEventListener('keydown', escClose); } };
+        window.addEventListener('click', overlayClose);
+        document.addEventListener('keydown', escClose);
+
+        // Keybinds: load saved keys into inputs
+        const defaultBinds = { inventory:'I', equipment:'E', passives:'P', adventure:'A', settings:'S' };
+        const saved = JSON.parse(localStorage.getItem('keybinds') || 'null') || defaultBinds;
+        const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = (v||'').toUpperCase(); };
+        setVal('kb-inventory', saved.inventory);
+        setVal('kb-equipment', saved.equipment);
+        setVal('kb-passives', saved.passives);
+        setVal('kb-adventure', saved.adventure);
+        setVal('kb-settings', saved.settings);
+
+
+		// Gameplay settings: Sell confirmation toggle
+		const sellToggle = document.getElementById('setting-disable-sell-confirm');
+		if (sellToggle) {
+			const savedPref = localStorage.getItem('disableSellConfirm') === 'true';
+			sellToggle.checked = savedPref;
+			sellToggle.onchange = () => {
+				localStorage.setItem('disableSellConfirm', sellToggle.checked ? 'true' : 'false');
+				logMessage(`Sell confirmation ${sellToggle.checked ? 'disabled' : 'enabled'}.`);
+			};
+		}
+
+		// Save/reset buttons
+        const saveBtn = document.getElementById('kb-save');
+        const resetBtn = document.getElementById('kb-reset');
+        if (saveBtn) saveBtn.onclick = () => {
+            const cleaned = (v) => (v||'').trim().slice(0,1).toUpperCase();
+            const binds = {
+                inventory: cleaned(document.getElementById('kb-inventory')?.value),
+                equipment: cleaned(document.getElementById('kb-equipment')?.value),
+                passives: cleaned(document.getElementById('kb-passives')?.value),
+                adventure: cleaned(document.getElementById('kb-adventure')?.value),
+                settings: cleaned(document.getElementById('kb-settings')?.value)
+            };
+            localStorage.setItem('keybinds', JSON.stringify(binds));
+            logMessage('Keybinds saved.');
+        };
+        if (resetBtn) resetBtn.onclick = () => {
+            localStorage.removeItem('keybinds');
+            setVal('kb-inventory', defaultBinds.inventory);
+            setVal('kb-equipment', defaultBinds.equipment);
+            setVal('kb-passives', defaultBinds.passives);
+            setVal('kb-adventure', defaultBinds.adventure);
+            setVal('kb-settings', defaultBinds.settings);
+            logMessage('Keybinds reset to defaults.');
+        };
     });
+
+    // Wire bulk actions (Sell All / Disassemble All) in inventory toolbar
+    const invSellAll = document.getElementById('inv-sell-all');
+    if (invSellAll) invSellAll.onclick = () => sellAllInInventory();
+    const invDisAll = document.getElementById('inv-disassemble-all');
+    if (invDisAll) invDisAll.onclick = () => disassembleAllInInventory();
 
     // Event listener for closing settings modal
     document.getElementById('close-settings').addEventListener('click', () => {
@@ -906,7 +990,58 @@ document.addEventListener('DOMContentLoaded', () => {
     updatePlayerStatsDisplay();
     updateInventoryDisplay();
     updateEquipmentDisplay();
+    // Sidebar collapse toggle hookup with persistence
+    const sidebar = document.getElementById('sidebar');
+    const collapseBtn = document.getElementById('sidebar-collapse-toggle');
+    if (sidebar && collapseBtn) {
+        // Restore persisted state
+        const saved = localStorage.getItem('sidebarCollapsed');
+        if (saved === 'true') {
+            sidebar.classList.add('collapsed');
+            collapseBtn.textContent = '›';
+        }
+        collapseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('collapsed');
+            const collapsed = sidebar.classList.contains('collapsed');
+            collapseBtn.textContent = collapsed ? '›' : '‹';
+            localStorage.setItem('sidebarCollapsed', collapsed ? 'true' : 'false');
+        });
+    }
 });
+
+// Global keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if (['INPUT','TEXTAREA'].includes((e.target && e.target.tagName) || '')) return;
+    const binds = JSON.parse(localStorage.getItem('keybinds') || 'null') || { inventory:'I', equipment:'E', passives:'P', adventure:'A', settings:'S' };
+    const key = (e.key||'').toUpperCase();
+    if (key === binds.inventory) { showScreen('inventory-screen'); e.preventDefault(); }
+    else if (key === binds.equipment) { showScreen('equipment-screen'); e.preventDefault(); }
+    else if (key === binds.passives) { showScreen('passives-screen'); e.preventDefault(); }
+    else if (key === binds.adventure) { showScreen('adventure-screen'); e.preventDefault(); }
+    else if (key === binds.settings) { const menu = document.getElementById('settings-menu'); if (menu) { menu.style.display='block'; e.preventDefault(); } }
+});
+
+// Lightweight global warning popup
+function showWarningPopup(message) {
+    const overlayId = 'warning-overlay';
+    const existing = document.getElementById(overlayId);
+    if (existing) existing.remove();
+    const overlay = document.createElement('div');
+    overlay.id = overlayId;
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100000; display:flex; align-items:center; justify-content:center;';
+    const box = document.createElement('div');
+    box.style.cssText = 'background:linear-gradient(to bottom,#2b2b2b,#151515); border:2px solid #ff6464; border-radius:8px; padding:16px 18px; color:#fff; max-width:420px; text-align:center; box-shadow:0 0 20px rgba(255,100,100,0.25)';
+    box.innerHTML = `<div style="font-family: 'Orbitron', sans-serif; color:#ffb3b3; font-weight:bold; margin-bottom:8px;">Warning</div>
+                     <div style="margin-bottom:12px; color:#ffdede;">${message}</div>`;
+    const ok = document.createElement('button');
+    ok.textContent = 'OK';
+    ok.style.cssText = 'background:linear-gradient(to bottom,#663333,#441111); color:#fff; border:1px solid #ff6464; border-radius:4px; padding:8px 14px; cursor:pointer;';
+    ok.addEventListener('click', () => overlay.remove());
+    box.appendChild(ok);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+}
 
 
 // Function to show the appropriate screen
@@ -921,6 +1056,28 @@ function showScreen(screenId) {
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
         targetScreen.classList.add('active');
+        // Only trigger inventory entrance animation when actually opening the screen
+        const inv = document.getElementById('inventory-screen');
+        if (inv) {
+            if (screenId === 'inventory-screen') {
+                inv.classList.add('play-animate');
+                // Compute total animation duration based on items and their stagger delay
+                // Base anim 500ms + (index * 50ms) stagger + small buffer
+                const scheduleRemoval = () => {
+                    const count = document.querySelectorAll('#inventory li').length;
+                    const totalMs = 170 + Math.max(0, count - 1) * 15 + 120;
+                    setTimeout(() => inv.classList.remove('play-animate'), totalMs);
+                };
+                // Defer to next frame so DOM has rendered the list
+                if (typeof requestAnimationFrame === 'function') {
+                    requestAnimationFrame(scheduleRemoval);
+                } else {
+                    setTimeout(scheduleRemoval, 0);
+                }
+            } else {
+                inv.classList.remove('play-animate');
+            }
+        }
         window.currentScreen = screenId;
         
         // Update sidebar menu to show active item

@@ -17,6 +17,24 @@ function getUsedInventorySlots() {
     return window.inventory.length;
 }
 
+// Determine sale price for an item. Fallback to material defaults.
+function getItemSalePrice(item) {
+    if (!item) return 0;
+    const direct = Number(item.salePrice);
+    if (!isNaN(direct) && direct > 0) return direct;
+    // Default pricing rules by type/name if no salePrice present
+    if (item.type === 'Material') {
+        // Basic materials like Scrap Metal have a small default value
+        if ((item.name||'').toLowerCase() === 'scrap metal') return 1;
+        return 1; // generic material baseline
+    } else if (item.type === 'Chip') {
+        return 10; // base chip value if not specified
+    } else if (item.type === 'Bionic') {
+        return 25; // base bionic value if not specified
+    }
+    return 0;
+}
+
 // Function to check if inventory has space for new items
 function hasInventorySpace(slotsNeeded = 1) {
     return getUsedInventorySlots() + slotsNeeded <= player.maxInventorySlots;
@@ -25,15 +43,25 @@ function hasInventorySpace(slotsNeeded = 1) {
 // Function to add an item to the inventory, handling stackable items
 function addItemToInventory(newItem) {
     console.log('Adding item to inventory:', newItem);
-    
-    if (newItem.stackable) {
-        const existingItem = window.inventory.find(item => item.name === newItem.name);
+
+    // Chips should never stack. Split into individual entries and force quantity = 1
+    if (newItem && newItem.type === 'Chip') {
+        const copiesToAdd = Math.max(1, Number(newItem.quantity) || 1);
+        for (let i = 0; i < copiesToAdd; i++) {
+            if (!hasInventorySpace(1)) {
+                logMessage(`Inventory full! Cannot add ${newItem.name}. (${getUsedInventorySlots()}/${player.maxInventorySlots} slots used)`);
+                return i > 0; // Return true if we managed to add at least one
+            }
+            const clone = { ...newItem, quantity: 1, stackable: false };
+            window.inventory.push(clone);
+            console.log(`Added chip instance: ${clone.name}`);
+        }
+    } else if (newItem && newItem.stackable) {
+        const existingItem = window.inventory.find(item => item.name === newItem.name && item.stackable === true);
         if (existingItem) {
-            // Stacking with existing item - no slot check needed
             existingItem.quantity += newItem.quantity;
             console.log(`Updated quantity of ${existingItem.name} to ${existingItem.quantity}`);
         } else {
-            // Adding new stackable item - check slots
             if (!hasInventorySpace(1)) {
                 logMessage(`Inventory full! Cannot add ${newItem.name}. (${getUsedInventorySlots()}/${player.maxInventorySlots} slots used)`);
                 return false;
@@ -42,7 +70,6 @@ function addItemToInventory(newItem) {
             console.log(`Added new stackable item: ${newItem.name}`);
         }
     } else {
-        // Adding non-stackable item - check slots
         if (!hasInventorySpace(1)) {
             logMessage(`Inventory full! Cannot add ${newItem.name}. (${getUsedInventorySlots()}/${player.maxInventorySlots} slots used)`);
             return false;
@@ -68,25 +95,41 @@ function addItemToInventory(newItem) {
 }
 
 // Function to remove an item from the inventory
-function removeItemFromInventory(itemName, quantity = 1) {
-    const inventoryItem = window.inventory.find(item => item.name === itemName);
-    if (inventoryItem) {
-        if (inventoryItem.stackable) {
-            inventoryItem.quantity -= quantity;
-            if (inventoryItem.quantity <= 0) {
+function removeItemFromInventory(itemOrName, quantity = 1) {
+    // Support removing by object reference or by name
+    if (itemOrName && typeof itemOrName === 'object') {
+        const idx = window.inventory.indexOf(itemOrName);
+        if (idx > -1) {
+            window.inventory.splice(idx, 1);
+        } else if (itemOrName.name) {
+            // Fallback: remove first item with same name
+            const byNameIdx = window.inventory.findIndex(it => it && it.name === itemOrName.name);
+            if (byNameIdx > -1) window.inventory.splice(byNameIdx, 1);
+            else console.warn(`Item ${itemOrName.name} not found in inventory when attempting to remove.`);
+        } else {
+            console.warn('Unknown item passed to removeItemFromInventory:', itemOrName);
+        }
+    } else {
+        const name = itemOrName;
+        const inventoryItem = window.inventory.find(item => item && item.name === name);
+        if (inventoryItem) {
+            if (inventoryItem.stackable) {
+                inventoryItem.quantity -= quantity;
+                if (inventoryItem.quantity <= 0) {
+                    const index = window.inventory.indexOf(inventoryItem);
+                    if (index > -1) {
+                        window.inventory.splice(index, 1);
+                    }
+                }
+            } else {
                 const index = window.inventory.indexOf(inventoryItem);
                 if (index > -1) {
                     window.inventory.splice(index, 1);
                 }
             }
         } else {
-            const index = window.inventory.indexOf(inventoryItem);
-            if (index > -1) {
-                window.inventory.splice(index, 1);
-            }
+            console.warn(`Item ${name} not found in inventory when attempting to remove.`);
         }
-    } else {
-        console.warn(`Item ${itemName} not found in inventory when attempting to remove.`);
     }
     if (window.currentScreen === 'fabrication-screen') {
         displayFabricationRecipes();
@@ -121,8 +164,43 @@ function updateInventoryDisplay() {
         return;
     }
 
-    // Loop through each item in the inventory
-    window.inventory.forEach((item, index) => {
+    // Apply search/filter/sort before rendering
+    const search = (document.getElementById('inv-search')?.value || '').trim().toLowerCase();
+    const filterType = (document.getElementById('inv-filter')?.value || 'all');
+    const sortBy = (document.getElementById('inv-sort')?.value || 'none');
+
+    let itemsToShow = window.inventory.slice();
+    if (filterType !== 'all') {
+        itemsToShow = itemsToShow.filter(it => (it && it.type === filterType));
+    }
+    if (search) {
+        itemsToShow = itemsToShow.filter(it => (it && (it.name||'').toLowerCase().includes(search)));
+    }
+    const weaponDps = (it) => {
+        if (!it || it.type !== 'Weapon') return 0;
+        const dmg = Object.values(it.damageTypes||{}).reduce((a,b) => a + (typeof b === 'number' ? b : (b.min||0)), 0);
+        const atkSpd = (typeof it.bAttackSpeed === 'number' ? it.bAttackSpeed : 1);
+        return Number((dmg * atkSpd).toFixed(2));
+    };
+    if (sortBy === 'rarity') {
+        const rank = { Legendary:5, Epic:4, Rare:3, Uncommon:2, Common:1 };
+        itemsToShow.sort((a,b) => (rank[(b?.rarity)||'Common']||0) - (rank[(a?.rarity)||'Common']||0));
+    } else if (sortBy === 'level') {
+        itemsToShow.sort((a,b) => (b?.levelRequirement||0) - (a?.levelRequirement||0));
+    } else if (sortBy === 'dps') {
+        itemsToShow.sort((a,b) => weaponDps(b) - weaponDps(a));
+    } else if (sortBy === 'sockets') {
+        const sockets = it => Array.isArray(it?.rolledWires) ? it.rolledWires.length : 0;
+        itemsToShow.sort((a,b) => sockets(b) - sockets(a));
+    } else if (sortBy === 'name') {
+        itemsToShow.sort((a,b) => (a?.name||'').localeCompare(b?.name||''));
+    }
+
+    // Determine if we can safely reorder (avoid confusion when filtered/sorted)
+    const canReorder = !search && filterType === 'all' && sortBy === 'none';
+
+    // Loop through each item in the inventory (post-filtered)
+    itemsToShow.forEach((item, index) => {
         if (item) {
             const listItem = document.createElement('li');
             listItem.style.position = 'relative'; // Required for quantity badge positioning
@@ -155,12 +233,63 @@ function updateInventoryDisplay() {
             
             inventoryList.appendChild(listItem);
 
-            // Click event to handle item actions
+            // Left-click: do not open options popup anymore (reserved for right-click)
+            // If the item is usable (consumable), keep left-click to use
             itemIcon.addEventListener('click', () => {
                 if (item.effect) {
                     showUseItemPopup(item);
+                }
+            });
+            // Drag and drop to reorder inventory (drop BETWEEN items)
+            if (canReorder) {
+                listItem.setAttribute('draggable', 'true');
+                listItem.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', index.toString());
+                });
+                listItem.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    const rect = listItem.getBoundingClientRect();
+                    const halfway = rect.top + rect.height / 2;
+                    listItem.classList.toggle('drag-over-top', e.clientY < halfway);
+                    listItem.classList.toggle('drag-over-bottom', e.clientY >= halfway);
+                });
+                listItem.addEventListener('dragleave', () => {
+                    listItem.classList.remove('drag-over-top', 'drag-over-bottom');
+                });
+                listItem.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const fromVisibleIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                    if (isNaN(fromVisibleIdx)) return;
+                    // Determine insertion index (before/after based on cursor position)
+                    const rect = listItem.getBoundingClientRect();
+                    const insertAfter = e.clientY >= (rect.top + rect.height / 2);
+                    let insertVisibleIdx = index + (insertAfter ? 1 : 0);
+                    // Reorder the underlying array (since no filter/sort, visible indices map 1:1)
+                    if (fromVisibleIdx !== insertVisibleIdx && fromVisibleIdx + 1 !== insertVisibleIdx) {
+                        // No-op check not strictly needed, just prevents jitter
+                    }
+                    const [moved] = window.inventory.splice(fromVisibleIdx, 1);
+                    // Adjust target index if removing item before the insertion point
+                    if (fromVisibleIdx < insertVisibleIdx) insertVisibleIdx -= 1;
+                    window.inventory.splice(insertVisibleIdx, 0, moved);
+                    listItem.classList.remove('drag-over-top', 'drag-over-bottom');
+                    updateInventoryDisplay();
+                    notifyInventoryChange();
+                });
+            }
+            // Double-click to equip if equippable
+            itemIcon.addEventListener('dblclick', () => {
+                if (isEquippableItem(item)) {
+                    equipItem(item);
+                }
+            });
+            // Right-click opens options popup
+            itemIcon.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                if (item.effect) {
+                    showUseItemPopup(item);
                 } else {
-                    showItemOptionsPopup(item, event);
+                    showItemOptionsPopup(item, e);
                 }
             });
         } else {
@@ -168,6 +297,14 @@ function updateInventoryDisplay() {
         }
     });
 }
+
+// Wire up inventory controls events (search/filter/sort)
+document.addEventListener('DOMContentLoaded', () => {
+    const s = document.getElementById('inv-search');
+    const f = document.getElementById('inv-filter');
+    const o = document.getElementById('inv-sort');
+    [s,f,o].forEach(el => { if (el) el.addEventListener('input', updateInventoryDisplay); });
+});
 
 // Function to equip an item from inventory
 function equipItem(item) {
@@ -272,7 +409,13 @@ function updateEquipmentDisplay() {
                 const wrapper = document.createElement('div');
                 wrapper.setAttribute('data-has-tooltip', 'true');
                 wrapper.setAttribute('data-tooltip-source', 'equipment-slot');
-                wrapper.setAttribute('data-tooltip-content', getItemTooltipContent(equippedItem));
+                let tooltipHtml = getItemTooltipContent(equippedItem);
+                if (Array.isArray(equippedItem.rolledWires) && equippedItem.rolledWires.length > 0) {
+                    const colorBadge = c => ({ red: '#ff6b6b', green: '#51cf66', blue: '#74c0fc', black: '#ced4da' }[c] || '#adb5bd');
+                    const chips = equippedItem.rolledWires.map(w => `<span style=\"display:inline-block; border:1px solid ${colorBadge(w.color)}; color:${colorBadge(w.color)}; padding:1px 4px; margin:1px; border-radius:3px; font-size:11px;\">${w.color}${w.chip ? ' • ' + w.chip.name : ''}</span>`).join(' ');
+                    tooltipHtml += `<div style=\"background: rgba(0,20,45,0.6); padding:4px; margin-top:4px; border-radius:4px; border-left:2px solid #00ffcc;\"><div style=\"color:#66ffcc; font-weight:bold; margin-bottom:2px;\">Wires</div>${chips}</div>`;
+                }
+                wrapper.setAttribute('data-tooltip-content', tooltipHtml);
                 wrapper.style.width = '100%';
                 wrapper.style.height = '100%';
                 wrapper.style.display = 'flex';
@@ -404,10 +547,14 @@ function updateEquipmentDisplay() {
 
 // Function to show confirmation popup with optional secondary action
 function showConfirmationPopup(message, onConfirm, onSecondary = null) {
-    // Create overlay
+    // Remove any existing generic overlay to avoid stacking
+    const existing = document.getElementById('overlay');
+    if (existing) existing.remove();
+
+    // Create overlay (full screen, centered)
     const overlay = document.createElement('div');
     overlay.id = 'overlay';
-    document.body.appendChild(overlay);
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100000; display:flex; align-items:center; justify-content:center;';
 
     // Create popup
     const popup = document.createElement('div');
@@ -423,16 +570,14 @@ function showConfirmationPopup(message, onConfirm, onSecondary = null) {
     const yesButton = document.createElement('button');
     yesButton.textContent = 'Yes';
     yesButton.addEventListener('click', () => {
-        onConfirm();
-        document.body.removeChild(popup);
-        document.body.removeChild(overlay);
+        try { if (typeof onConfirm === 'function') onConfirm(); } catch (e) { console.error(e); }
+        if (overlay && overlay.parentNode) overlay.remove();
     });
 
     const noButton = document.createElement('button');
     noButton.textContent = 'No';
     noButton.addEventListener('click', () => {
-        document.body.removeChild(popup);
-        document.body.removeChild(overlay);
+        if (overlay && overlay.parentNode) overlay.remove();
     });
 
     buttonsContainer.appendChild(yesButton);
@@ -443,15 +588,20 @@ function showConfirmationPopup(message, onConfirm, onSecondary = null) {
         const secondaryButton = document.createElement('button');
         secondaryButton.textContent = 'Disassemble';
         secondaryButton.addEventListener('click', () => {
-            onSecondary();
-            document.body.removeChild(popup);
-            document.body.removeChild(overlay);
+            try { if (typeof onSecondary === 'function') onSecondary(); } catch (e) { console.error(e); }
+            if (overlay && overlay.parentNode) overlay.remove();
         });
         buttonsContainer.appendChild(secondaryButton);
     }
 
     popup.appendChild(buttonsContainer);
-    document.body.appendChild(popup);
+    overlay.appendChild(popup);
+    document.body.appendChild(overlay);
+
+    // Close when clicking outside
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    const onKey = (e) => { if (e.key === 'Escape') { if (overlay && overlay.parentNode) overlay.remove(); document.removeEventListener('keydown', onKey); } };
+    document.addEventListener('keydown', onKey);
 }
 
 // Function to initialize equipment slots with click event listeners
@@ -789,6 +939,33 @@ function showEquipmentSelectionWindow(slotName, bionicIndex = null) {
             updateEquipmentDisplay();
         });
         unequipSection.appendChild(unequipButton);
+
+        // Manage Wires button if equipped item has wire slots
+        if (Array.isArray(currentItem.rolledWires) && currentItem.rolledWires.length > 0) {
+            const mwButton = document.createElement('button');
+            mwButton.textContent = 'Manage Wires';
+            mwButton.style.cssText = `
+                margin-left: 10px;
+                background: linear-gradient(to bottom, #003366, #001133);
+                color: #00ffcc;
+                border: 1px solid #00ffcc;
+                border-radius: 4px;
+                padding: 8px 15px;
+                cursor: pointer;
+                font-family: 'Orbitron', sans-serif;
+                transition: all 0.2s ease;
+            `;
+            mwButton.addEventListener('mouseover', () => {
+                mwButton.style.background = 'linear-gradient(to bottom, #004080, #002255)';
+            });
+            mwButton.addEventListener('mouseout', () => {
+                mwButton.style.background = 'linear-gradient(to bottom, #003366, #001133)';
+            });
+            mwButton.addEventListener('click', () => {
+                openManageWiresWindow(currentItem);
+            });
+            unequipSection.appendChild(mwButton);
+        }
         window.appendChild(unequipSection);
     }
 
@@ -956,9 +1133,10 @@ function showItemOptionsPopup(item, clickEvent) {
         existingOverlay.remove();
     }
     
-    // Create overlay
+    // Create overlay (use unique id to avoid clashing with generic confirmation overlays)
     const overlay = document.createElement('div');
-    overlay.id = 'overlay';
+    overlay.id = 'item-options-overlay';
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:100000;';
     document.body.appendChild(overlay);
 
     // Create popup
@@ -972,36 +1150,85 @@ function showItemOptionsPopup(item, clickEvent) {
     const buttonsContainer = document.createElement('div');
     buttonsContainer.className = 'popup-buttons';
 
+    // Lock/Unlock toggle (icon only)
+    const lockButton = document.createElement('button');
+    const isLocked = !!item.locked;
+    lockButton.textContent = isLocked ? '🔒' : '🔓';
+    lockButton.title = isLocked ? 'Unlock item' : 'Lock item';
+    lockButton.addEventListener('click', () => {
+        item.locked = !item.locked;
+        lockButton.textContent = item.locked ? '🔒' : '🔓';
+        lockButton.title = item.locked ? 'Unlock item' : 'Lock item';
+        updateInventoryDisplay();
+    });
+    buttonsContainer.appendChild(lockButton);
+
     // Equip Button (only if item is actually equippable - not materials)
     if (item.slot && item.type !== 'Material' && isEquippableItem(item)) {
         const equipButton = document.createElement('button');
         equipButton.textContent = 'Equip';
+        if (item.locked) { equipButton.disabled = true; equipButton.title = 'Item locked'; }
         equipButton.addEventListener('click', () => {
+            if (item.locked) { logMessage('Item is locked. Unlock it to equip.'); return; }
             equipItem(item);
-            document.body.removeChild(popup);
-            document.body.removeChild(overlay);
+            if (popup && popup.parentNode) popup.remove();
+            if (overlay && overlay.parentNode) overlay.remove();
         });
         buttonsContainer.appendChild(equipButton);
+    }
+
+    // Manage Wires (if item has wire slots)
+    if (Array.isArray(item.rolledWires) && item.rolledWires.length > 0) {
+        const manageWiresButton = document.createElement('button');
+        manageWiresButton.textContent = 'Manage Wires';
+        manageWiresButton.addEventListener('click', () => {
+            if (popup && popup.parentNode) popup.remove();
+            if (overlay && overlay.parentNode) overlay.remove();
+            openManageWiresWindow(item);
+        });
+        buttonsContainer.appendChild(manageWiresButton);
     }
 
     // Disassemble Button (if applicable)
     if (item.isDisassembleable) {
         const disassembleButton = document.createElement('button');
         disassembleButton.textContent = 'Disassemble';
+        if (item.locked) { disassembleButton.disabled = true; disassembleButton.title = 'Item locked'; }
         disassembleButton.addEventListener('click', () => {
+            if (item.locked) { logMessage('Item is locked. Unlock it to disassemble.'); return; }
             disassembleItem(item);
-            document.body.removeChild(popup);
-            document.body.removeChild(overlay);
+            if (popup && popup.parentNode) popup.remove();
+            if (overlay && overlay.parentNode) overlay.remove();
         });
         buttonsContainer.appendChild(disassembleButton);
     }
+
+	// Sell Button (all items)
+	const sellButton = document.createElement('button');
+	sellButton.textContent = 'Sell';
+    sellButton.addEventListener('click', () => {
+		const price = Number(item.salePrice) || 0;
+		const disableConfirm = localStorage.getItem('disableSellConfirm') === 'true';
+		const doSell = () => {
+            if (item.locked) { logMessage('Item is locked. Unlock it to sell.'); return; }
+            sellItem(item, 1);
+			if (popup && popup.parentNode) popup.remove();
+			if (overlay && overlay.parentNode) overlay.remove();
+		};
+		if (disableConfirm) {
+			doSell();
+		} else {
+			showConfirmationPopup(`Sell ${item.name} for ${price} credits?`, doSell);
+		}
+	});
+	buttonsContainer.appendChild(sellButton);
 
     // Cancel Button
     const cancelButton = document.createElement('button');
     cancelButton.textContent = 'Cancel';
     cancelButton.addEventListener('click', () => {
-        document.body.removeChild(popup);
-        document.body.removeChild(overlay);
+        if (popup && popup.parentNode) popup.remove();
+        if (overlay && overlay.parentNode) overlay.remove();
     });
     buttonsContainer.appendChild(cancelButton);
 
@@ -1010,6 +1237,19 @@ function showItemOptionsPopup(item, clickEvent) {
     
     // Add to DOM first so we can calculate size
     document.body.appendChild(popup);
+    // Dynamically size the window to be just wider than the buttons row
+    try {
+        // Sum individual button widths plus the gap between them (10px set in CSS)
+        const btns = Array.from(buttonsContainer.querySelectorAll('button'));
+        const sumButtons = btns.reduce((sum, b) => sum + (b.getBoundingClientRect().width || 0), 0);
+        const gaps = Math.max(0, btns.length - 1) * 10;
+        const paddingBuffer = 40; // small padding around contents
+        const desired = sumButtons + gaps + paddingBuffer;
+        const maxAllowed = Math.max(320, window.innerWidth - 40);
+        const targetWidth = Math.min(desired, maxAllowed);
+        popup.style.maxWidth = 'none';
+        popup.style.width = `${Math.max(320, targetWidth)}px`;
+    } catch (e) { /* ignore sizing errors */ }
     
     // Position the popup near the clicked item
     if (clickEvent && clickEvent.clientX && clickEvent.clientY) {
@@ -1044,5 +1284,347 @@ function showItemOptionsPopup(item, clickEvent) {
         popup.style.top = `${top}px`;
         popup.style.left = `${left}px`;
     }
+
+    // Close on overlay click and ESC
+    overlay.addEventListener('click', () => {
+        if (popup && popup.parentNode) popup.remove();
+        if (overlay && overlay.parentNode) overlay.remove();
+    });
+    const onKey = (e) => {
+        if (e.key === 'Escape') {
+            if (popup && popup.parentNode) popup.remove();
+            overlay.remove();
+            document.removeEventListener('keydown', onKey);
+        }
+    };
+    document.addEventListener('keydown', onKey);
+}
+
+// Sell an item (sells one unit for stackables)
+function sellItem(item, quantity = 1) {
+	if (!item) return;
+    if (item.locked) { logMessage('Item is locked. Unlock it to sell.'); return; }
+    const pricePer = getItemSalePrice(item);
+	let soldCount = 0;
+	if (item.stackable && item.quantity && item.quantity > 1) {
+		const toSell = Math.max(1, Math.min(quantity, item.quantity));
+		item.quantity -= toSell;
+		soldCount = toSell;
+		if (item.quantity <= 0) {
+			removeItemFromInventory(item);
+		}
+	} else {
+		// Non-stackable or single
+		removeItemFromInventory(item);
+		soldCount = 1;
+	}
+	const total = pricePer * soldCount;
+	if (typeof playerCurrency === 'number') {
+		playerCurrency += total;
+	}
+	logMessage(`Sold ${item.name}${soldCount > 1 ? ' x' + soldCount : ''} for ${total} credits.`);
+	updateInventoryDisplay();
+}
+
+// Bulk: Sell all sellable, unlocked items in inventory
+function sellAllInInventory() {
+    const disableConfirm = localStorage.getItem('disableSellConfirm') === 'true';
+    const sellable = window.inventory.filter(it => it && !it.locked && getItemSalePrice(it) > 0);
+    if (sellable.length === 0) { logMessage('No sellable items found.'); return; }
+    const previewTotal = sellable.reduce((sum, it) => sum + getItemSalePrice(it) * (it.stackable ? (it.quantity||1) : 1), 0);
+    const doAll = () => {
+        // Recompute defensively and remove as we go
+        let soldCount = 0;
+        let credits = 0;
+        window.inventory = window.inventory.filter(it => {
+            if (!it || it.locked) return true;
+            const price = getItemSalePrice(it);
+            if (price <= 0) return true;
+            const qty = it.stackable ? (it.quantity||1) : 1;
+            credits += price * qty;
+            soldCount += 1;
+            return false; // remove from inventory
+        });
+        if (typeof playerCurrency === 'number') playerCurrency += credits;
+        logMessage(`Sold ${soldCount} item${soldCount!==1?'s':''} for ${credits} credits.`);
+        updateInventoryDisplay();
+        notifyInventoryChange();
+    };
+    if (disableConfirm) doAll(); else showConfirmationPopup(`Sell all (${sellable.length}) items for ${previewTotal} credits?`, doAll);
+}
+
+// Bulk: Disassemble all eligible, unlocked items
+function disassembleAllInInventory() {
+    const eligible = window.inventory.filter(it => it && it.isDisassembleable && !it.locked);
+    if (eligible.length === 0) { logMessage('No disassembleable items found.'); return; }
+    const doAll = () => {
+        // Walk items and disassemble one by one to preserve stacking rules
+        const items = [...window.inventory];
+        window.inventory = [];
+        items.forEach(it => {
+            if (it && it.isDisassembleable && !it.locked) {
+                const qty = it.stackable ? (it.quantity||1) : 1;
+                for (let i = 0; i < qty; i++) {
+                    const mats = getMaterialsFromItem(it);
+                    mats.forEach(m => addItemToInventory(m));
+                }
+            } else if (it) {
+                window.inventory.push(it);
+            }
+        });
+        logMessage(`Disassembled ${eligible.length} item${eligible.length!==1?'s':''}. Materials added to inventory.`);
+        updateInventoryDisplay();
+        notifyInventoryChange();
+    };
+    showConfirmationPopup(`Disassemble all (${eligible.length}) eligible items?`, doAll);
+}
+
+// Manage Wires UI
+function openManageWiresWindow(item) {
+    // Overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'manage-wires-overlay';
+    overlay.style.cssText = `
+        position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100000;
+        display:flex; align-items:center; justify-content:center;`;
+    document.body.appendChild(overlay);
+
+    // Window
+    const win = document.createElement('div');
+    win.className = 'manage-wires-window';
+    win.style.cssText = `
+        background: linear-gradient(to bottom, #001a33, #000d1a);
+        border: 2px solid #00ffcc; border-radius: 8px; padding: 12px;
+        width: 940px; max-width: 98vw; max-height: 80vh; overflow: hidden;
+        box-shadow: 0 0 20px rgba(0,255,204,0.3); display:flex; flex-direction:row; gap:12px;`;
+    overlay.appendChild(win);
+
+    // Persistent item tooltip on the left
+    const sideTooltip = document.createElement('div');
+    sideTooltip.style.cssText = 'flex:0 0 320px; max-width:320px; overflow:auto; border:1px solid rgba(0,255,204,0.25); border-radius:6px; background: rgba(0,10,25,0.6); padding:8px;';
+    const updateSideTooltip = () => {
+        sideTooltip.innerHTML = getItemTooltipContent(item, false);
+    };
+    updateSideTooltip();
+    win.appendChild(sideTooltip);
+
+    // Right column container
+    const rightCol = document.createElement('div');
+    rightCol.style.cssText = 'flex:1; display:flex; flex-direction:column; gap:10px; min-width:0;';
+    win.appendChild(rightCol);
+
+    // Header
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex; align-items:center; justify-content:space-between;';
+    const title = document.createElement('div');
+    title.textContent = `Manage Wires — ${item.name}`;
+    title.style.cssText = 'color:#00ffcc; font-weight:bold; font-size:16px;';
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.style.cssText = 'background:linear-gradient(to bottom,#003366,#001133); color:#00ffcc; border:1px solid #00ffcc; border-radius:4px; padding:6px 10px; cursor:pointer;';
+    closeBtn.onclick = () => overlay.remove();
+    header.appendChild(title); header.appendChild(closeBtn); rightCol.appendChild(header);
+
+    // Body split: chips (top) and slots (bottom)
+    const body = document.createElement('div');
+    body.style.cssText = 'display:flex; flex-direction:column; gap:10px; flex:1; overflow:hidden;';
+    rightCol.appendChild(body);
+
+    // Chips list
+    const chipsPanel = document.createElement('div');
+    chipsPanel.style.cssText = 'background: rgba(0,0,0,0.4); border:1px solid rgba(0,255,204,0.3); border-radius:6px; padding:10px; flex:1; overflow:auto;';
+    const headerRow = document.createElement('div');
+    headerRow.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;';
+    const chipsHeader = document.createElement('div');
+    chipsHeader.textContent = 'Inventory Chips';
+    chipsHeader.style.cssText = 'color:#66ccff;';
+    headerRow.appendChild(chipsHeader);
+    // Chip color filter buttons
+    const filterRow = document.createElement('div');
+    filterRow.style.cssText = 'display:flex; gap:6px;';
+    const filters = ['All','Red','Green','Blue','Black'];
+    let currentFilter = 'All';
+    filters.forEach(name => {
+        const b = document.createElement('button');
+        b.textContent = name;
+        b.style.cssText = 'background:linear-gradient(to bottom,#003366,#001133); color:#cfe6ff; border:1px solid #004a7f; border-radius:4px; padding:4px 6px; cursor:pointer; font-size:12px;';
+        b.addEventListener('click', ()=>{ currentFilter = name; renderChips(); });
+        filterRow.appendChild(b);
+    });
+    headerRow.appendChild(filterRow);
+    chipsPanel.appendChild(headerRow);
+
+    const chipsGrid = document.createElement('div');
+    chipsGrid.style.cssText = 'display:grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap:8px;';
+    chipsPanel.appendChild(chipsGrid);
+    body.appendChild(chipsPanel);
+
+    // Slots panel
+    const slotsPanel = document.createElement('div');
+    slotsPanel.style.cssText = 'background: rgba(0,0,0,0.5); border:1px solid rgba(0,255,204,0.3); border-radius:6px; padding:10px;';
+    const slotsHeader = document.createElement('div');
+    slotsHeader.textContent = 'Wire Slots';
+    slotsHeader.style.cssText = 'color:#66ffcc; margin-bottom:6px;';
+    slotsPanel.appendChild(slotsHeader);
+
+    // Unsocket All button (per item)
+    const unsocketAllBtn = document.createElement('button');
+    unsocketAllBtn.textContent = 'Unsocket All';
+    unsocketAllBtn.style.cssText = 'margin: 0 0 8px 0; background:linear-gradient(to bottom,#332200,#221100); color:#ffcc66; border:1px solid #ffcc66; border-radius:4px; padding:6px 10px; cursor:pointer;';
+    unsocketAllBtn.addEventListener('click', () => {
+        let changed = false;
+        (item.rolledWires || []).forEach(w => {
+            if (w.chip) { addItemToInventory(w.chip); w.chip = null; changed = true; }
+        });
+        if (changed) {
+            player.calculateStats();
+            updateInventoryDisplay();
+            updateEquipmentDisplay();
+            renderSlots();
+            renderChips();
+            updateSideTooltip();
+        }
+    });
+    slotsPanel.appendChild(unsocketAllBtn);
+
+    const slotsRow = document.createElement('div');
+    slotsRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:8px;';
+    slotsPanel.appendChild(slotsRow);
+    body.appendChild(slotsPanel);
+
+    // Selection state
+    let selectedSlotIndex = -1;
+
+    const colorHex = { red:'#ff6b6b', green:'#51cf66', blue:'#74c0fc', black:'#ced4da' };
+
+    function chipStatsHtml(chip) {
+        if (!chip) return '<em>Empty</em>';
+        const parts = [];
+        if (chip.damageTypes) {
+            for (const dt in chip.damageTypes) parts.push(`+${chip.damageTypes[dt]} ${dt}`);
+        }
+        if (chip.statModifiers) {
+            if (chip.statModifiers.damageTypes) {
+                for (const dt in chip.statModifiers.damageTypes) parts.push(`+${chip.statModifiers.damageTypes[dt]}% ${dt} dmg`);
+            }
+            for (const k in chip.statModifiers) {
+                if (k === 'damageTypes' || k === 'damageGroups') continue;
+                parts.push(`+${chip.statModifiers[k]} ${k}`);
+            }
+        }
+        if (chip.precision) parts.push(`+${chip.precision} Precision`);
+        if (chip.deflection) parts.push(`+${chip.deflection} Deflection`);
+        return parts.length ? parts.join('<br>') : '<em>No stats</em>';
+    }
+
+    function renderSlots() {
+        slotsRow.innerHTML = '';
+        (item.rolledWires || []).forEach((wire, idx) => {
+            const slot = document.createElement('div');
+            const border = colorHex[wire.color] || '#adb5bd';
+            slot.style.cssText = `min-width:120px; flex:0 0 auto; padding:8px; border:1px solid ${border}; border-radius:4px; background: rgba(0,20,45,0.4); cursor:pointer;`;
+            slot.innerHTML = `<div style="color:${border}; font-weight:bold; margin-bottom:4px;">${capitalize(wire.color)} Wire</div>` +
+                             `<div style="color:#cfe6ff; font-size:12px;">${wire.chip ? wire.chip.name : 'Empty'}</div>` +
+                             (wire.chip ? `<div style="margin-top:6px;"><button data-act="remove" style="background:#3b0; color:#fff; border:1px solid #4d4; border-radius:3px; padding:3px 6px; cursor:pointer;">Remove</button></div>` : '');
+            // Tooltip for this slot showing the slotted chip's stats
+            slot.setAttribute('data-has-tooltip', 'true');
+            slot.setAttribute('data-tooltip-content', chipStatsHtml(wire.chip));
+            if (idx === selectedSlotIndex) slot.style.boxShadow = `0 0 8px ${border}`;
+            slot.addEventListener('click', (e) => {
+                // If clicking remove button, unsocket
+                if (e.target && e.target.getAttribute('data-act') === 'remove') {
+                    if (wire.chip) {
+                        addItemToInventory(wire.chip);
+                        wire.chip = null;
+                        player.calculateStats();
+                        updateInventoryDisplay();
+                        updateEquipmentDisplay();
+                        renderSlots();
+                        renderChips();
+                        updateSideTooltip();
+                    }
+                    return;
+                }
+                selectedSlotIndex = idx;
+                renderSlots();
+            });
+            slotsRow.appendChild(slot);
+        });
+    }
+
+    function canUseChipInSlot(chip, wireColor) {
+        if (!chip || chip.type !== 'Chip') return false;
+        if (wireColor === 'black') return true; // accepts any
+        return (chip.color && chip.color.toLowerCase() === wireColor);
+    }
+
+    function isBlackChip(chip) { return chip && chip.type === 'Chip' && (chip.color||'').toLowerCase() === 'black'; }
+
+    function anyBlackChipEquipped() {
+        const slots = ['mainHand','offHand','head','chest','legs','feet','gloves'];
+        for (const slot of slots) {
+            const it = player.equipment[slot];
+            if (!it || !Array.isArray(it.rolledWires)) continue;
+            if (it.rolledWires.some(w => w.chip && isBlackChip(w.chip))) return true;
+        }
+        return false;
+    }
+
+    function renderChips() {
+        chipsGrid.innerHTML = '';
+        const chipItems = window.inventory.filter(i => i && i.type === 'Chip').filter(c => {
+            if (currentFilter === 'All') return true;
+            return (c.color||'').toLowerCase() === currentFilter.toLowerCase();
+        });
+        if (chipItems.length === 0) {
+            const empty = document.createElement('div');
+            empty.style.cssText = 'color:#aaa; font-style:italic;';
+            empty.textContent = 'No chips in inventory.';
+            chipsGrid.appendChild(empty);
+            return;
+        }
+        // Show each chip instance as its own card (no grouping)
+        chipItems.forEach(chip => {
+            const card = document.createElement('div');
+            const border = colorHex[chip.color] || '#888';
+            card.style.cssText = `border:1px solid ${border}; border-radius:4px; padding:8px; background: linear-gradient(135deg, rgba(0,34,85,0.5), rgba(0,17,51,0.5)); cursor:pointer;`;
+            card.innerHTML = `<div style="color:${border}; font-weight:bold; margin-bottom:4px;">${chip.name}</div>` +
+                             `<div style="color:#cfe6ff; font-size:12px;">Color: ${capitalize(chip.color||'unknown')}</div>`;
+            // Tooltip for chip stats
+            card.setAttribute('data-has-tooltip', 'true');
+            card.setAttribute('data-tooltip-source', 'chip-card');
+            card.setAttribute('data-tooltip-content', getItemTooltipContent(chip));
+            card.addEventListener('click', () => {
+                if (selectedSlotIndex < 0) { logMessage('Select a wire slot first.'); return; }
+                const wire = item.rolledWires[selectedSlotIndex];
+                if (!canUseChipInSlot(chip, wire.color)) { logMessage('Chip color does not match this wire.'); return; }
+                if (isBlackChip(chip) && anyBlackChipEquipped() && !(wire.chip && isBlackChip(wire.chip))) { logMessage('Only one Black Chip may be equipped across all gear.'); return; }
+                // If slot already has chip, return it to inventory first
+                if (wire.chip) addItemToInventory(wire.chip);
+                // Remove this exact chip instance from inventory
+                removeItemFromInventory(chip);
+                // Slot a cloned single-quantity instance to avoid inventory reference sharing
+                const slotted = { ...chip };
+                slotted.quantity = 1;
+                slotted.stackable = false;
+                wire.chip = slotted;
+                player.calculateStats();
+                updateInventoryDisplay();
+                updateEquipmentDisplay();
+                renderSlots();
+                renderChips();
+                updateSideTooltip();
+            });
+            chipsGrid.appendChild(card);
+        });
+    }
+
+    renderSlots();
+    renderChips();
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    const onKey = (e) => { if (e.key === 'Escape') { if (overlay && overlay.parentNode) overlay.remove(); document.removeEventListener('keydown', onKey); } };
+    document.addEventListener('keydown', onKey);
 }
 

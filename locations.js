@@ -27,7 +27,7 @@ const locations = [
         enemies: [
             { name: "Roachbot", spawnRate: 2, empoweredChance: 0.1 },
             { name: "Spiderbot", spawnRate: 1, empoweredChance: 0.1 },
-            { name: "Electro Wasp", spawnRate: 1, empoweredChance: 0.02 }
+            // { name: "Electro Wasp", spawnRate: 1, empoweredChance: 0.02 }
         ],
         numFights: 4,
         description: "Robotic insects roam these woods.",

@@ -1,20 +1,10 @@
 const recipes = [
     {
-        name: "Poison Pistol",
+        name: "Makeshift Laser Sword",
         category: "Weapons",
+        levelRequirement: 1,
         ingredients: {
-            "Synthetic Poison Gland": 4,
-            "Scrap Metal": 5,
-            "Minor Electronic Circuit": 2,
-            "Partical Fuser": 1
-        },
-        craftingTime: 5,
-    },
-    {
-        name: "Laser Sword",
-        category: "Weapons",
-        ingredients: {
-            "Crystalized Light": 3,
+            "Crystalized Light": 1,
             "Scrap Metal": 5,
             "Minor Electronic Circuit": 2,
             "Partical Fuser": 1

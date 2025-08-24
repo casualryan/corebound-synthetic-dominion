@@ -45,17 +45,123 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDelveBagUI(); // Initialize the UI
 
     // We'll use this as the "Flee" button
-    const fleeButton = document.getElementById('stop-combat');
-    if (fleeButton) {
-        fleeButton.addEventListener('click', () => {
-            stopCombat('playerFled');
-        });
-        fleeButton.style.display = 'none'; // Hidden by default, shown when delve starts
-    } else {
-        console.error("Flee/Stop Combat button not found in the DOM.");
-    }
+    // const fleeButton = document.getElementById('stop-combat');
+    // if (fleeButton) {
+    //     fleeButton.addEventListener('click', () => {
+    //         stopCombat('playerFled');
+    //     });
+    //     fleeButton.style.display = 'none'; // Hidden by default, shown when delve starts
+    // } else {
+    //     console.error("Flee/Stop Combat button not found in the DOM.");
+    // }
 
     createShieldPulseAnimation();
+    // Pop-out combat log setup
+    const btn = document.getElementById('combat-log-popout');
+    if (btn) {
+        let pop = null;
+        // Preserve original logger to mirror into popout
+        const originalLogMessage = window.logMessage;
+        btn.addEventListener('click', () => {
+            if (pop) { // Nest back into main log
+                if (pop.parentNode) pop.parentNode.removeChild(pop); pop = null;
+                const src = document.getElementById('log-messages');
+                if (src) { src.innerHTML = ''; src.setAttribute('data-nested', 'false'); }
+                btn.textContent = 'Pop Out';
+                window.logMessage = originalLogMessage;
+                return;
+            }
+            const src = document.getElementById('log-messages');
+            if (!src) return;
+            pop = document.createElement('div');
+            pop.className = 'combat-log-popout';
+            const baseCss = 'position:fixed; z-index:100001; background:rgba(0,15,35,0.95); border:1px solid #00ffcc; border-radius:6px; box-shadow:0 0 12px rgba(0,255,204,0.3); display:flex; flex-direction:column;';
+            const saved = JSON.parse(localStorage.getItem('combatLogPopout') || 'null');
+            const posCss = saved ? `top:${saved.top}px; left:${saved.left}px; width:${saved.width}px; height:${saved.height}px;` : 'top:80px; right:40px; width:380px; height:240px;';
+            pop.style.cssText = baseCss + posCss;
+            const header = document.createElement('div');
+            header.style.cssText = 'cursor:move; padding:6px 8px; color:#00ffcc; background:linear-gradient(to right,#002244,#001122); border-bottom:1px solid rgba(0,255,204,0.3); display:flex; justify-content:space-between; align-items:center;';
+            header.textContent = 'Combat Log';
+            const close = document.createElement('button');
+            close.textContent = '×';
+            close.style.cssText = 'background:none; border:none; color:#00ffcc; font-size:16px; cursor:pointer;';
+            close.onclick = () => {
+                if (pop && pop.parentNode) pop.parentNode.removeChild(pop); pop = null;
+                const src2 = document.getElementById('log-messages');
+                if (src2) { src2.innerHTML = ''; src2.setAttribute('data-nested', 'false'); }
+                btn.textContent = 'Pop Out';
+                window.logMessage = originalLogMessage;
+            };
+            header.appendChild(close);
+            pop.appendChild(header);
+            const body = document.createElement('div');
+            body.style.cssText = 'flex:1; overflow:auto; padding:8px; color:#e0f2ff; font-family: "Orbitron", sans-serif;';
+            body.innerHTML = src.innerHTML;
+            pop.appendChild(body);
+            document.body.appendChild(pop);
+
+            // Persist initial position/size immediately so a quick nest/re-pop restores
+            try {
+                const r0 = pop.getBoundingClientRect();
+                localStorage.setItem('combatLogPopout', JSON.stringify({ top: r0.top, left: r0.left, width: r0.width, height: r0.height }));
+            } catch (_) {}
+
+            // Dragging to reposition; persist to localStorage
+            let drag = { active:false, offsetX:0, offsetY:0 };
+            header.addEventListener('mousedown', (e) => {
+                drag.active = true;
+                const rect = pop.getBoundingClientRect();
+                drag.offsetX = e.clientX - rect.left;
+                drag.offsetY = e.clientY - rect.top;
+                e.preventDefault();
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (!drag.active || !pop) return;
+                const left = Math.max(0, Math.min(window.innerWidth - pop.offsetWidth, e.clientX - drag.offsetX));
+                const top = Math.max(0, Math.min(window.innerHeight - pop.offsetHeight, e.clientY - drag.offsetY));
+                pop.style.left = left + 'px';
+                pop.style.top = top + 'px';
+                pop.style.right = '';
+            });
+            document.addEventListener('mouseup', () => {
+                if (!pop) return;
+                drag.active = false;
+                const rect = pop.getBoundingClientRect();
+                localStorage.setItem('combatLogPopout', JSON.stringify({ top: rect.top, left: rect.left, width: rect.width, height: rect.height }));
+            });
+
+            // Mirror subsequent log messages ONLY to the popout (suppress nested log updates)
+            window.logMessage = function(msg) {
+                if (!pop) { if (typeof originalLogMessage === 'function') originalLogMessage(msg); return; }
+                const div = document.createElement('div');
+                try {
+                    if (typeof window.processColorCodes === 'function') {
+                        div.innerHTML = window.processColorCodes(msg);
+                    } else {
+                        div.innerHTML = msg;
+                    }
+                } catch (_) { div.textContent = msg; }
+                body.appendChild(div);
+                body.scrollTop = body.scrollHeight;
+                const rect = pop.getBoundingClientRect();
+                localStorage.setItem('combatLogPopout', JSON.stringify({ top: rect.top, left: rect.left, width: rect.width, height: rect.height }));
+            };
+
+            // Mark nested state and change button
+            src.innerHTML = '<div style="color:#99ccff; opacity:0.85; font-style:italic;">Currently popped out!</div>';
+            src.setAttribute('data-nested', 'true');
+            btn.textContent = 'Nest Log';
+
+            // Resize handle
+            const resize = document.createElement('div');
+            resize.style.cssText = 'position:absolute; right:0; bottom:0; width:14px; height:14px; cursor:nwse-resize; background:rgba(0,255,204,0.25)';
+            pop.appendChild(resize);
+            let resizing=false, sw=0, sh=0, rx=0, ry=0;
+            resize.addEventListener('mousedown', (e)=>{ resizing=true; sw=pop.offsetWidth; sh=pop.offsetHeight; rx=e.clientX; ry=e.clientY; e.stopPropagation(); e.preventDefault();});
+            window.addEventListener('mousemove', (e)=>{ if(!resizing) return; const dw=e.clientX-rx, dh=e.clientY-ry; pop.style.width=(sw+dw)+'px'; pop.style.height=(sh+dh)+'px';});
+            window.addEventListener('mouseup', ()=> { if(resizing){ resizing=false; const rect = pop.getBoundingClientRect(); localStorage.setItem('combatLogPopout', JSON.stringify({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })); }});
+        });
+    }
 });
 
 function displayAdventureLocations() {
@@ -172,6 +278,20 @@ function displayAdventureLocations() {
         interfaceContainer.style.position = 'relative';
         interfaceContainer.style.overflow = 'hidden'; // For the scanner effect
         adventureDiv.appendChild(interfaceContainer);
+
+        // Auto re-deploy toggle
+        const autoRow = document.createElement('div');
+        autoRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:10px;';
+        const autoChk = document.createElement('input');
+        autoChk.type = 'checkbox';
+        autoChk.checked = localStorage.getItem('autoRedeploy') === 'true';
+        autoChk.addEventListener('change', ()=> localStorage.setItem('autoRedeploy', autoChk.checked ? 'true' : 'false'));
+        const autoLbl = document.createElement('span');
+        autoLbl.textContent = 'Auto re-deploy after delve completion';
+        autoLbl.style.cssText = 'color:#cfe6ff;';
+        autoRow.appendChild(autoChk);
+        autoRow.appendChild(autoLbl);
+        interfaceContainer.appendChild(autoRow);
         
         // Add scanner effect
         const scannerEffect = document.createElement('div');
@@ -447,21 +567,21 @@ function displayAdventureLocations() {
             locationDesc.style.lineHeight = '1.4';
             locationCard.appendChild(locationDesc);
             
-            // Recommended level (optional)
+            // Recommended level (optional) with color-coded badge
             if (typeof loc.recommendedLevel === 'number' && !isNaN(loc.recommendedLevel)) {
-                const rec = document.createElement('div');
-                rec.textContent = `Recommended Lv ${loc.recommendedLevel}`;
-                rec.style.display = 'inline-block';
-                rec.style.alignSelf = 'flex-start';
-                rec.style.color = '#ffcc00';
-                rec.style.fontSize = '11px';
-                rec.style.border = '1px solid rgba(255, 204, 0, 0.4)';
-                rec.style.background = 'rgba(255, 204, 0, 0.08)';
-                rec.style.borderRadius = '10px';
-                rec.style.padding = '2px 8px';
-                rec.style.margin = '0 0 8px 0';
-                rec.style.textShadow = '0 0 5px rgba(255, 204, 0, 0.4)';
-                locationCard.appendChild(rec);
+                const badge = document.createElement('span');
+                badge.className = 'adventure-badge';
+                badge.textContent = `Rec. Lv ${loc.recommendedLevel}`;
+                const plyrLevel = (typeof player !== 'undefined' && player && typeof player.level === 'number') ? player.level : 1;
+                const delta = plyrLevel - loc.recommendedLevel;
+                if (delta <= -3) badge.setAttribute('data-diff', 'below-3');
+                else if (delta <= -1) badge.setAttribute('data-diff', 'below-1');
+                else if (delta === 0) badge.setAttribute('data-diff', 'even');
+                else if (delta <= 2) badge.setAttribute('data-diff', 'above-1');
+                else badge.setAttribute('data-diff', 'above-3');
+                badge.style.alignSelf = 'flex-start';
+                badge.style.margin = '0 0 8px 0';
+                locationCard.appendChild(badge);
             }
             
             // Enemy count and fight info 
@@ -606,6 +726,8 @@ function startAdventure(location) {
     clearLog();
     logMessage(`You begin your delve into ${location.name}.`);
     currentLocation = location;
+    // Remember for auto re-deploy preference
+    window.lastDelveLocation = location;
 
     // Make sure health regen is properly initialized before entering delve mode
     // This ensures it's ready to work when the delve ends
@@ -970,8 +1092,11 @@ function spawnEnemyForSequence(monsterName, isEmpowered = false) {
     playerAttackTimer = 0;
     enemyAttackTimer = 0;
 
-    // Look up the enemy template
-    const enemyTemplate = enemies.find(e => e.name === monsterName);
+	// Look up the enemy template (prefer window.enemies if available)
+	const enemyPool = (Array.isArray(window.enemies) && window.enemies.length)
+		? window.enemies
+		: (typeof enemies !== 'undefined' ? enemies : []);
+	const enemyTemplate = enemyPool.find(e => e.name === monsterName);
     if (!enemyTemplate) {
         console.error(`Enemy template not found: ${monsterName}`);
         stopCombat('enemyTemplateNotFound');
@@ -1828,6 +1953,13 @@ function stopCombat(reason) {
         
         // Call displayAdventureLocations to refresh the UI
         displayAdventureLocations();
+        // Auto re-deploy if user has it enabled
+        try {
+            const auto = localStorage.getItem('autoRedeploy') === 'true';
+            if (auto && window.lastDelveLocation) {
+                setTimeout(() => startAdventure(window.lastDelveLocation), 500);
+            }
+        } catch (e) { /* ignore */ }
         console.log("stopCombat - delveCompleted - after displayAdventureLocations");
 
         // Restart health regeneration as we're no longer in a delve
@@ -1908,9 +2040,8 @@ function playerAttack() {
 
         applyDamage(enemy, damageResult.total, enemy.name, damageResult.damageBreakdown);
 
-        // Check again after damage application if entities still exist
+        // After damage, enemy may be cleared by stopCombat in applyDamage; guard only if truly needed
         if (!player || !enemy) {
-            console.warn("Entity became null after damage application");
             return;
         }
 
@@ -2338,6 +2469,15 @@ function applyEffectDamage(target, amount, damageType, ignoreDefense = false, so
         if (target.isPlayer) {
             stopCombat("playerDefeated");
         } else {
+            // Award per-enemy experience on death BEFORE clearing enemy in stopCombat
+            try {
+                const defeatedEnemy = enemy; // snapshot
+                const xp = (defeatedEnemy && typeof defeatedEnemy.experienceValue === 'number') ? defeatedEnemy.experienceValue : 0;
+                if (xp > 0 && typeof gainExperience === 'function') {
+                    gainExperience(xp);
+                    logMessage(`Gained ${xp} experience for defeating ${defeatedEnemy?.name || 'an enemy'}.`);
+                }
+            } catch (e) { /* ignore */ }
             stopCombat("enemyDefeated");
         }
     }
@@ -2439,8 +2579,18 @@ function applyDamage(target, damage, targetName, damageTypes = null) {
         logMessage(`${targetName} takes ${damageMessage} damage!`);
     }
 
-    // Display popup
-    displayDamagePopup(`${Math.round(totalDamage)}`, target.isPlayer);
+    // Display popup; pass source flag (attacker) and dominant damage type for tinting
+    const isFromPlayer = !target.isPlayer; // if target is player, source is enemy; else player
+    let dominantType = 'neutral';
+    if (damageTypes && typeof damageTypes === 'object') {
+        let maxVal = -1;
+        for (const t in damageTypes) {
+            if (t === 'total') continue;
+            const v = Number(damageTypes[t]) || 0;
+            if (v > maxVal) { maxVal = v; dominantType = t.toLowerCase(); }
+        }
+    }
+    displayDamagePopup(`${Math.round(totalDamage)}`, isFromPlayer, dominantType);
 
     // Update HP/Shield UI
     updateHPESBars(target, target.isPlayer);
@@ -2464,6 +2614,14 @@ function applyDamage(target, damage, targetName, damageTypes = null) {
         if (target.isPlayer) {
             stopCombat("playerDefeated");
         } else {
+            // Award XP from the defeated enemy before combat state is cleared
+            try {
+                const xpVal = (typeof target.experienceValue === 'number') ? target.experienceValue : 0;
+                if (xpVal > 0 && typeof gainExperience === 'function') {
+                    gainExperience(xpVal);
+                    logMessage(`Gained ${xpVal} experience for defeating ${target.name || 'an enemy'}.`);
+                }
+            } catch (e) { /* ignore */ }
             stopCombat("enemyDefeated");
         }
     }
@@ -2648,36 +2806,9 @@ function displayLootPopup(message) {
 // matchDamageToDefense function moved to stats.js
 
 // Function to display damage popup
-function displayDamagePopup(message, isPlayer) {
-    const container = document.getElementById('damage-popups-container');
-    if (!container) {
-        console.error('Damage popups container not found in the DOM.');
-        return;
-    }
-
-    const popup = document.createElement('div');
-    popup.classList.add('damage-popup');
-    popup.textContent = message;
-
-    // Add appropriate class based on who took damage
-    if (isPlayer) {
-        popup.classList.add('player-damage');
-    } else {
-        popup.classList.add('enemy-damage');
-    }
-
-    // Add the popup to the container
-    container.appendChild(popup);
-
-    // Remove the popup after 3 seconds
-    setTimeout(() => {
-        popup.style.opacity = '0';
-        popup.style.transition = 'opacity 0.5s';
-        // Remove the popup from the DOM after the transition
-        setTimeout(() => {
-            container.removeChild(popup);
-        }, 500);
-    }, 3000);
+function displayDamagePopup(message, isFromPlayer, damageTypeOverride = null) {
+	// Removed per notes: no damage toast popups
+	return;
 }
 
 function initializeEnemyStatsDisplay() {
@@ -2846,52 +2977,56 @@ function processBuffs(entity, deltaTime) {
 
 // Function to format and add messages to the combat log
 function addToCombatLog(message, color = null, isBold = false) {
-    let formattedMessage = message;
+    let html = message || '';
 
-    // Highlight key words with better formatting (case-insensitive)
+    // Only modify plain text, not inside existing HTML tags
+    const applyToTextOnly = (input, replacer) => input.split(/(<[^>]+>)/g).map(seg => seg.startsWith('<') ? seg : replacer(seg)).join('');
+    const escapeRegExp = (s) => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+
+    const playerName = (player && player.name) ? player.name : 'Player';
+    const enemyName = (enemy && enemy.name) ? enemy.name : 'Enemy';
+
+    // Keyword highlights
     const keywordHighlights = [
-        // Combat keywords
         { word: 'CRITICAL', style: 'font-weight: bold; color: #ffff00; text-shadow: 0 0 5px rgba(255, 255, 0, 0.7);' },
         { word: 'critical', style: 'font-weight: bold; color: #ffff00; text-shadow: 0 0 3px rgba(255, 255, 0, 0.5);' },
         { word: 'combo attack', style: 'font-weight: bold; color: #ff8800; text-shadow: 0 0 3px rgba(255, 136, 0, 0.7);' },
         { word: 'Combo hit', style: 'font-weight: bold; color: #ffaa44;' },
         { word: 'triggers', style: 'font-weight: bold; color: #66ffcc;' },
-        { word: 'effect', style: 'font-weight: bold; color: #88ddff;' },
-        { word: 'Effect', style: 'font-weight: bold; color: #88ddff;' },
-        // Damage keywords
-        { word: 'damage', style: 'font-weight: bold; color: #ff6666;' },
-        { word: 'attacks', style: 'font-weight: bold; color: #ffaa88;' },
         { word: 'heals', style: 'font-weight: bold; color: #66ff88;' },
         { word: 'dies', style: 'font-weight: bold; color: #ff4444; text-shadow: 0 0 3px rgba(255, 68, 68, 0.7);' },
-        { word: 'defeated', style: 'font-weight: bold; color: #ff4444; text-shadow: 0 0 3px rgba(255, 68, 68, 0.7);' },
-        // Status effects
-        { word: 'inflicted', style: 'font-weight: bold; color: #cc88ff;' },
-        { word: 'applies', style: 'font-weight: bold; color: #cc88ff;' },
-        { word: 'expires', style: 'font-weight: bold; color: #88ffcc;' },
-        { word: 'ticks', style: 'font-weight: bold; color: #ffcc88;' }
+        { word: 'defeated', style: 'font-weight: bold; color: #ff4444; text-shadow: 0 0 3px rgba(255, 68, 68, 0.7);' }
     ];
 
-    // Apply keyword highlighting
-    keywordHighlights.forEach(highlight => {
-        // Use global case-insensitive replace with word boundaries
-        const regex = new RegExp(`\\b${highlight.word}\\b`, 'gi');
-        formattedMessage = formattedMessage.replace(regex, (match) => {
-            return `<span style="${highlight.style}">${match}</span>`;
+    html = applyToTextOnly(html, txt => {
+        keywordHighlights.forEach(h => {
+            const rx = new RegExp(`\\b${h.word}\\b`, 'gi');
+            txt = txt.replace(rx, (m) => `<span style="${h.style}">${m}</span>`);
         });
+        return txt;
     });
 
-    // Apply color if provided (applied after keyword highlighting to override)
-    if (color) {
-        formattedMessage = `<span style="color: ${color};">${formattedMessage}</span>`;
-    }
+    // Damage types
+    const dmgColors = { kinetic:'#b8c1c1', slashing:'#c8a2c8', pyro:'#ff6b6b', electric:'#74c0fc', cryo:'#7dd3fc', corrosive:'#2eb82e', radiation:'#66ff99', chemical:'#2eb82e', physical:'#aab3b3' };
+    html = applyToTextOnly(html, txt => {
+        Object.keys(dmgColors).forEach(dt => {
+            const rx = new RegExp(`\\b${dt}\\b`, 'gi');
+            txt = txt.replace(rx, (m)=>`<span style=\"color:${dmgColors[dt]}; font-weight:bold;\">${m}</span>`);
+        });
+        return txt;
+    });
 
-    // Apply bold if requested
-    if (isBold) {
-        formattedMessage = `<strong>${formattedMessage}</strong>`;
-    }
+    // Numbers (near damage/HP/ES/shield context)
+    html = applyToTextOnly(html, txt => txt.replace(/(\\b\\d+\\b)(?=\\s*(damage|HP|ES|shield)\\b)?/gi, '<span style=\"color:#ffd166; font-weight:bold;\">$1</span>'));
 
-    // Add to the log
-    logMessage(formattedMessage);
+    // Names
+    html = applyToTextOnly(html, txt => txt.replace(new RegExp(escapeRegExp(playerName), 'g'), `<span style=\"color:#7df9ff; font-weight:bold; text-shadow:0 0 4px #7df9ff55;\">${playerName}</span>`));
+    html = applyToTextOnly(html, txt => txt.replace(new RegExp(escapeRegExp(enemyName), 'g'), `<span style=\"color:#ff7f7f; font-weight:bold; text-shadow:0 0 4px #ff7f7f55;\">${enemyName}</span>`));
+
+    if (color) html = `<span style=\"color: ${color};\">${html}</span>`;
+    if (isBold) html = `<strong>${html}</strong>`;
+
+    logMessage(html);
 }
 
 // Expose the function globally so it can be accessed from other scripts like debuffs.js

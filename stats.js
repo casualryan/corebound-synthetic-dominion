@@ -261,7 +261,16 @@ function calculatePlayerStats(playerObject) {
             if (item.attackSpeedModifier !== undefined) {
                 equipmentASBonus += item.attackSpeedModifier;
             }
-            applyItemModifiers(stats, item); // Apply other stats from gear
+            // Base item stats
+            applyItemModifiers(stats, item);
+            // Apply slotted chip stats (if any)
+            if (Array.isArray(item.rolledWires)) {
+                item.rolledWires.forEach(wire => {
+                    if (wire && wire.chip) {
+                        applyItemModifiers(stats, wire.chip);
+                    }
+                });
+            }
         }
     });
     
@@ -341,6 +350,14 @@ function calculatePlayerStats(playerObject) {
             }
             
             applyItemModifiers(stats, enhancedBionic); // Apply enhanced bionic stats
+            // If bionics ever support wires, also apply slotted chip stats
+            if (Array.isArray(bionic.rolledWires)) {
+                bionic.rolledWires.forEach(wire => {
+                    if (wire && wire.chip) {
+                        applyItemModifiers(stats, wire.chip);
+                    }
+                });
+            }
         }
     });
 

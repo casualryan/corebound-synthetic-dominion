@@ -47,6 +47,16 @@ function startFabrication(recipe, button) {
         return;
     }
 
+    // Check inventory capacity upfront
+    if (!hasInventorySpace(1)) {
+        if (typeof showWarningPopup === 'function') {
+            showWarningPopup('Your inventory is full. Free up space before starting fabrication.');
+        } else {
+            logMessage('Your inventory is full. Free up space before starting fabrication.');
+        }
+        return;
+    }
+
     // Deduct materials
     removeMaterialsFromInventory(recipe.ingredients);
     updateInventoryDisplay();
@@ -144,9 +154,17 @@ function completeFabrication(recipe, button) {
             const craftedItem = generateItemInstance(itemTemplate);
             console.log("Generated item:", craftedItem);
             
-            // Add to inventory
-            addItemToInventory(craftedItem);
-            logMessage(`You have fabricated: ${craftedItem.name}`);
+            // Add to inventory (guard again in case capacity changed during fabrication)
+            if (!hasInventorySpace(1)) {
+                if (typeof showWarningPopup === 'function') {
+                    showWarningPopup('Your inventory is full. Crafted item cannot be added. Materials have been refunded.');
+                }
+                // Refund materials since we cannot add the item
+                refundMaterials(recipe.ingredients);
+            } else {
+                addItemToInventory(craftedItem);
+                logMessage(`You have fabricated: ${craftedItem.name}`);
+            }
             
             // Play success sound if available
             if (window.playSound) {

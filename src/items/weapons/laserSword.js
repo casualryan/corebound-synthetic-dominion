@@ -1,9 +1,10 @@
 // src/items/weapons/laserSword.js
 export default {
-        name: "Laser Sword",
+        name: "Makeshift Laser Sword",
         type: "Weapon",
         weaponType: "Sword",
         icon: "icons/lasersword.png",
+        levelRequirement: 1,
         damageTypes: {
             kinetic: { min: 12, max: 25 },
         },

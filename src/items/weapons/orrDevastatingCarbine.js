@@ -4,10 +4,10 @@ export default {
         type: "Weapon",
         weaponType: "Rifle",
         icon: "icons/orr.png",
-        level: 10,
-        bAttackSpeed: 1.1,
+        level: 40,
+        bAttackSpeed: .8,
         damageTypes: {
-            kinetic: { min: 210, max: 230 },
+            kinetic: { min: 240, max: 280 },
         },
         statModifiers: {
             damageTypes: {
@@ -31,6 +31,11 @@ export default {
                 }
             }
         ],
+        wires: {
+            totalSlots: "0-2",
+            blackSlotsMax: 1,
+            colors: { red: "1-2", green: "1-2", blue: "1-2", black: "1-1" }
+        },
         isDisassembleable: true,
         disassembleResults: [
             { name: 'Advanced Alloy', quantity: 1 }

@@ -12,7 +12,7 @@ const npcs = [
         inventory: [
             {
                 itemName: "Scrap Metal",
-                price: 10,
+                price: 5000,
                 stock: 999,
                 defaultStock: 999,
                 levelReq: 1
@@ -32,7 +32,9 @@ const npcs = [
                 levelReq: 1
             },
             { itemName: "Mod Pool Test Blade", price: 1, stock: 999, defaultStock: 999, levelReq: 1 },
-            { itemName: "Dual Pool Test Staff", price: 1, stock: 999, defaultStock: 999, levelReq: 1 }
+            { itemName: "Dual Pool Test Staff", price: 1, stock: 999, defaultStock: 999, levelReq: 1 },
+            { itemName: "Wired Test Dagger", price: 1, stock: 999, defaultStock: 999, levelReq: 1 },
+            { itemName: "Red Test Chip", price: 1, stock: 999, defaultStock: 999, levelReq: 1 }
         ]
     },
     {
@@ -229,15 +231,53 @@ function displayNPCShop(npc) {
             buyButton.title = `Requires level ${itemLevelReq}`;
         } else {
             // Normal buy behavior
+            // Highlight unaffordable items and show delta
+            const missingCredits = Math.max(0, itemPrice - playerCurrency);
+            if (missingCredits > 0) {
+                itemDiv.classList.add('unaffordable');
+                const needP = document.createElement('p');
+                needP.className = 'shop-item-need';
+                needP.textContent = `Need +${missingCredits} credits`;
+                itemDiv.appendChild(needP);
+                buyButton.disabled = true;
+                buyButton.title = `Need +${missingCredits} credits`;
+            }
+
             buyButton.addEventListener('click', () => {
-                buyItemFromNPC(npc, index, 1);
+                const cost = itemPrice * 1; // quantity 1
+                const threshold = (window.gameSettings && window.gameSettings.purchaseConfirmThresholdCredits) || 500;
+                const doBuy = () => buyItemFromNPC(npc, index, 1);
+
+                // Only block on inventory space for non-service items
+                if (!isService) {
+                    if (!hasInventorySpace(1)) {
+                        if (typeof showWarningPopup === 'function') {
+                            showWarningPopup('Your inventory is full. Free up space before purchasing this item.');
+                        } else {
+                            logMessage('Your inventory is full. Free up space before purchasing this item.');
+                        }
+                        return;
+                    }
+                }
+
+                if (cost >= threshold) {
+                    if (typeof showConfirmationPopup === 'function') {
+                        showConfirmationPopup(`Confirm purchase of ${itemName} for ${cost} credits?`, doBuy);
+                    } else if (window.confirm) {
+                        if (confirm(`Purchase ${itemName} for ${cost} credits?`)) doBuy();
+                    } else {
+                        doBuy();
+                    }
+                } else {
+                    doBuy();
+                }
             });
         }
 
         // Setup tooltip using global system
         itemDiv.setAttribute('data-has-tooltip', 'true');
         itemDiv.setAttribute('data-tooltip-source', 'shop-item');
-        itemDiv.setAttribute('data-tooltip-content', getItemTooltipContent(itemTemplate || {}, true));
+        itemDiv.setAttribute('data-tooltip-content', getItemTooltipContent(itemTemplate || invItem || {}, true));
 
         // Append everything
         itemDiv.appendChild(itemNameP);
@@ -311,13 +351,21 @@ function buyItemFromNPC(npc, itemIndex, quantity) {
         if (itemTemplate) {
             const purchasedItem = generateItemInstance(itemTemplate);
             purchasedItem.quantity = quantity;
+            // Inventory capacity check again just in case
+            if (!hasInventorySpace(1)) {
+                if (typeof showWarningPopup === 'function') {
+                    showWarningPopup('Your inventory is full. Purchase cancelled.');
+                }
+                // Refund the purchase
+                playerCurrency += cost;
+                return;
+            }
             const success = addItemToInventory(purchasedItem);
             if (success) {
                 logMessage(`You bought ${quantity}x ${invItem.itemName} for ${cost} credits.`);
             } else {
                 // Inventory was full, refund the purchase
                 playerCurrency += cost;
-                invItem.stock += quantity;
                 return;
             }
         } else {

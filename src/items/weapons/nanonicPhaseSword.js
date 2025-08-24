@@ -6,6 +6,7 @@ export default {
     icon: "icons/ironsword.png", // TODO: Create proper icon
     bAttackSpeed: 2.2,
     levelRequirement: 1,
+    salePrice: 1000,
     damageTypes: {
         slashing: { min: 300, max: 400 }
     },
@@ -43,5 +44,10 @@ export default {
         { name: 'Titanium Alloy Fragment', quantity: 2 },
         { name: 'Neural Processor', quantity: 1 }
     ],
+    wires: {
+        totalSlots: "2-2",
+        blackSlotsMax: 1,
+        colors: { red: "1-1", green: "1-1", blue: "1-1", black: "1-1" }
+      },
     description: 'An advanced nanonic phase blade that cuts through reality itself. The nanobots embedded in the blade seek out weak points in flesh, causing devastating wounds that refuse to heal. Forged for the most elite warriors, this weapon represents the pinnacle of close-combat technology.'
 };

@@ -51,7 +51,24 @@ body, body * {
     border-right: 1px solid rgba(0, 255, 204, 0.2);
     box-shadow: 2px 0 15px rgba(0, 0, 0, 0.5);
     overflow-y: auto;
-    z-index: 100;
+    z-index: 200;
+}
+
+#sidebar.collapsed {
+    width: 56px;
+    padding-top: 30px; /* leave room for collapse arrow */
+}
+
+#sidebar.collapsed .sidebar-section h2,
+#sidebar.collapsed .sidebar-section span,
+#sidebar.collapsed hr,
+#sidebar.collapsed .sidebar-bottom span,
+#sidebar.collapsed .sidebar-spacer {
+    display: none !important;
+}
+
+#sidebar.collapsed img {
+    margin: 0 auto;
 }
 
 #main-content {
@@ -59,6 +76,10 @@ body, body * {
     padding: 20px;
     min-height: 100vh;
     transition: margin-left 0.3s ease;
+}
+
+#sidebar.collapsed + #main-content {
+    margin-left: 56px;
 }
 
 h1, h2, h3, h4, h5 {
@@ -368,6 +389,10 @@ hr {
     transform-style: preserve-3d;
     perspective: 500px;
 }
+
+/* Visual guides for drag-and-drop insertion between items */
+#inventory li.drag-over-top { box-shadow: 0 -3px 0 #00ffcc inset; }
+#inventory li.drag-over-bottom { box-shadow: 0 3px 0 #00ffcc inset; }
 
 #inventory li:hover {
     animation: itemGlow 2s infinite;
@@ -729,6 +754,29 @@ hr {
     box-shadow: 0 0 15px #00ffcc;
 }
 
+/* Keybinds UI */
+.keybinds-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px 12px;
+    margin-top: 8px;
+}
+.keybind-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0, 17, 34, 0.5);
+    border: 1px solid rgba(0, 255, 204, 0.2);
+    padding: 6px 8px;
+    border-radius: 6px;
+}
+.keybind-row label { color:#cfe6ff; }
+.keybind-row input {
+    width: 48px; text-align: center; color:#00ffcc; background: #001122;
+    border: 1px solid #00ffcc; border-radius:4px; padding: 4px 6px;
+}
+.btn-small { background: linear-gradient(to bottom,#003366,#001133); color:#00ffcc; border:1px solid #00ffcc; border-radius:4px; padding:6px 10px; cursor:pointer; }
+
 .close-button {
     color: #fff;
     float: right;
@@ -747,34 +795,71 @@ hr {
 /* Damage Popups */
 #damage-popups-container {
     position: fixed;
-    bottom: 20px;
+    pointer-events: none;
+    inset: 0;
+    z-index: 100000;
+}
+
+#damage-popups-container .lane-player,
+#damage-popups-container .lane-enemy,
+#lane-player,
+#lane-enemy {
+    position: absolute;
     left: 50%;
+    bottom: 0;
     transform: translateX(-50%);
-    width: auto;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column-reverse;
-    align-items: center;
+    width: 100%;
 }
 
-.damage-popup {
-    margin-top: 5px;
-    padding: 10px 15px;
-    border-radius: 5px;
-    color: #fff;
-    font-weight: bold;
-    text-align: center;
-    animation: popupSlideUp 0.5s ease-out forwards;
-    box-shadow: 0 0 10px #000;
+#damage-popups-container .lane-player, #lane-player { bottom: 24px; }
+#damage-popups-container .lane-enemy, #lane-enemy { bottom: 84px; }
+
+.damage-popup { 
+    position: absolute;
+    left: 50%;
+    transform: translateX(calc(-50% + var(--x-jitter, 0px)));
+    bottom: 56px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 16px;
+    text-shadow: 0 0 8px rgba(0,0,0,0.6);
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255,255,255,0.12);
+    animation: floatUp 1.6s ease-out forwards;
 }
 
-.damage-popup.player-damage {
-    background-color: rgba(185, 0, 0, 0.8);
+.damage-popup .dmg { font-size: 18px; font-weight: 900; margin-right: 6px; }
+.damage-popup .dtype { font-size: 12px; opacity: 0.95; text-transform: uppercase; margin-left: 4px; letter-spacing: 0.4px; }
+.damage-popup .crit-tag { color: #ffd166; margin-left: 6px; text-shadow: 0 0 10px #ffd16688; }
+.damage-popup .count-badge { margin-left: 6px; font-size: 12px; color: #a0aec0; }
+
+/* Source colors */
+.damage-popup.from-player { box-shadow: 0 0 14px #58fff655; border-color: #41e2ffcc; background: rgba(6, 32, 64, 0.7) !important; }
+.damage-popup.from-enemy { box-shadow: 0 0 14px #ff6b6b66; border-color: #ff6b6bcc; background: rgba(64, 8, 8, 0.7) !important; }
+
+/* Damage type accents */
+.damage-popup.type-kinetic { color: #e5e7eb; border-color: #9ca3af99; text-shadow: 0 0 10px #9ca3af55; }
+.damage-popup.type-slashing { color: #d8b4fe; border-color: #a78bfa99; text-shadow: 0 0 10px #a78bfa55; }
+.damage-popup.type-pyro { color: #ff8585; border-color: #ff6b6b99; text-shadow: 0 0 10px #ff6b6b55; }
+.damage-popup.type-electric { color: #7df9ff; border-color: #7df9ff99; text-shadow: 0 0 10px #7df9ff55; }
+.damage-popup.type-cryo { color: #bfe9ff; border-color: #9ee7ff99; text-shadow: 0 0 10px #9ee7ff55; }
+.damage-popup.type-corrosive { color: #8ce9a5; border-color: #7bd38999; text-shadow: 0 0 10px #7bd38955; }
+.damage-popup.type-radiation { color: #a7f3d0; border-color: #a7f3d099; text-shadow: 0 0 10px #a7f3d055; }
+
+.damage-popup.crit { transform: translateX(calc(-50% + var(--x-jitter, 0px))) scale(1.08); filter: drop-shadow(0 0 6px #ffd16666); }
+.damage-popup.fade-out { opacity: 0; transition: opacity 0.35s ease-out; }
+
+@keyframes floatUp {
+    0% { opacity: 0; transform: translateX(calc(-50% + var(--x-jitter, 0px))) translateY(8px) scale(0.95); }
+    15% { opacity: 1; }
+    100% { opacity: 0; transform: translateX(calc(-50% + var(--x-jitter, 0px))) translateY(-52px) scale(1); }
 }
 
-.damage-popup.enemy-damage {
-    background-color: rgba(8, 136, 175, 0.8);
-}
+/* Ensure visual spacing to avoid overlap by natural flow */
+#lane-player .damage-popup, .lane-player .damage-popup { margin-top: 22px; }
+#lane-enemy .damage-popup, .lane-enemy .damage-popup { margin-top: 22px; }
 
 #loot-popups-container {
     position: fixed;
@@ -1561,7 +1646,7 @@ hr {
     max-height: 40px; /* Limit height */
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 2; /* Limit to 2 lines */
     -webkit-box-orient: vertical;
 }
 
@@ -1728,7 +1813,7 @@ hr {
     max-width: 400px;
     padding: 20px;
     text-align: center;
-    z-index: 10000;
+    z-index: 100001;
 }
 
 .confirmation-popup p {
@@ -1837,6 +1922,16 @@ hr {
     position: relative;
     overflow: hidden;
     transition: transform 0.25s, box-shadow 0.25s;
+}
+
+.shop-card.unaffordable {
+    opacity: 0.75;
+}
+
+.shop-item-need {
+    color: #ff8080;
+    font-size: 12px;
+    margin: 4px 0 0 0;
 }
 
 .shop-card::before {
@@ -2069,9 +2164,10 @@ hr {
     100% { transform: scale(1); opacity: 1; }
 }
 
-#inventory li {
-    animation: itemAppear 0.5s forwards;
-    animation-delay: calc(var(--item-index, 0) * 0.05s);
+/* Play appear animation only when the inventory screen first becomes active. */
+#inventory-screen.play-animate #inventory li {
+    animation: itemAppear 0.17s forwards;
+    animation-delay: calc(var(--item-index, 0) * 0.015s);
 }
 
 /* Equipment paper doll update animation */
@@ -2773,6 +2869,12 @@ hr {
     font-size: 12px;
     text-shadow: 0 0 5px rgba(255, 204, 0, 0.4);
 }
+
+.adventure-badge[data-diff="below-3"] { color: #ff6b6b; border-color: rgba(255,107,107,0.5); background: rgba(255,107,107,0.12); text-shadow: none; }
+.adventure-badge[data-diff="below-1"] { color: #ffa94d; border-color: rgba(255,169,77,0.5); background: rgba(255,169,77,0.12); text-shadow: none; }
+.adventure-badge[data-diff="even"]    { color: #00ffcc; border-color: rgba(0,255,204,0.5); background: rgba(0,255,204,0.12); text-shadow: none; }
+.adventure-badge[data-diff="above-1"] { color: #74c0fc; border-color: rgba(116,192,252,0.5); background: rgba(116,192,252,0.12); text-shadow: none; }
+.adventure-badge[data-diff="above-3"] { color: #51cf66; border-color: rgba(81,207,102,0.5); background: rgba(81,207,102,0.12); text-shadow: none; }
 
 .adventure-card-body {
     color: #cfe6ff;

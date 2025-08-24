@@ -10,7 +10,7 @@ export default {
   damageTypes: {
     kinetic: "5-8"
   },
-  criticalChanceModifier: "5-5", // guaranteed +5%
+  criticalChanceModifierRange: { min: 5, max: 5 },
   // One roll group: pick 1-3 choices from the pool
   rollGroups: [
     {

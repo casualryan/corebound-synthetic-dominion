@@ -6,4 +6,5 @@ export default {
     stackable: true,
     isDisassembleable: false,
     disassembleResults: [],
+    salePrice: 100,
 }; 

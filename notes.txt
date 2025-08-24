@@ -1,9 +1,27 @@
-some stats showing up as %nan% on tooltip
-better formatting for possible mod rolls
-
-WIRES WIRES WIRES MAN, DO THE WIRES TODAY
-
 THE BELOW CHANGES AND NOTES ARE TO BE IGNORED FOR NOW:
+
+    Inventory
+
+    Wires/Chips
+Preview stat delta on hover before slotting.
+Persist the “one black chip equipped” violation message inline near the slot selector.
+
+    Tooltips
+Roll quality indicator per stat (low/avg/high relative to range; color-coded). Attempted and failed.
+
+    UI/UX  DONE DONE DONE
+ESC closes any open modal/popup. DONE (save for equipment menu)
+
+    MISC  
+Color the adventure “Rec. Lv” badge based on player level delta. Highlight in these deltas: 3+ levels below. 1-2 levels below. Matching rec level. 1-2 above. 3+ above. Attempted and failed.
+
+
+QOL:
+IGNORE:
+
+add option to "re-deploy" automatically after a delve is complete
+
+combat log looks like shit
 
 IGNORE: Add missions and steps to unlock new areas. 99% of them should be locked by default.
 IGNORE: Add area sort options in addition to search bar. Sort by level, area biome type, recently unlocked, alphabetical. Other ideas?
@@ -15,8 +33,6 @@ The way these work is simple, some items will require a blueprint. Once one is a
 This adds chase to crafting, while make some drops more exciting because they are rarer but multi-use
 
 IGNORE: Look closer at "viral" mechanic. Currently it doesn't do much.
-
-IGNORE: change gear generation to have some more randomness to it
 
 IGNORE: Interactive tutorial to show how to equip/unequip items etc
 

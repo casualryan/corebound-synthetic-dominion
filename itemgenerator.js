@@ -101,7 +101,7 @@ function generateItemInstance(template) {
         }
         // Group-specific %
         if (template.statModifiers.damageGroups) {
-            item.statModifiers.damageGroups = {};
+        item.statModifiers.damageGroups = {};
             for (const group in template.statModifiers.damageGroups) {
                 const rolled = rollFrom(template.statModifiers.damageGroups[group]);
                 item.statModifiers.damageGroups[group] = (rolled !== undefined) ? rolled : Number(template.statModifiers.damageGroups[group]) || 0;
@@ -318,6 +318,47 @@ function generateItemInstance(template) {
         const rolled = rollFrom(template.levelRequirement);
         if (rolled !== undefined) item.levelRequirement = rolled;
         else if (typeof template.levelRequirement === 'number') item.levelRequirement = template.levelRequirement;
+    }
+
+    // 9) Wires (Sockets) rolling
+    if (template.wires && typeof template.wires === 'object') {
+        const totalSlots = rollFrom(template.wires.totalSlots);
+        const maxTotal = (typeof totalSlots === 'number' && totalSlots > 0) ? Math.floor(totalSlots) : 0;
+        const colorsSpec = template.wires.colors || {};
+        const colorCaps = {
+            red: rollFrom(colorsSpec.red),
+            green: rollFrom(colorsSpec.green),
+            blue: rollFrom(colorsSpec.blue),
+            black: rollFrom(colorsSpec.black)
+        };
+        const blackMax = rollFrom(template.wires.blackSlotsMax);
+        const resolvedCap = (v) => (typeof v === 'number' ? Math.max(0, Math.floor(v)) : undefined);
+        const caps = {
+            red: resolvedCap(colorCaps.red),
+            green: resolvedCap(colorCaps.green),
+            blue: resolvedCap(colorCaps.blue),
+            black: resolvedCap(colorCaps.black)
+        };
+        const blackLimit = resolvedCap(blackMax);
+
+        // Build a pool of possible colors honoring per-color caps
+        const chosen = [];
+        const counts = { red: 0, green: 0, blue: 0, black: 0 };
+        const colorList = ['red', 'green', 'blue', 'black'];
+        for (let i = 0; i < maxTotal; i++) {
+            // Build allowed choices for this slot
+            const allowed = colorList.filter(c => (caps[c] === undefined || counts[c] < caps[c]));
+            if (allowed.length === 0) break;
+            // Prefer non-black if black limit reached
+            const filtered = allowed.filter(c => c !== 'black' || (blackLimit === undefined || counts.black < blackLimit));
+            const pool = filtered.length > 0 ? filtered : allowed;
+            const pickIndex = getRandomInt(0, pool.length - 1);
+            const color = pool[pickIndex];
+            counts[color] += 1;
+            chosen.push({ color });
+        }
+        item.rolledWires = chosen; // runtime sockets
+        item.wires = template.wires; // keep template for reference
     }
 
     // Quantity default

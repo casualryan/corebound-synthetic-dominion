@@ -6,7 +6,8 @@ console.log('items.js - Current window.weapons:', window.weapons ? `Array with $
 console.log('items.js - Current window.materials:', window.materials ? `Array with ${window.materials.length} items` : 'undefined');
 console.log('items.js - Current window.armor:', window.armor ? `Array with ${window.armor.length} items` : 'undefined');
 console.log('items.js - Current window.bionics:', window.bionics ? `Array with ${window.bionics.length} items` : 'undefined');
-console.log('items.js - Current window.components:', window.components ? `Array with ${window.components.length} items` : 'undefined');
+    // console.log('items.js - Current window.components:', window.components ? `Array with ${window.components.length} items` : 'undefined');
+    console.log('items.js - Current window.chips:', window.chips ? `Array with ${window.chips.length} items` : 'undefined');
 
 // Load all item definitions
 function loadItems() {
@@ -15,7 +16,8 @@ function loadItems() {
     console.log('- materials available:', window.materials ? window.materials.length : 'none');
     console.log('- armor available:', window.armor ? window.armor.length : 'none');
     console.log('- bionics available:', window.bionics ? window.bionics.length : 'none');
-    console.log('- components available:', window.components ? window.components.length : 'none');
+    // console.log('- components available:', window.components ? window.components.length : 'none');
+    console.log('- chips available:', window.chips ? window.chips.length : 'none');
     
     // Warning for missing item types
     if (!window.weapons || window.weapons.length === 0) {
@@ -30,8 +32,11 @@ function loadItems() {
     if (!window.bionics || window.bionics.length === 0) {
         console.log('WARNING: window.bionics is empty or undefined - this will cause item loading issues');
     }
-    if (!window.components || window.components.length === 0) {
-        console.log('NOTE: window.components is empty or undefined - this is expected as components are not yet implemented');
+    // if (!window.components || window.components.length === 0) {
+    //     console.log('NOTE: window.components is empty or undefined - this is expected as components are not yet implemented');
+    
+    if (!window.chips || window.chips.length === 0) {
+        console.log('NOTE: window.chips is empty or undefined - chips may be optional');
     }
     
     // Create a master array that combines all item types
@@ -40,7 +45,8 @@ function loadItems() {
         ...window.armor || [],
         ...window.bionics || [],
         ...window.materials || [],
-        ...window.components || []
+        // ...window.components || [],
+        ...window.chips || []
     ];
 
     console.log('Combined items length:', allItems.length);
@@ -61,7 +67,7 @@ function loadItems() {
     console.log(`- Armor: ${(window.armor || []).length}`);
     console.log(`- Bionics: ${(window.bionics || []).length}`);
     console.log(`- Materials: ${(window.materials || []).length}`);
-    console.log(`- Components: ${(window.components || []).length}`);
+    // console.log(`- Components: ${(window.components || []).length}`);
     
     return allItems;
 }
@@ -70,23 +76,28 @@ function loadItems() {
 window.loadItems = loadItems;
 
 // Wait for all item types to be loaded before calling loadItems
+let __itemsWaitLogLast = 0;
+let __itemsWaitLogCount = 0;
 function waitForAllItemTypesAndLoad() {
     if (window.weapons && window.weapons.length > 0 && 
         window.materials && window.materials.length > 0 &&
         window.armor && window.armor.length > 0 &&
-        window.bionics && window.bionics.length > 0 &&
-        window.components !== undefined) { // Components can be empty array
+        window.bionics && window.bionics.length > 0) { // chips are optional
         console.log('About to call loadItems() from items.js - all item types are ready');
         const items = loadItems();
         console.log('items.js - loadItems() completed, window.items.length:', window.items.length);
     } else {
-        console.log('items.js - Waiting for all item types to load...');
-        console.log('  - Weapons:', window.weapons ? window.weapons.length : 'not loaded');
-        console.log('  - Materials:', window.materials ? window.materials.length : 'not loaded');
-        console.log('  - Armor:', window.armor ? window.armor.length : 'not loaded');
-        console.log('  - Bionics:', window.bionics ? window.bionics.length : 'not loaded');
-        console.log('  - Components:', window.components ? 'loaded' : 'not loaded');
-        setTimeout(waitForAllItemTypesAndLoad, 50); // Check again in 50ms
+        const now = Date.now();
+        if (now - __itemsWaitLogLast > 1000 && __itemsWaitLogCount < 5) {
+            __itemsWaitLogLast = now;
+            __itemsWaitLogCount++;
+            console.log('items.js - Waiting for all item types to load...');
+            console.log('  - Weapons:', window.weapons ? window.weapons.length : 'not loaded');
+            console.log('  - Materials:', window.materials ? window.materials.length : 'not loaded');
+            console.log('  - Armor:', window.armor ? window.armor.length : 'not loaded');
+            console.log('  - Bionics:', window.bionics ? window.bionics.length : 'not loaded');
+        }
+        setTimeout(waitForAllItemTypesAndLoad, 150); // Check again with modest cadence
     }
 }
 
@@ -104,6 +115,7 @@ window.addEventListener('load', () => {
          !window.items.find(item => item.type === 'Material') ||
          !window.items.find(item => item.type === 'Armor') ||
          !window.items.find(item => item.type === 'Bionic'))) {
+
         console.log('items.js load event: All item types available but not in items array - reloading');
         window.items = loadItems();
     }

@@ -6,5 +6,5 @@ export default {
     stackable: true,
     isDisassembleable: false,
     disassembleResults: [],
-    description: 'Crafting Material for advanced technology.'
+    description: 'A compact, disposable fuser. Has enough latent energy to fuse technology only once.'
 }; 

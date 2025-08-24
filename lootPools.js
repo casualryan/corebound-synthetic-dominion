@@ -18,26 +18,21 @@ const LOOT_POOLS = {
     lowRoboParts: {
         tier: 1,
         items: [
-            { itemName: "Scrap Metal", weight: 100 },
-            { itemName: "Minor Electronic Circuit", weight: 50 },
-            { itemName: "Wire Bundle", weight: 70 },
-            { itemName: "Basic Servo", weight: 40 }
+            { itemName: "Scrap Metal", weight: 150 },
+            { itemName: "Minor Electronic Circuit", weight: 20 },
         ]
     },
     arachnidParts: {
         tier: 1,
         items: [
-            { itemName: "Synthetic Poison Gland", weight: 70 },
-            { itemName: "Spider Leg Segment", weight: 100 },
-            { itemName: "Optic Sensor", weight: 50 }
+            { itemName: "Synthetic Poison Gland", weight: 20 },
+            { itemName: "Spider Leg Segment", weight: 300 },
         ]
     },
     genericCommon: {
         tier: 1,
         items: [
             { itemName: "Scrap Metal", weight: 100 },
-            { itemName: "Wire Bundle", weight: 70 },
-            { itemName: "Metal Fasteners", weight: 80 }
         ]
     },
     
@@ -72,9 +67,8 @@ const LOOT_POOLS = {
     genericRare: {
         tier: 3,
         items: [
-            { itemName: "Titanium Plating", weight: 60 },
-            { itemName: "Unstable Photon", weight: 50 },
-            { itemName: "Neural Processor", weight: 40 }
+            { itemName: "Partical Fuser", weight: 60 },
+
         ]
     },
     

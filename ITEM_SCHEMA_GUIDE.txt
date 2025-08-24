@@ -16,6 +16,21 @@ Core Fields
 - stackable: boolean (usually for materials)
 - levelRequirement: number or "min-max" (rolled by the generator; used to gate equipping/buying)
 
+Wires (Sockets)
+- wires: {
+  totalSlots: number | "min-max",           // total wire sockets that can roll on the item
+  blackSlotsMax?: number | "min-max",       // optional cap for black (universal) sockets
+  colors?: {                                  // optional color-specific min-max caps
+    red?: number | "min-max",
+    green?: number | "min-max",
+    blue?: number | "min-max",
+    black?: number | "min-max"
+  }
+}
+- rolledWires (runtime only, created by generator): Array<{ color: 'red'|'green'|'blue'|'black', chip?: ChipRef }>
+  - The generator will roll an allocation of wire colors and populate an empty list of sockets for runtime use.
+  - black sockets accept any chip color; enforce maximum one black chip equipped per character across all gear.
+
 Weapon-Specific
 - weaponType: string (e.g., Sword, Staff, Dagger)
 - bAttackSpeed: number or range (e.g., 1.2 or "1.0-1.5")
@@ -124,9 +139,9 @@ Example: Full Weapon Using Every Stat
   "energyShieldBonus": "5-10",
   "healthBonusPercent": "5-10",
   "energyShieldBonusPercent": "5-10",
-  "attackSpeedModifier": "5-15",
-  "criticalChanceModifier": "5-10",
-  "criticalMultiplierModifier": "10-20",
+  "attackSpeedModifierRange": "5-15",
+  "criticalChanceModifierRange": "5-10",
+  "criticalMultiplierModifierRange": "10-20",
   "precision": "2-4",
   "deflection": "1-3",
   "healthRegen": "0.25-0.5",
@@ -180,6 +195,11 @@ Example: Full Weapon Using Every Stat
       ]
     }
   ],
+  "wires": {
+    "totalSlots": "1-3",
+    "blackSlotsMax": 1,
+    "colors": { "red": "0-2", "green": "0-2", "blue": "0-2", "black": "0-1" }
+  },
   "effects": [
     {
       "trigger": "onCritical",

@@ -529,7 +529,9 @@ function displayDebuffMessage(target, debuffName, isApplied) {
     
     // Also display a visual indicator if the display popup function exists
     if (typeof displayDamagePopup === 'function') {
-        displayDamagePopup(message, target.isPlayer ? true : false);
+        // Treat the popup source as the attacker (inverse of target)
+        const isFromPlayer = !target.isPlayer;
+        displayDamagePopup(message, isFromPlayer);
     }
 }
 

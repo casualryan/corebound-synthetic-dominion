@@ -7,7 +7,7 @@ export default {
   slot: "mainHand",
   levelRequirement: 1,
   // Guaranteed baseline
-  bAttackSpeed: "1.2-1.2",
+  bAttackSpeed: "1.2",
   // Two separate pools:
   // - Pool 1: choose element for base damage (exactly 1)
   // - Pool 2: choose 2 passives out of 4
@@ -31,7 +31,7 @@ export default {
     }
   ],
   // Guaranteed minor crit to verify top-level percent mapping works
-  criticalChanceModifier: "3-5",
+  criticalChanceModifierRange: { min: 3, max: 5 },
   description: "Test staff with two separate pools: pick 1 element for base damage and 2 passives from a list.",
   isDisassembleable: true,
   disassembleResults: [ { name: 'Flux Crystal', quantity: 1 } ]

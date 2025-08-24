@@ -2,28 +2,32 @@ import weapons from './items/weapons/index.js';
 import materials from './items/materials/index.js';
 import armor from './items/armor/index.js';
 import bionics from './items/bionics/index.js';
-import components from './items/components/index.js';
+import chips from './items/chips/index.js';
+import enemies from './enemies/index.js';
 
 console.log('Vite main.js - Starting to load all item types');
 console.log('Weapons array content:', weapons);
 console.log('Materials array content:', materials);
 console.log('Armor array content:', armor);
 console.log('Bionics array content:', bionics);
-console.log('Components array content:', components);
+console.log('Chips array content:', chips);
+console.log('Enemies array content:', enemies);
 
 // First, immediately make all item types available
 window.weapons = weapons;
 window.materials = materials;
 window.armor = armor;
 window.bionics = bionics;
-window.components = components;
+window.chips = chips;
+window.enemies = enemies;
 
 console.log('Vite main.js - All items assigned to window:');
 console.log('- Weapons:', window.weapons.length);
 console.log('- Materials:', window.materials.length);
 console.log('- Armor:', window.armor.length);
 console.log('- Bionics:', window.bionics.length);
-console.log('- Components:', window.components.length);
+console.log('- Chips:', window.chips.length);
+console.log('- Enemies:', window.enemies.length);
 
 // Then, add a failsafe loader to ensure all items are available to the rest of the system
 window.addEventListener('load', () => {
@@ -50,9 +54,13 @@ window.addEventListener('load', () => {
     window.bionics = bionics;
   }
   
-  if (!window.components || window.components.length === 0) {
-    console.log('Re-applying components to window object after load');
-    window.components = components;
+  if (!window.chips || window.chips.length === 0) {
+    console.log('Re-applying chips to window object after load');
+    window.chips = chips;
+  }
+  if (!window.enemies || window.enemies.length === 0) {
+    console.log('Re-applying enemies to window object after load');
+    window.enemies = enemies;
   }
   
   // Force reload items after we know all item types are available
@@ -68,7 +76,7 @@ window.addEventListener('load', () => {
       materials: window.items.filter(item => item.type === 'Material').length,
       armor: window.items.filter(item => item.type === 'Armor').length,
       bionics: window.items.filter(item => item.type === 'Bionic').length,
-      components: window.items.filter(item => item.type === 'Component').length
+       components: window.items.filter(item => item.type === 'Component').length
     });
   }
 });

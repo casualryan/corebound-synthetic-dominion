@@ -16,25 +16,48 @@ function getItemTooltipContent(item, showRanges = false) {
     content += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
     content += `<span style="color: #7fdbff;">Type:</span> ${item.type}<br>`;
     if (item.weaponType) {
-        content += `<span style="color: #7fdbff;">Weapon Type:</span> ${item.weaponType}<br>`;
+        content += `<span style=\"color: #7fdbff;\">Weapon Type:</span> ${item.weaponType}<br>`;
         if (item.bAttackSpeed !== undefined) {
-            content += `<span style="color: #7fdbff;">Attack Speed:</span> ${item.bAttackSpeed}<br>`;
+            content += `<span style=\"color: #7fdbff;\">Attack Speed:</span> ${item.bAttackSpeed}<br>`;
         }
+        const dmgMin = item.damageTypes ? Object.values(item.damageTypes).reduce((a,b)=>a+(typeof b==='number'?b:(b.min||0)),0) : 0;
+        const atkSpd = (typeof item.bAttackSpeed === 'number') ? item.bAttackSpeed : 1;
+        const dps = (dmgMin * atkSpd).toFixed(2);
+        content += `<span style=\"color: #ffd166;\">DPS:</span> ${dps}<br>`;
+    }
+    if (item.levelRequirement !== undefined) {
+        // content += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
+        content += `<span style="color: #ffd166;">Level Requirement:</span> ${item.levelRequirement}<br>`;
+        content += `</div>`;
     }
     content += `</div>`;
     
     // Roll Groups (Possible Mods) - structured preview for shop/fabricator
     if (showRanges && Array.isArray(item.rollGroups) && item.rollGroups.length > 0) {
+        const safeNum = (n) => (typeof n === 'number' && isFinite(n)) ? n : 0;
+        const pct = (value, min, max) => {
+            if (min === max) return 1;
+            return Math.max(0, Math.min(1, (value - min) / (max - min)));
+        };
+        const rollColor = (value, min, max) => {
+            // Colors per spec: min, below35, avg(35-65), above65, max
+            if (value === min) return '#888888';
+            if (value === max) return '#51cf66';
+            const p = pct(value, min, max) * 100;
+            if (p < 35) return '#ffa94d';
+            if (p <= 65) return '#cfe6ff';
+            return '#74c0fc';
+        };
         const formatRange = (val, suffix = '') => {
             if (val === undefined || val === null) return '';
             if (typeof val === 'string') {
                 return `${val}${suffix}`;
             }
             if (typeof val === 'number') {
-                return `${val}${suffix}`;
+                return `${safeNum(val)}${suffix}`;
             }
             if (typeof val === 'object' && val.min !== undefined && val.max !== undefined) {
-                return `${val.min}${suffix}-${val.max}${suffix}`;
+                return `${safeNum(val.min)}${suffix}-${safeNum(val.max)}${suffix}`;
             }
             return '';
         };
@@ -121,7 +144,19 @@ function getItemTooltipContent(item, showRanges = false) {
             });
             if (kinds.size === 1) title = Array.from(kinds)[0];
 
-            const bullets = grp.from.map(fmtChoice).filter(Boolean).map(line => `* ${line}`).join('<br>');
+            const bullets = grp.from.map(choice => {
+                if (!choice || !choice.path) return '';
+                // If choice.value is a range, colorize ends; if number, colorize value relative to itself (treat as max)
+                let colored = fmtChoice(choice);
+                const v = choice.value;
+                if (typeof v === 'object' && v.min !== undefined && v.max !== undefined && v.min !== v.max) {
+                    const colorMin = rollColor(v.min, v.min, v.max);
+                    const colorMax = rollColor(v.max, v.min, v.max);
+                    colored = colored.replace(`${v.min}`, `<span style=\"color:${colorMin}\">${v.min}</span>`)
+                                     .replace(`${v.max}`, `<span style=\"color:${colorMax}\">${v.max}</span>`);
+                }
+                return `* ${colored}`;
+            }).filter(Boolean).join('<br>');
             if (bullets) {
                 const slotsLabel = `(${pickTxt} ${pickTxt === '1' ? 'slot' : 'slots'})`;
                 poolsHtml += `<div style="margin-top:6px;">
@@ -769,13 +804,46 @@ function getItemTooltipContent(item, showRanges = false) {
         }
         
         content += `</div>`;
-    }
-
-    // Level Requirement - only add section if it has content
-    if (item.levelRequirement !== undefined) {
-        content += `<div style="background: rgba(0, 15, 40, 0.5); padding: 4px; margin-bottom: 6px; border-radius: 2px;">`;
-        content += `<span style="color: #ffd166;">Level Requirement:</span> ${item.levelRequirement}<br>`;
-        content += `</div>`;
+    }   
+    
+    // Wires (sockets) - show for instantiated items only
+    if (Array.isArray(item.rolledWires) && item.rolledWires.length > 0) {
+        const colorBadge = c => ({ red: '#ff6b6b', green: '#51cf66', blue: '#74c0fc', black: '#ced4da' }[c] || '#adb5bd');
+        const chips = item.rolledWires.map(w => {
+            const line1 = `<span style=\"display:inline-block; border:1px solid ${colorBadge(w.color)}; color:${colorBadge(w.color)}; padding:1px 4px; margin:1px; border-radius:3px; font-size:11px;\">${w.color}${w.chip ? ' • ' + w.chip.name : ''}</span>`;
+            let statsHtml = '';
+            if (w.chip) {
+                const chip = w.chip;
+                const parts = [];
+                // Flat damage types
+                if (chip.damageTypes) {
+                    for (const dt in chip.damageTypes) {
+                        parts.push(`+${chip.damageTypes[dt]} ${dt}`);
+                    }
+                }
+                // statModifiers (show key/basic cases)
+                if (chip.statModifiers) {
+                    if (chip.statModifiers.damageTypes) {
+                        for (const dt in chip.statModifiers.damageTypes) {
+                            parts.push(`+${chip.statModifiers.damageTypes[dt]}% ${dt} dmg`);
+                        }
+                    }
+                    for (const k in chip.statModifiers) {
+                        if (k === 'damageTypes' || k === 'damageGroups') continue;
+                        parts.push(`+${chip.statModifiers[k]} ${k}`);
+                    }
+                }
+                if (chip.precision) parts.push(`+${chip.precision} Precision`);
+                if (chip.deflection) parts.push(`+${chip.deflection} Deflection`);
+                if (parts.length > 0) {
+                    statsHtml = `<div style=\"color:#cfe6ff; font-size:11px; margin-left:4px;\">${parts.join(' • ')}</div>`;
+                }
+            }
+            return `${line1}${statsHtml}`;
+        }).join('<br>');
+        content += `<div style=\"background: rgba(0, 20, 45, 0.6); padding: 4px; margin-bottom: 6px; border-radius: 4px; border-left: 2px solid #00ffcc;\">\n` +
+                   `<div style=\"color:#66ffcc; font-weight:bold; margin-bottom:2px;\">Wires</div>` +
+                   `${chips}</div>`;
     }
 
     // Description - only add section if it has content
@@ -814,7 +882,8 @@ document.addEventListener('DOMContentLoaded', () => {
     globalTooltip.className = 'tooltip';
     globalTooltip.style.display = 'none';
     globalTooltip.style.position = 'fixed';
-    globalTooltip.style.zIndex = '99999';
+    // Ensure tooltip appears above modals/overlays (which use z-index ~100000)
+    globalTooltip.style.zIndex = '100002';
     globalTooltip.style.background = 'rgba(0, 0, 0, 0.95)';
     globalTooltip.style.color = 'white';
     globalTooltip.style.border = '1px solid #00ffcc';
@@ -828,6 +897,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Track current open tooltip to prevent flicker
     let currentTarget = null;
     let isTooltipVisible = false;
+    let tooltipSuppressed = false;
     
     // Add a class to all existing tooltip elements to help identify them
     document.querySelectorAll('.tooltip').forEach(tooltip => {
@@ -925,6 +995,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.addEventListener('mouseenter', handleMouseEvent, true);
     document.body.addEventListener('mouseleave', handleMouseEvent, true);
     document.body.addEventListener('click', hideTooltip, true);
+    // Suppress tooltips during drag-and-drop
+    document.addEventListener('dragstart', () => { hideTooltip(); tooltipSuppressed = true; }, true);
+    document.addEventListener('dragend', () => { tooltipSuppressed = false; }, true);
+    document.addEventListener('drop', () => { tooltipSuppressed = false; }, true);
+    // Extra safety: if user cancels drag with mouseup, re-enable tooltips
+    document.addEventListener('mouseup', () => { tooltipSuppressed = false; }, true);
     
     // Handle window resize to reposition tooltip if needed
     window.addEventListener('resize', () => {
@@ -942,9 +1018,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleMouseEvent(event) {
         // Find the closest element with a tooltip
+        if (tooltipSuppressed) return;
         const target = findTooltipTarget(event.target);
         
-        if (!target) return;
+        if (!target || tooltipSuppressed) return;
         
         if (event.type === 'mouseenter') {
             debugTooltip('Mouse enter on element with tooltip', { 

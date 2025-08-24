@@ -17,6 +17,7 @@ import comboTestSword from './comboTestSword.js';
 import nanonicPhaseSword from './nanonicPhaseSword.js';
 import modPoolTestBlade from './modPoolTestBlade.js';
 import dualPoolTestStaff from './dualPoolTestStaff.js';
+import wiredTestDagger from './wiredTestDagger.js';
 
 // Add all weapons to this array
 const weapons = [
@@ -37,7 +38,8 @@ const weapons = [
   comboTestSword,
   nanonicPhaseSword,
   modPoolTestBlade,
-  dualPoolTestStaff
+  dualPoolTestStaff,
+  wiredTestDagger
 ];
 
 export default weapons;

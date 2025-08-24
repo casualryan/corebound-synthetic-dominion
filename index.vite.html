@@ -15,6 +15,7 @@
 <body>
     <!-- Sidebar Navigation -->
     <div id="sidebar">
+        <button id="sidebar-collapse-toggle" style="position:absolute; top:6px; right:6px; width:22px; height:22px; border:1px solid #00ffcc; background:linear-gradient(to bottom,#003366,#001133); color:#00ffcc; border-radius:4px; cursor:pointer; z-index:200;">‹</button>
         <div class="sidebar-section">
             <h2>Menu</h2>
             <ul class="sidebar-menu">
@@ -94,7 +95,28 @@
     <div id="main-content">
         <!-- Inventory Screen -->
         <div id="inventory-screen" class="screen active">
-            <h2>Inventory</h2>
+            <h2 id="inventory-header">Inventory</h2>
+            <div id="inventory-controls" style="display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap;">
+                <button id="inv-sell-all" class="btn-small" style="padding:6px 10px; background:linear-gradient(to bottom,#330000,#220000); color:#ffb3b3; border:1px solid #ff6680; border-radius:4px;">Sell All</button>
+                <button id="inv-disassemble-all" class="btn-small" style="padding:6px 10px; background:linear-gradient(to bottom,#332200,#221100); color:#ffde99; border:1px solid #ffcc66; border-radius:4px;">Disassemble All</button>
+                <input id="inv-search" type="text" placeholder="Search..." style="flex:1; padding:6px; background:#001122; color:#cfe6ff; border:1px solid #004a7f; border-radius:4px;"/>
+                <select id="inv-filter" style="padding:6px; background:#001122; color:#cfe6ff; border:1px solid #004a7f; border-radius:4px;">
+                    <option value="all">All</option>
+                    <option value="Weapon">Weapon</option>
+                    <option value="Armor">Armor</option>
+                    <option value="Bionic">Bionic</option>
+                    <option value="Material">Material</option>
+                    <option value="Chip">Chip</option>
+                </select>
+                <select id="inv-sort" style="padding:6px; background:#001122; color:#cfe6ff; border:1px solid #004a7f; border-radius:4px;">
+                    <option value="none">Sort: None</option>
+                    <option value="rarity">Rarity</option>
+                    <option value="level">Level</option>
+                    <option value="dps">DPS (weapons)</option>
+                    <option value="sockets">Sockets</option>
+                    <option value="name">Name</option>
+                </select>
+            </div>
             <ul id="inventory"></ul>
         </div>
 
@@ -231,9 +253,10 @@
 
                 </div>
                 <!-- Combat Log -->
-                <div class="combat-log">
+                <div class="combat-log" style="position:relative;">
                     <h2>Combat Log</h2>
                     <div id="log-messages"></div>
+                    <button id="combat-log-popout" style="position:absolute; top:8px; right:8px; background:linear-gradient(to bottom,#003366,#001133); color:#00ffcc; border:1px solid #00ffcc; border-radius:4px; padding:4px 8px; cursor:pointer; font-size:12px;">Pop Out</button>
                 </div>
             </div>
         </div>
@@ -290,6 +313,16 @@
                 <button id="load-game">Load Game</button>
                 <button id="reset-game">Reset Save</button>
             </div>
+            <div class="settings-buttons" style="margin-top:8px; gap:8px; display:flex; flex-wrap:wrap;">
+                <button id="sell-all">Sell All</button>
+                <button id="disassemble-all">Disassemble All</button>
+            </div>
+            <hr>
+            <h3>Gameplay</h3>
+            <label style="display:flex; align-items:center; gap:8px; color:#cfe6ff;">
+                <input id="setting-disable-sell-confirm" type="checkbox">
+                Disable sell confirmation
+            </label>
         </div>
     </div>
 
